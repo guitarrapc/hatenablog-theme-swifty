@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, FIXTURE_URLS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, TIMEOUTS, SCHEMES, schemeCss } from './constants.js';
 
 /**
  * テキストのコントラストを検証する (theme-design-spec.md の「配色」を参照)。
@@ -140,30 +140,19 @@ const measure = (/** @type {any} */ page, /** @type {Record<string,string>} */ t
  */
 const resetToThemeBackground = (page) => page.addStyleTag({ content: 'body { background: var(--background); }' });
 
-// 配色ごとに測る(theme-design-spec.md の「配色の切り替え」)。切り替えはデザインCSSに書く1行
-const SCHEMES = {
-  // 開発用ブログのデザインCSSで配色を切り替えていても既定の配色を測れるよう、ミントも明示する
-  ミント: ':root { --swifty-scheme: mint; }',
-  ブルー: ':root { --swifty-scheme: blue; }',
-  ピンク: ':root { --swifty-scheme: pink; }',
-  イエロー: ':root { --swifty-scheme: yellow; }',
-  パープル: ':root { --swifty-scheme: purple; }',
-};
+/** デザインCSSで配色を切り替える(theme-design-spec.md の「配色の切り替え」)。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */
+const applyScheme = (/** @type {any} */ page, /** @type {string} */ scheme) => page.addStyleTag({ content: schemeCss(scheme) });
 
-/** デザインCSSで配色を切り替える。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */
-const applyScheme = async (/** @type {any} */ page, /** @type {string} */ css) => {
-  if (css) await page.addStyleTag({ content: css });
-};
-
-for (const [schemeName, schemeCss] of Object.entries(SCHEMES)) {
-  test.describe(`テキストのコントラスト(配色: ${schemeName})`, () => {
+// 配色ごとに測る
+for (const scheme of SCHEMES) {
+  test.describe(`テキストのコントラスト(配色: ${scheme})`, () => {
     for (const [name, { path, targets }] of Object.entries({
       本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
       コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
     })) {
       test(`${name}がWCAG AAを満たす`, async ({ page }) => {
         await page.navigateTo(path, { waitFor: 'networkidle' });
-      await applyScheme(page, schemeCss);
+      await applyScheme(page, scheme);
         await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
         await resetToThemeBackground(page);
 
@@ -181,7 +170,7 @@ for (const [schemeName, schemeCss] of Object.entries(SCHEMES)) {
 
     test('引用の左の線がカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-      await applyScheme(page, schemeCss);
+      await applyScheme(page, scheme);
       await expect(page.locator('.entry-content blockquote').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
 
       // 引用であることを示す主な手がかり(背景はカードとほとんど差がなく、Windowsのハイコントラストでは消える)なので、
@@ -214,7 +203,7 @@ for (const [schemeName, schemeCss] of Object.entries(SCHEMES)) {
     test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {
       // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
       await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
-      await applyScheme(page, schemeCss);
+      await applyScheme(page, scheme);
       await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
       await resetToThemeBackground(page);
 
@@ -230,7 +219,7 @@ for (const [schemeName, schemeCss] of Object.entries(SCHEMES)) {
 
     test('状態を示す印の色(目次の現在位置・フォーカスの枠)がカードの背景に対して3:1以上ある', async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-      await applyScheme(page, schemeCss);
+      await applyScheme(page, scheme);
       await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
       const result = await page.evaluate(() => {

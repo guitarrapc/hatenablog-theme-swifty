@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET } from './constants.js';
+import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET, SCHEMES, schemeCss } from './constants.js';
 
 /**
  * 配色の切り替えのテスト (theme-design-spec.md の「配色の切り替え」を参照)
@@ -12,9 +12,8 @@ import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET } from './constants.js';
  * 開発用ブログのデザインCSSで配色を切り替えていることがあるので、配色に関わるテストでは配色を明示する。
  */
 
-// テーマが持つ配色(既定の mint 以外)。_variable.scss の $schemes と揃える
-const SCHEMES = ['blue', 'pink', 'yellow', 'purple'];
-const BLUE = ':root { --swifty-scheme: blue; }';
+const [DEFAULT_SCHEME, ...SWITCHABLE] = SCHEMES;
+const BLUE = schemeCss('blue');
 
 // 切り替えで変わる配色の変数のうち、見た目の要になるもの
 const SWITCHED = ['background', 'text-body', 'text-light', 'link', 'accent', 'accent-strong', 'accent-soft', 'border'];
@@ -96,7 +95,7 @@ test.describe('配色の切り替え', () => {
     expect(declared).toEqual([]);
   });
 
-  test('書かなければ既定の配色(ミント)で、body は :root の配色をそのまま使う', async ({ page }) => {
+  test(`書かなければ既定の配色(${DEFAULT_SCHEME})で、body は :root の配色をそのまま使う`, async ({ page }) => {
     await openArticle(page);
     // 開発用ブログのデザインCSSで切り替えていても、書いていない状態に戻す
     await designCss(page, ':root { --swifty-scheme: initial; }');
@@ -106,10 +105,10 @@ test.describe('配色の切り替え', () => {
     expect(colors.body).toEqual(colors.root);
   });
 
-  for (const scheme of SCHEMES) {
+  for (const scheme of SWITCHABLE) {
     test(`デザインCSSで --swifty-scheme: ${scheme} と書くと、ページ全体の配色が切り替わる`, async ({ page }) => {
       await openArticle(page);
-      await designCss(page, `:root { --swifty-scheme: ${scheme}; }`);
+      await designCss(page, schemeCss(scheme));
       const colors = await measure(page);
 
       expect(colors.scheme).toBe(scheme);
@@ -124,6 +123,16 @@ test.describe('配色の切り替え', () => {
       expect(colors.rendered.bandBar).toBe(colors.expected.accent);
     });
   }
+
+  test('どの配色でも、ブログのヘッダーの帯ははてなのヘッダーメニューと同じ白にする', async ({ page }) => {
+    await openArticle(page);
+    // はてなのヘッダーメニューは別ドメインのiframeで白固定。ブログのヘッダーと続けて1つのヘッダーに見せる
+    for (const scheme of SCHEMES) {
+      await designCss(page, schemeCss(scheme));
+      const header = await page.evaluate(() => getComputedStyle(/** @type {Element} */ (document.getElementById('blog-title'))).backgroundColor);
+      expect(header, scheme).toBe('rgb(255, 255, 255)');
+    }
+  });
 
   test('デザインCSSがテーマより前に読み込まれても、切り替わる', async ({ page }) => {
     await openArticle(page);

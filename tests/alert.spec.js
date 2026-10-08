@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, FIXTURE_URLS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, SCHEMES, schemeCss } from './constants.js';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
@@ -695,17 +695,21 @@ test.describe('アラート記法', () => {
     await page.screenshot({ path: 'screenshots/alert.png', fullPage: false });
   });
 
-  test('種類ごとの色がWCAG AAを満たす', async ({ page }) => {
-    await setupFixture(page);
+  // アラートの淡い背景はカードの色(--surface)から作るので、カードの色を変える配色もあり、配色ごとに測る
+  for (const scheme of SCHEMES) {
+    test(`種類ごとの色がWCAG AAを満たす(配色: ${scheme})`, async ({ page }) => {
+      await setupFixture(page);
+      await page.addStyleTag({ content: schemeCss(scheme) });
 
-    for (const s of await getAlertStyles(page)) {
-      // タイトルと本文は、種類の色を混ぜた淡い背景の上で4.5:1以上
-      expect(contrast(s.titleColor, s.background), `${s.type} のタイトル ${s.titleColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
-      expect(contrast(s.bodyColor, s.background), `${s.type} の本文 ${s.bodyColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
-      // 背景はカードとほとんど差がないので、枠が箱の範囲を示す。カードに対して3:1以上
-      expect(contrast(s.borders[0].color, s.cardBackground), `${s.type} の枠 ${s.borders[0].color} on ${s.cardBackground}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
-    }
-  });
+      for (const s of await getAlertStyles(page)) {
+        // タイトルと本文は、種類の色を混ぜた淡い背景の上で4.5:1以上
+        expect(contrast(s.titleColor, s.background), `${s.type} のタイトル ${s.titleColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
+        expect(contrast(s.bodyColor, s.background), `${s.type} の本文 ${s.bodyColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
+        // 背景はカードとほとんど差がないので、枠が箱の範囲を示す。カードに対して3:1以上
+        expect(contrast(s.borders[0].color, s.cardBackground), `${s.type} の枠 ${s.borders[0].color} on ${s.cardBackground}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+      }
+    });
+  }
 
   test('ハイコントラストモードでもアイコンが文字色で表示される', async ({ page }) => {
     await setupFixture(page);

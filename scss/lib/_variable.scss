@@ -115,6 +115,17 @@ $color-lilac-800: #322d3b;
 $color-lilac-850: #2a2632;
 $color-lilac-900: #1b1822;
 
+// Linen系 (ベージュの地と、わずかに緑みを帯びた文字。配色 beige の地と文字)
+$color-linen-50: #fffcf6;
+$color-linen-100: #faf5eb;
+$color-linen-150: #f4ebda;
+$color-linen-200: #e9dfcc;
+$color-linen-300: #d6cab3;
+$color-linen-500: #8d8778;
+$color-linen-600: #63645c;
+$color-linen-800: #262724;
+$color-linen-900: #1a1b19;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -160,6 +171,15 @@ $color-violet-500: #8361dc;
 $color-violet-700: #6a3fc4;
 $color-violet-800: #522f9c;
 
+// Sage系 (配色 beige のアクセント。くすんだ緑は白地で淡いので、文字と状態の印には濃くした色を使う)
+$color-sage-50: #eef2ec;
+$color-sage-100: #e0e7de;
+$color-sage-300: #c4cfc3;
+$color-sage-400: #a6b5a5;
+$color-sage-500: #728771;
+$color-sage-700: #4f644e;
+$color-sage-800: #3b4c3a;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -184,6 +204,7 @@ $color-alpha-shadow-slate: rgba(17, 24, 39, 0.06);
 $color-alpha-shadow-mauve: rgba(48, 24, 34, 0.06);
 $color-alpha-shadow-sand: rgba(45, 38, 20, 0.06);
 $color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
+$color-alpha-shadow-linen: rgba(38, 39, 36, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -191,7 +212,10 @@ $color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
 // 色の選定理由は theme-design-spec.md の「配色」を参照
 $light-theme: (
     "background": $color-gray-150, // ページの背景
-    "surface": $color-white, // ヘッダー・記事・モジュールのカード
+    "surface": $color-white, // 記事・モジュールのカード
+    // ブログのヘッダーの帯。はてなのヘッダーメニュー(別ドメインのiframeで白固定)と続けて1つのヘッダーに見せるので、
+    // カードの色を変える配色でも白のままにする($schemes で変えない)
+    "surface-header": $color-white,
     "surface-muted": $color-gray-100, // コードブロック・表の見出し・本文中の目次
 
     "text-body": $color-gray-800,
@@ -342,6 +366,34 @@ $schemes: (
 
         "code-text": $color-lilac-850,
         "code-comment": $color-lilac-600,
+    )),
+    // ベージュを地に、くすんだ緑(セージ)をアクセントにしたやわらかい配色。カードも真っ白にせず、地に合わせて温かい白にする。
+    // セージ(#a6b5a5)は白地で2.15:1しかないので飾りだけに使い、リンクと状態の印は同じ色相を濃くする
+    "beige": map.merge($light-theme, (
+        "background": $color-linen-150,
+        "surface": $color-linen-50,
+        "surface-muted": $color-linen-100,
+
+        "text-body": $color-linen-800,
+        "text-header": $color-linen-900,
+        "text-light": $color-linen-600,
+
+        "link": $color-sage-700,
+        "link-hover": $color-sage-800,
+
+        "accent": $color-sage-400,
+        "accent-strong": $color-sage-500,
+        "accent-line": $color-sage-300,
+        "accent-soft": $color-sage-50,
+        "accent-soft-hover": $color-sage-100,
+
+        "border": $color-linen-200,
+        "border-strong": $color-linen-300,
+        "border-quote": $color-linen-500,
+        "shadow": $color-alpha-shadow-linen,
+
+        "code-text": $color-linen-800,
+        "code-comment": $color-linen-600,
     )),
 );
 

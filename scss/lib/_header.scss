@@ -30,7 +30,7 @@ body {
 
 #blog-title {
     margin: 0;
-    background-color: var(--surface);
+    background-color: var(--surface-header);
     border-bottom: 1px solid var(--border);
 }
 
@@ -107,7 +107,7 @@ body {
     padding: 0 16px;
     border: 1px solid var(--accent-strong);
     border-radius: 999px;
-    background-color: var(--surface);
+    background-color: var(--surface-header);
     color: var(--link);
     font-size: .8125rem;
     font-weight: 700;
@@ -132,7 +132,7 @@ body {
     // はてなは背景を透明にするので、帯の白を戻す
     #blog-title {
         padding-block: 16px;
-        background-color: var(--surface);
+        background-color: var(--surface-header);
     }
 
     #blog-title-inner {
