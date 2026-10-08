@@ -13,7 +13,7 @@ import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET } from './constants.js';
  */
 
 // テーマが持つ配色(既定の mint 以外)。_variable.scss の $schemes と揃える
-const SCHEMES = ['blue', 'pink', 'yellow'];
+const SCHEMES = ['blue', 'pink', 'yellow', 'purple'];
 const BLUE = ':root { --swifty-scheme: blue; }';
 
 // 切り替えで変わる配色の変数のうち、見た目の要になるもの
@@ -139,7 +139,8 @@ test.describe('配色の切り替え', () => {
 
   test('知らない配色の名前では、既定の配色のまま表示する', async ({ page }) => {
     await openArticle(page);
-    await designCss(page, ':root { --swifty-scheme: purple; }');
+    // 配色の名前にはしない名前(配色を足しても、ここが既存の配色と重ならないように)
+    await designCss(page, ':root { --swifty-scheme: no-such-scheme; }');
     const colors = await measure(page);
 
     expect(colors.body).toEqual(colors.root);

@@ -104,6 +104,17 @@ $color-sand-800: #37322a;
 $color-sand-850: #2f2b24;
 $color-sand-900: #1e1b16;
 
+// Lilac系 (わずかに紫みを帯びたグレー。配色 purple の地と文字)
+$color-lilac-100: #f8f6fb;
+$color-lilac-150: #f4f2f8;
+$color-lilac-200: #e6e2ee;
+$color-lilac-300: #d0cadc;
+$color-lilac-500: #8a8397;
+$color-lilac-600: #615a6e;
+$color-lilac-800: #322d3b;
+$color-lilac-850: #2a2632;
+$color-lilac-900: #1b1822;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -140,6 +151,15 @@ $color-honey-500: #b07c00;
 $color-honey-700: #8a5a00;
 $color-honey-800: #6b4500;
 
+// Violet系 (配色 purple のアクセント)
+$color-violet-50: #f3eefd;
+$color-violet-100: #e7dcfb;
+$color-violet-300: #c9b6f3;
+$color-violet-400: #a586ec;
+$color-violet-500: #8361dc;
+$color-violet-700: #6a3fc4;
+$color-violet-800: #522f9c;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -163,6 +183,7 @@ $color-alpha-shadow: rgba(23, 35, 33, 0.06);
 $color-alpha-shadow-slate: rgba(17, 24, 39, 0.06);
 $color-alpha-shadow-mauve: rgba(48, 24, 34, 0.06);
 $color-alpha-shadow-sand: rgba(45, 38, 20, 0.06);
+$color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -295,6 +316,32 @@ $schemes: (
 
         "code-text": $color-sand-850,
         "code-comment": $color-sand-600,
+    )),
+    // わずかに紫みを帯びたグレーを地に、紫をアクセントにする
+    "purple": map.merge($light-theme, (
+        "background": $color-lilac-150,
+        "surface-muted": $color-lilac-100,
+
+        "text-body": $color-lilac-800,
+        "text-header": $color-lilac-900,
+        "text-light": $color-lilac-600,
+
+        "link": $color-violet-700,
+        "link-hover": $color-violet-800,
+
+        "accent": $color-violet-400,
+        "accent-strong": $color-violet-500,
+        "accent-line": $color-violet-300,
+        "accent-soft": $color-violet-50,
+        "accent-soft-hover": $color-violet-100,
+
+        "border": $color-lilac-200,
+        "border-strong": $color-lilac-300,
+        "border-quote": $color-lilac-500,
+        "shadow": $color-alpha-shadow-lilac,
+
+        "code-text": $color-lilac-850,
+        "code-comment": $color-lilac-600,
     )),
 );
 
