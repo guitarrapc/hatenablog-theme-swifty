@@ -14,19 +14,16 @@
     --card-padding-block: 28px;
     --card-padding-inline: 16px;
 
+    // 広い画面でも内側の余白は増やさず、そのぶんを本文に回す
     @media #{var.$mq-sm} {
         --gutter: 24px;
         --card-padding-block: 40px;
         --card-padding-inline: 40px;
     }
 
-    @media #{var.$mq-lg} {
-        --card-padding-block: 48px;
-        --card-padding-inline: 48px;
-    }
-
-    // ヘッダー・本文・ブログパーツが揃える最大幅。本文の横の目次まで含めたカードの幅
-    --layout-max: calc(var(--content-max) + var(--toc-width) + var(--toc-gap) + var(--card-padding-inline) * 2);
+    // ヘッダー・本文・ブログパーツが揃える最大幅。本文の横の目次まで含めたカードの幅。
+    // カードは枠(左右1pxずつ)を含めた幅(box-sizing: border-box)なので、枠のぶんも足さないと本文が上限に届かない
+    --layout-max: calc(var(--content-max) + var(--toc-width) + var(--toc-gap) + var(--card-padding-inline) * 2 + 2px);
     // ヘッダーとフッターの左右の余白。カードの外端に揃え、カードが画面幅いっぱいになるスマホではカードの文字に揃える
     --header-gutter: max(var(--gutter), 16px);
 }

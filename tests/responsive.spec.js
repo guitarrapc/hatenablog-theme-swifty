@@ -26,6 +26,22 @@ test.describe('レスポンシブデザインのテスト', () => {
     });
   }
 
+  // 目次を本文中に置く幅(1024px)と横に置く幅(1440px)のどちらでも、本文は上限(--content-max)まで広がる。
+  // 目次を横に出す幅を下げたり、目次や余白を広げたりすると本文が狭くなる(theme-design-spec.md の「レイアウト」を参照)
+  for (const width of [1024, 1440]) {
+    test(`本文は上限の幅まで広がる(${width}px)`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+
+      const result = await page.evaluate(() => ({
+        text: document.querySelector('.entry-content > p')?.getBoundingClientRect().width,
+        contentMax: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-max')),
+      }));
+      expect(result.text).toBeCloseTo(result.contentMax, 0);
+    });
+  }
+
   test('スマートフォンでの記事ページ確認', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.MOBILE_STANDARD);
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });

@@ -82,7 +82,7 @@ $toc-row-span: 1000;
  * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、全行にまたがらせて position: sticky で止める。
  * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
  */
-@media screen and #{var.$mq-md} {
+@media screen and #{var.$mq-lg} {
     .entry:has(> .entry-inner > .entry-content > .table-of-contents) .entry-inner {
         > * {
             max-width: calc(var(--content-max) + var(--toc-width) + var(--toc-gap));

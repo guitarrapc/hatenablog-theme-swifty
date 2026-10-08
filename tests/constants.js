@@ -34,8 +34,8 @@ export const VIEWPORTS = {
   DESKTOP: { width: 1440, height: 1440 },
   /** タブレット（iPad Pro 12.9インチ） */
   TABLET: { width: 1024, height: 1366 },
-  /** 目次を本文の横に出さない最大の幅(_variable.scss の $mq-md の1px手前) */
-  BELOW_SIDE_TOC: { width: 991, height: 1000 },
+  /** 目次を本文の横に出さない最大の幅(_variable.scss の $mq-lg の1px手前) */
+  BELOW_SIDE_TOC: { width: 1199, height: 1000 },
   /** Surface Pro 7 */
   SURFACE_PRO: { width: 912, height: 1368 },
   /** スマートフォン（iPhone 14 Pro Max） */
