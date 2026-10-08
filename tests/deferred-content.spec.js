@@ -42,10 +42,10 @@ test.describe('描画の後回し', () => {
       await page.navigateTo(path, { waitFor: 'networkidle' });
       await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-      // 前提: 後回しが効いていること(ここが崩れると比較が意味を失う)
-      const contentVisibility = await page.evaluate(() =>
-        getComputedStyle(/** @type {Element} */(document.querySelector('.entry-content > p'))).contentVisibility);
-      expect(contentVisibility).toBe('auto');
+      // 前提: 本文で後回しが効いていること(ここが崩れると比較が意味を失う)
+      const deferredCount = await page.evaluate(() =>
+        [...document.querySelectorAll('.entry-content > *')].filter((el) => getComputedStyle(el).contentVisibility === 'auto').length);
+      expect(deferredCount).toBeGreaterThan(0);
 
       await renderAll(page);
       const deferred = await measure(page);
@@ -61,4 +61,14 @@ test.describe('描画の後回し', () => {
       });
     });
   }
+
+  test('最初の画面にある本文の先頭は後回しにしない', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    // 仮の高さ(100px)で置かれてから実際の高さに変わると、下の要素(本文中の目次など)がずれてCLSになる
+    const values = await page.evaluate(() =>
+      [...document.querySelectorAll('.entry-content > *')].slice(0, 5).map((el) => getComputedStyle(el).contentVisibility));
+    expect(values.every((value) => value !== 'auto'), `先頭の5要素: ${values.join(', ')}`).toBe(true);
+  });
 });

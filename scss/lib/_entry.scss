@@ -1,0 +1,688 @@
+@use "./_variable" as var;
+
+/*
+ * 本文の見出しの役割ごとの形 (theme-design-spec.md の「見出しと引用」を参照)。
+ * 見出しの段は記事の書き方で変わるので、段ではなく役割で形を決める。
+ * 同じ見出しに別の役割が後から当たっても前の形が残らないよう、役割ごとに変わる指定はすべての役割で書く
+ */
+// 縦棒。左の縦棒は見出しだけの印にする。上の余白(--heading-space)には引かない
+@mixin heading-left-bar($top, $bottom, $width) {
+    padding-left: .75em;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: $top;
+        bottom: $bottom;
+        left: 0;
+        width: $width;
+        border-radius: 3px;
+        background-color: var(--accent);
+    }
+}
+
+// 大見出し。上下に余白を持つ帯にし、太い縦棒と右へ薄れる淡い帯を帯の高さいっぱいに引く
+@mixin heading-band {
+    --band-padding: .4em;
+    @include heading-left-bar(var(--heading-space), 0, 5px);
+    padding-top: calc(var(--heading-space) + var(--band-padding));
+    padding-bottom: var(--band-padding);
+    border-bottom: 0;
+    border-radius: 0 6px 6px 0;
+    background: linear-gradient(90deg, var(--accent-soft), transparent 80%) left bottom / 100% calc(100% - var(--heading-space)) no-repeat;
+    font-size: 1.45rem;
+
+    @media #{var.$mq-sm} {
+        font-size: 1.6rem;
+    }
+}
+
+// 中見出し。全幅の破線の下線。帯(面)に次いで目立ち、縦棒の帯と形がはっきり違う
+@mixin heading-dashed {
+    padding: var(--heading-space) 0 .35em;
+    border-bottom: 2px dashed var(--accent-line);
+    border-radius: 0;
+    background: none;
+    font-size: 1.3rem;
+
+    @media #{var.$mq-sm} {
+        font-size: 1.375rem;
+    }
+
+    &::before {
+        content: none;
+    }
+}
+
+// 小見出し。細い縦棒を文字の高さにだけ引く。全幅の破線より軽い
+@mixin heading-bar {
+    @include heading-left-bar(calc(var(--heading-space) + .15em), .15em, 3px);
+    padding-top: var(--heading-space);
+    padding-bottom: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    background: none;
+    font-size: 1.175rem;
+
+    @media #{var.$mq-sm} {
+        font-size: 1.175rem;
+    }
+}
+
+// それより下の見出し。太字だけ
+@mixin heading-minor($size) {
+    padding: var(--heading-space) 0 0;
+    border-bottom: 0;
+    border-radius: 0;
+    background: none;
+    font-size: $size;
+
+    @media #{var.$mq-sm} {
+        font-size: $size;
+    }
+
+    &::before {
+        content: none;
+    }
+}
+
+/*
+ * 記事 (theme-design-spec.md の「記事」を参照)
+ * 記事は1枚のカードにし、本文は --content-max の幅で中央に置く。
+ * 目次があり画面が広いときは、本文の横に目次の列を足す(_table_of_contents.scss)
+ */
+.entry {
+    @include var.card;
+    position: relative;
+    margin: 0 0 16px;
+    padding: var(--card-padding-block) var(--card-padding-inline);
+}
+
+.entry-inner > * {
+    max-width: var(--content-max);
+    margin-inline: auto;
+}
+
+/* 記事のヘッダー: カテゴリ → タイトル → 日付の順に並べる */
+.entry-header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.entry-categories {
+    order: -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+
+    a {
+        @include var.category-chip;
+    }
+}
+
+// 大きく、行の高さと字間を詰めて塊として見せる(theme-design-spec.md の「見出しと引用」を参照)
+.entry-title {
+    margin: 0;
+    font-size: 1.625rem;
+    line-height: 1.3;
+    letter-spacing: -.02em;
+
+    @media #{var.$mq-sm} {
+        font-size: 2.125rem;
+    }
+}
+
+.entry-header .date {
+    order: 1;
+    margin: 0;
+    font-size: .8125rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+
+    a {
+        color: var(--text-light);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+}
+
+/* 「編集する」ボタン(ブログ主のログイン時だけ表示される) */
+.entry-header-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    a {
+        @include var.outline-button;
+        min-height: 28px;
+        padding-inline: 12px;
+        font-size: .75rem;
+    }
+}
+
+/*
+ * 記事の本文
+ * 余白は下方向(margin-bottom)と見出しの上(padding-top)だけで作る。
+ * 目次を本文の横に置くときは本文をグリッドにするため、マージンの相殺に頼ると目次の有無で間隔が変わる
+ * (theme-design-spec.md の「目次」を参照)
+ */
+.entry-content {
+    --flow-space: 1.6rem;
+    font-size: 1rem;
+    line-height: 1.9;
+    letter-spacing: .02em;
+    overflow-wrap: anywhere; // 長いURLなども折り返す
+
+    > * {
+        margin-top: 0;
+        margin-bottom: var(--flow-space);
+    }
+
+    > :last-child,
+    > :empty {
+        margin-bottom: 0;
+    }
+
+    > :empty {
+        margin-top: 0;
+    }
+
+    a {
+        text-decoration-thickness: 1px;
+        text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+
+        &:hover {
+            text-decoration-color: currentColor;
+        }
+    }
+
+    /* 見出し (theme-design-spec.md の「見出しと引用」を参照) */
+    // 上の余白は --heading-space の padding-top で作る(margin-top は相殺されるため使わない。「本文の余白」を参照)。
+    // 字間は本文(.02em)から切り離して詰め、行の高さも詰めて、見出しを塊として見せる
+    > h1,
+    > h2,
+    > h3,
+    > h4,
+    > h5,
+    > h6 {
+        --heading-space: 1.4rem;
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-top: var(--heading-space);
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: 0;
+    }
+
+    > :is(h1, h2, h3, h4, h5, h6):first-child {
+        --heading-space: 0px;
+    }
+
+    // 見出しの形は段(h1〜h6)ではなく、記事の中での役割(帯・破線・縦棒)で決める。
+    // :has() に対応していないブラウザでは、この段ごとの割り当て(「#」から書く記事と同じ)になる
+    > h1 {
+        @include heading-band;
+    }
+
+    > h2 {
+        @include heading-dashed;
+    }
+
+    > h3 {
+        @include heading-bar;
+    }
+
+    > h4 {
+        @include heading-minor(1.05rem);
+    }
+
+    > h5,
+    > h6 {
+        @include heading-minor(1rem);
+    }
+}
+
+/*
+ * 記事でいちばん上に使われている見出しの段を帯にし、その下の段を破線、縦棒と続ける。
+ * 書き方によって大見出しの段が違うため(マークダウンの「#」はh1、「##」はh2、はてな記法と見たままモードはh3)、
+ * どの書き方でも大見出しが帯になるようにする(theme-design-spec.md の「見出しと引用」を参照)
+ */
+$heading-top-levels: (
+    1: ":has(> h1)",
+    2: ":not(:has(> h1)):has(> h2)",
+    3: ":not(:has(> h1, > h2))",
+);
+
+@each $top, $condition in $heading-top-levels {
+    .entry-content#{$condition} {
+        > h#{$top} {
+            @include heading-band;
+        }
+
+        > h#{$top + 1} {
+            @include heading-dashed;
+        }
+
+        > h#{$top + 2} {
+            @include heading-bar;
+        }
+
+        @for $level from $top + 3 through 6 {
+            > h#{$level} {
+                @if $level == $top + 3 {
+                    @include heading-minor(1.05rem);
+                } @else {
+                    @include heading-minor(1rem);
+                }
+            }
+        }
+    }
+}
+
+.entry-content {
+
+    /* リスト */
+    ul,
+    ol {
+        padding-left: 1.6em;
+    }
+
+    // 項目の間だけ空け、リストの外へ余白が漏れないようにする
+    li + li,
+    li > ul,
+    li > ol {
+        margin-top: .35em;
+    }
+
+    ul > li::marker {
+        color: var(--accent-strong);
+    }
+
+    ol > li::marker {
+        color: var(--link);
+        font-weight: 700;
+    }
+
+    dl {
+        dt {
+            font-weight: 700;
+        }
+
+        dd {
+            margin: 0 0 1em;
+            padding-left: 1em;
+        }
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    /* 画像・埋め込み */
+    img,
+    video {
+        max-width: 100%;
+        height: auto;
+    }
+
+    img.hatena-fotolife {
+        border-radius: var(--radius-small);
+    }
+
+    iframe {
+        max-width: 100%;
+    }
+
+    figure {
+        margin-inline: 0;
+    }
+
+    figcaption {
+        margin-top: .5em;
+        font-size: .8125rem;
+        color: var(--text-light);
+        text-align: center;
+    }
+
+    /* 表。はみ出す場合は表の中で横にスクロールする */
+    table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+        font-size: .9rem;
+        line-height: 1.6;
+    }
+
+    th,
+    td {
+        padding: .5em .9em;
+        border: 1px solid var(--border);
+    }
+
+    th {
+        background-color: var(--surface-muted);
+        color: var(--text-header);
+        font-weight: 700;
+    }
+
+    /* 引用 */
+    // 左の線はミントの縦棒(見出しの印)と区別してグレーにする。
+    // 引用であることを示す主な手がかりなので、カードと引用の背景の両方に対して3:1を満たす色にする(theme-design-spec.md の「配色」を参照)
+    blockquote {
+        margin-inline: 0;
+        padding: 1em 1.25em;
+        border-left: 3px solid var(--border-quote);
+        border-radius: 0 var(--radius-small) var(--radius-small) 0;
+        background-color: var(--surface-muted);
+
+        // 段落に限らず最初と最後の要素(リストやコードブロックなど)の外側の余白をなくし、上下の余白を揃える
+        > :first-child {
+            margin-top: 0;
+        }
+
+        // はてなブログがホバー時に末尾へ追加する引用ボタン(.js-requote-button)は除いて最後の要素を数える
+        > :nth-last-child(1 of :not(.js-requote-button)) {
+            margin-bottom: 0;
+        }
+
+        cite {
+            display: block;
+            margin-top: .5em;
+            font-size: .8125rem;
+            font-style: normal;
+            color: var(--text-light);
+        }
+    }
+
+    /* 折りたたみ */
+    details {
+        padding: 0 1.1em;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-small);
+
+        > summary {
+            padding-block: .7em;
+            font-weight: 700;
+            cursor: pointer;
+
+            &::marker {
+                color: var(--accent-strong);
+            }
+        }
+
+        &[open] {
+            padding-bottom: 1em;
+
+            > summary {
+                margin-bottom: .8em;
+                border-bottom: 1px solid var(--border);
+            }
+        }
+    }
+
+    hr {
+        height: 1px;
+        border: 0;
+        background-color: var(--border);
+    }
+
+    /* コード */
+    pre,
+    code {
+        font-family: var.$font-family-monospace;
+        letter-spacing: 0;
+    }
+
+    code {
+        padding: .15em .4em;
+        border-radius: 4px;
+        background-color: var(--accent-soft);
+        color: var(--code-text);
+        font-size: .875em;
+    }
+
+    // 折り返さずに横スクロールさせる。行が長くても形を崩さないため
+    pre {
+        padding: 1em 1.25em;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-small);
+        background-color: var(--surface-muted);
+        color: var(--code-text);
+        font-size: .875rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-wrap: normal;
+        tab-size: 4;
+
+        > code {
+            padding: 0;
+            background: none;
+            font-size: inherit;
+        }
+    }
+
+    // シンタックスハイライト。はてな(synXxx)とPrism(token)の両方
+    .synStatement,
+    .synType,
+    .token.keyword,
+    .token.atrule,
+    .token.selector,
+    .token.important {
+        color: var(--code-keyword);
+    }
+
+    .synPreProc,
+    .synError,
+    .token.deleted {
+        color: var(--code-preproc);
+    }
+
+    .synIdentifier,
+    .token.function,
+    .token.property,
+    .token.tag {
+        color: var(--code-function);
+    }
+
+    .synSpecial,
+    .token.punctuation {
+        color: var(--code-punctuation);
+    }
+
+    .synConstant,
+    .token.string,
+    .token.number,
+    .token.boolean,
+    .token.attr-name,
+    .token.attr-value,
+    .token.entity,
+    .token.url,
+    .token.operator {
+        color: var(--code-constant);
+    }
+
+    .synComment,
+    .token.comment,
+    .token.prolog,
+    .token.doctype,
+    .token.cdata {
+        color: var(--code-comment);
+    }
+
+    .synTodo {
+        color: var(--code-keyword);
+        font-weight: 700;
+    }
+
+    /* 脚注。マークダウンは div.footnotes (区切りの hr と ol)、はてな記法は div.footnote (p.footnote) */
+    > .footnotes,
+    > .footnote {
+        padding-top: 1em;
+        border-top: 1px solid var(--border);
+        font-size: .8125rem;
+        line-height: 1.7;
+        color: var(--text-light);
+
+        // 区切りは上の線で示す
+        > hr {
+            display: none;
+        }
+
+        > ol {
+            margin: 0;
+        }
+
+        > :first-child,
+        > hr + * {
+            margin-top: 0;
+        }
+
+        > :last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+/* About ページ */
+.page-about .entry-content {
+    dt {
+        padding-bottom: .3em;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: .5em;
+    }
+
+    dd {
+        padding-left: 0;
+        margin-bottom: 2em;
+    }
+}
+
+/* 記事下 */
+.entry-footer {
+    margin-top: 48px;
+    font-size: .875rem;
+
+    .social-buttons {
+        margin: 1em 0;
+    }
+
+    // 記事下のブログパーツ(関連記事)は、カードの中なのでカードにしない(_modules.scss)
+    .customized-footer {
+        margin-top: 32px;
+    }
+}
+
+.entry-footer-section {
+    margin: 0 0 1em;
+    color: var(--text-light);
+
+    a {
+        color: var(--text-light);
+    }
+}
+
+/* コメント */
+.comment-box {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+
+    .comment {
+        margin: 0 0 16px;
+        padding: 0;
+        list-style: none;
+        font-size: .875rem;
+    }
+
+    .entry-comment {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .read-more-comments {
+        padding: 10px 0;
+    }
+}
+
+.comment-user-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 .4em;
+    font-weight: 700;
+
+    a {
+        color: var(--text-header);
+        text-decoration: none;
+    }
+
+    .hatena-id-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+    }
+}
+
+.comment-content {
+    margin: 0 0 .4em;
+    overflow-wrap: anywhere;
+    color: var(--text-body);
+
+    p {
+        margin: 0 0 .6em;
+    }
+}
+
+.comment-metadata {
+    margin: 0;
+    font-size: .8125rem;
+    color: var(--text-light);
+
+    a {
+        color: var(--text-light);
+    }
+}
+
+.leave-comment-title {
+    @include var.outline-button;
+}
+
+/* Pager */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding-inline: var(--card-padding-inline);
+
+    @media #{var.$mq-sm} {
+        padding-inline: 0;
+    }
+
+    a {
+        @include var.outline-button;
+        max-width: 100%;
+        border-color: var(--border);
+        border-radius: var(--radius-small);
+        color: var(--text-header);
+        overflow-wrap: anywhere;
+    }
+
+    .pager-next {
+        margin-left: auto;
+        text-align: right;
+    }
+}

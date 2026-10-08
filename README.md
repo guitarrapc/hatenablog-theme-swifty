@@ -3,7 +3,15 @@
 
 # Swifty
 
-はてなブログのデザインテーマ Swifty です。
+**さわやかで使いやすいワンカラムのはてなブログテーマ**
+
+- 白と淡いミントを基調に、記事やブログパーツをカードにして読みやすく並べます。
+- はてなのヘッダーメニューとブログのヘッダーを1つのヘッダーにまとめ、「読者になる」ボタンをヘッダーの右端に置きます。
+- 記事の目次は、PCやタブレットの広い画面(992px以上)では本文の横に常に表示し、スクロールしても画面に残ります。**JavaScriptのカスタマイズは不要です。**
+- Chrome・Edgeでは、いま読んでいる見出しを目次で示します(CSSの `:target-current`)。
+- スマートフォンでは目次を本文中に表示します。
+
+デザインCSSでCSS変数を上書きすると、目次の見出し(`--toc-label`)、本文の最大幅(`--content-max`)、配色(`--link`、`--accent` など)を変えられます。
 
 [Hatena-Blog-Theme-Boilerplate](https://github.com/hatena/Hatena-Blog-Theme-Boilerplate)をもとに、[CodeFocus](https://github.com/guitarrapc/hatenablog-theme-codefocus)で整えた開発の仕組み(CSS変数による配色、開発用ブログでのE2Eテスト、Lighthouse計測、CI)を土台にしています。
 
@@ -116,10 +124,15 @@ hatenablog-theme-swifty/
 ┣ scss/
 ┃ ┣ style.scss          ... ビルドの起点(テーマのヘッダーコメント)
 ┃ ┗ lib/
-┃   ┣ _variable.scss    ... メディアクエリ、フォント、配色(CSS変数)
-┃   ┣ _functions.scss   ... SVGをdata URIにする関数
-┃   ┣ _core.scss        ... テーマ全体のスタイル
-┃   ┗ _print.scss       ... 印刷用のスタイル
+┃   ┣ _variable.scss            ... メディアクエリ、レイアウト、配色(CSS変数)、共通のmixin
+┃   ┣ _functions.scss           ... SVGをdata URIにする関数
+┃   ┣ _core.scss                ... ページ全体の配置、フッター
+┃   ┣ _header.scss              ... ヘッダー(はてなのヘッダーメニュー・読者になるボタンとの一体化)
+┃   ┣ _entry.scss               ... 記事(本文、コード、コメント、ページャー)
+┃   ┣ _table_of_contents.scss   ... 目次(本文の横に常に表示)
+┃   ┣ _archive.scss             ... 記事の一覧
+┃   ┣ _modules.scss             ... ブログパーツ
+┃   ┗ _print.scss               ... 印刷用のスタイル
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/

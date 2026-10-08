@@ -1,0 +1,153 @@
+@use "./_variable" as var;
+
+/*
+ * ヘッダー (theme-design-spec.md の「ヘッダー」を参照)
+ * はてなのヘッダーメニュー(白の帯、テーマから変えられない)の直下に、ブログのヘッダーを同じ白の帯として続ける。
+ * はてなの「読者になる」ボタンはブログのヘッダーの右端に置き、2段で1つのヘッダーに見せる
+ */
+body {
+    // はてなのヘッダーメニューの高さ。「読者になる」ボタンをその直下に置くのに使う
+    --hatena-globalheader-height: #{var.$hatena-globalheader-height-legacy};
+    --blog-header-height: #{var.$blog-header-height-xs};
+    // ブログのヘッダーの右端に「読者になる」ボタンのぶん空けておく幅
+    --subscribe-space: 112px;
+
+    @media #{var.$mq-sm} {
+        --blog-header-height: #{var.$blog-header-height};
+        --subscribe-space: 128px;
+    }
+
+    &.globalheader-ng-enabled {
+        --hatena-globalheader-height: #{var.$hatena-globalheader-height};
+    }
+
+    // はてなブログProの「ヘッダを表示しない」設定
+    &.globalheader-off,
+    &.hide-global-header {
+        --hatena-globalheader-height: 0px;
+    }
+}
+
+#blog-title {
+    margin: 0;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+#blog-title-inner {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    min-height: var(--blog-header-height);
+    max-width: calc(var(--layout-max) + var(--header-gutter) * 2);
+    margin-inline: auto;
+    padding: 10px calc(var(--header-gutter) + var(--subscribe-space)) 10px var(--header-gutter);
+}
+
+#blog-title-content {
+    min-width: 0;
+}
+
+#title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: .02em;
+
+    @media #{var.$mq-sm} {
+        font-size: 1.3rem;
+    }
+
+    a {
+        color: var(--text-header);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+        }
+    }
+}
+
+#blog-description {
+    margin: .1em 0 0;
+    font-size: .8125rem;
+    font-weight: normal;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+/*
+ * はてなの「読者になる」の帯。
+ * はてなはスマホでは見出し付きの帯(ブログのアイコン・タイトル・ボタン)、PCではボタンだけを右上に浮かせる。
+ * どちらの幅でもボタンだけをブログのヘッダーの右端へ移し、ヘッダーのタイトルと重複するアイコンとタイトルは出さない
+ */
+.blog-controlls {
+    position: absolute;
+    top: var(--hatena-globalheader-height);
+    // ヘッダーの文字の右端に揃える(#blog-title-inner と同じ計算)
+    right: max(var(--header-gutter), calc((100% - var(--layout-max)) / 2));
+    display: flex;
+    align-items: center;
+    height: var(--blog-header-height);
+    padding: 0;
+    background-color: transparent;
+}
+
+.blog-controlls-blog-icon,
+.blog-controlls-title {
+    display: none;
+}
+
+// はてなは文字色を白、背景を半透明の灰色にしている。テーマのボタンの形に揃える
+.blog-controlls .blog-controlls-subscribe-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 16px;
+    border: 1px solid var(--accent-strong);
+    border-radius: 999px;
+    background-color: var(--surface);
+    color: var(--link);
+    font-size: .8125rem;
+    font-weight: 700;
+    line-height: 1.5;
+
+    &:visited {
+        color: var(--link);
+    }
+
+    &:hover {
+        background-color: var(--accent-soft);
+        color: var(--link-hover);
+    }
+}
+
+/*
+ * ヘッダ画像を設定したとき。
+ * はてなは #blog-title-inner に画像を背景として当て、高さを200pxにする。画像をヘッダーの帯の中のカードとして置く
+ */
+.header-image-enable,
+.header-image-only {
+    // はてなは背景を透明にするので、帯の白を戻す
+    #blog-title {
+        padding-block: 16px;
+        background-color: var(--surface);
+    }
+
+    #blog-title-inner {
+        width: calc(100% - var(--header-gutter) * 2);
+        max-width: var(--layout-max);
+        padding: 0 24px 20px;
+        align-items: flex-end;
+        background-size: cover;
+        border-radius: var(--radius-small);
+    }
+
+    // 画像の右上に置く
+    .blog-controlls {
+        top: calc(var(--hatena-globalheader-height) + 28px);
+        right: calc(max(var(--header-gutter), calc((100% - var(--layout-max)) / 2)) + 12px);
+        height: auto;
+    }
+}

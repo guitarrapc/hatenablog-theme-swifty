@@ -11,10 +11,15 @@ import { TEST_URLS, TIMEOUTS } from './constants.js';
  */
 
 const AA_TEXT = 4.5; // WCAG 1.4.3 通常サイズのテキスト
+const AA_NON_TEXT = 3.0; // WCAG 1.4.11 UIの境界や状態を示す印
 const DISTINCT_FROM_TEXT = 3.0; // WCAG 1.4.1 達成方法G183 下線のないリンクと周りの文字の差
 
 /** 対象はいずれも大きなテキストの例外(24px / 太字18.66px)には当たらない */
 const TARGETS = {
+  ブログの説明: '#blog-description',
+  読者になるボタン: '.blog-controlls-subscribe-btn',
+  パンくずのリンク: '.breadcrumb a',
+  カテゴリ: '.entry-categories a',
   本文: '.entry-content p',
   記事の投稿日時: '.entry-date a',
   コメント日時: '.comment-metadata',
@@ -22,11 +27,26 @@ const TARGETS = {
   記事下フッタのリンク: '.entry-footer-section a',
   引用: '.entry-content blockquote',
   ページ内目次のリンク: '.entry-content .table-of-contents a',
+  ページ内目次の入れ子のリンク: '.entry-content .table-of-contents ul a',
   // はてな側のCSSがopacity: 0.7を当てており、spanとtimeに入れ子で掛かって0.49になる。
   // 指定色ではなく実際に描かれる色で見ないと見逃す
   最近のコメントの日時: '.hatena-module-recent-comments time.recent-comment-time',
   ページ末尾フッタ: '#footer p',
   ページ末尾フッタのリンク: '#footer .services a',
+  // はてなが文字色を !important で白にしているボタン。背景色で読めるようにしている
+  はてなブログをはじめるボタン: '#footer .guest-footer .btn-register',
+};
+
+/** コードハイライト。はてなのハイライトの種類ごとに、コードブロックの背景の上で測る */
+const CODE_TARGETS = {
+  コード: '.entry-content pre.code',
+  キーワード: '.entry-content pre .synStatement',
+  型: '.entry-content pre .synType',
+  インポート: '.entry-content pre .synPreProc',
+  識別子: '.entry-content pre .synIdentifier',
+  記号: '.entry-content pre .synSpecial',
+  定数: '.entry-content pre .synConstant',
+  コメント: '.entry-content pre .synComment',
 };
 
 const measure = (/** @type {any} */ page, /** @type {Record<string,string>} */ targets) => page.evaluate((targets) => {
@@ -117,20 +137,56 @@ const measure = (/** @type {any} */ page, /** @type {Record<string,string>} */ t
 const resetToThemeBackground = (page) => page.addStyleTag({ content: 'html, body { background: var(--background); }' });
 
 test.describe('テキストのコントラスト', () => {
-  test('本文と補助テキストがWCAG AAを満たす', async ({ page }) => {
+  for (const [name, { path, targets }] of Object.entries({
+    本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
+    コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
+  })) {
+    test(`${name}がWCAG AAを満たす`, async ({ page }) => {
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+      await resetToThemeBackground(page);
+
+      const { result } = await measure(page, targets);
+
+      for (const [target, measured] of Object.entries(result)) {
+        expect(measured, `${target} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
+        // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
+        expect(measured?.ratio,
+          `${target}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
+          .toBeGreaterThanOrEqual(AA_TEXT);
+      }
+    });
+  }
+
+  test('引用の左の線がカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
-    await resetToThemeBackground(page);
+    await expect(page.locator('.entry-content blockquote').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
 
-    const { result } = await measure(page, TARGETS);
+    // 引用であることを示す主な手がかり(背景はカードとほとんど差がなく、Windowsのハイコントラストでは消える)なので、
+    // 非テキストのコントラスト(WCAG 1.4.11)を満たす
+    const result = await page.evaluate(() => {
+      const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+      const luminance = (/** @type {number[]} */ rgb) => {
+        const [r, g, b] = rgb.map((v) => {
+          const c = v / 255;
+          return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const contrast = (/** @type {string} */ fg, /** @type {string} */ bg) => {
+        const a = luminance(channels(fg)) + 0.05;
+        const b = luminance(channels(bg)) + 0.05;
+        return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
+      };
+      const quote = /** @type {Element} */ (document.querySelector('.entry-content blockquote'));
+      const line = getComputedStyle(quote).borderLeftColor;
+      const card = getComputedStyle(/** @type {Element} */(quote.closest('.entry'))).backgroundColor;
+      const inside = getComputedStyle(quote).backgroundColor;
+      return { line, card, inside, vsCard: contrast(line, card), vsInside: contrast(line, inside) };
+    });
 
-    for (const [name, measured] of Object.entries(result)) {
-      expect(measured, `${name} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
-      // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
-      expect(measured?.ratio,
-        `${name}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
-        .toBeGreaterThanOrEqual(AA_TEXT);
-    }
+    expect(result.vsCard, `引用の線 ${result.line} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+    expect(result.vsInside, `引用の線 ${result.line} と引用の背景 ${result.inside}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
   });
 
   test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {

@@ -1,0 +1,137 @@
+@use "./_variable" as var;
+
+/*
+ * 記事の一覧(トップページの一覧表示、アーカイブ、カテゴリー) (theme-design-spec.md の「記事の一覧」を参照)
+ * 1記事を1枚のカードにし、サムネイルを右に置く
+ */
+.archive-header-category,
+.archive-heading {
+    margin: 8px 0 16px;
+    padding-inline: var(--card-padding-inline);
+    font-size: 1.25rem;
+    text-align: left;
+
+    @media #{var.$mq-sm} {
+        padding-inline: 0;
+    }
+}
+
+.archive-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.page-archive .archive-entry {
+    @include var.card;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    grid-template-areas:
+        "header thumb"
+        "categories thumb"
+        "body body";
+    column-gap: 16px;
+    align-content: start;
+    margin: 0;
+    padding: 20px var(--card-padding-inline);
+    line-height: 1.6;
+
+    @media #{var.$mq-sm} {
+        grid-template-columns: minmax(0, 1fr) 176px;
+        grid-template-areas:
+            "header thumb"
+            "categories thumb"
+            "body thumb";
+        column-gap: 32px;
+        padding: 28px 32px;
+    }
+
+    // サムネイルがない記事は1列にする
+    &:not(:has(.entry-thumb-link)) {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "header"
+            "categories"
+            "body";
+    }
+
+    .archive-entry-header {
+        grid-area: header;
+    }
+
+    .archive-date {
+        font-size: .8125rem;
+        color: var(--text-light);
+        font-variant-numeric: tabular-nums;
+
+        a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+    }
+
+    .entry-title {
+        margin: .25em 0 .5em;
+        font-size: 1.125rem;
+        line-height: 1.5;
+
+        @media #{var.$mq-sm} {
+            font-size: 1.3rem;
+        }
+    }
+
+    .categories {
+        grid-area: categories;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 .75em;
+
+        a {
+            @include var.category-chip;
+        }
+    }
+
+    .entry-thumb-link {
+        grid-area: thumb;
+        align-self: start;
+    }
+
+    // はてなは float: left で幅120pxの正方形にしている
+    .entry-thumb {
+        float: none;
+        width: 96px;
+        height: 96px;
+        margin: 0;
+        border-radius: var(--radius-small);
+        background-size: cover;
+        background-position: center;
+
+        @media #{var.$mq-sm} {
+            width: 176px;
+            height: 120px;
+        }
+    }
+
+    .archive-entry-body {
+        grid-area: body;
+    }
+
+    .entry-description {
+        display: -webkit-box;
+        margin: 0;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: .875rem;
+        color: var(--text-body);
+    }
+
+    .social-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: .6em;
+    }
+}

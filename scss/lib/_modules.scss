@@ -1,0 +1,325 @@
+@use "./_variable" as var;
+@use "./_functions" as fn;
+
+/*
+ * ブログパーツ (theme-design-spec.md の「ブログパーツ」を参照)
+ * ワンカラムなので、サイドバー(#box2)は本文の下にカードを並べる。
+ * カードの高さはブログパーツごとにまちまちなので、段組みにして上から詰める(グリッドだと行ごとに隙間が空く)。
+ * 記事下(関連記事)のブログパーツは記事のカードの中にあるので、カードにはしない
+ */
+#box2-inner {
+    columns: 300px 3;
+    column-gap: 16px;
+}
+
+#box2 .hatena-module {
+    @include var.card;
+    break-inside: avoid;
+    margin: 0 0 16px;
+    padding: 24px var(--card-padding-inline);
+
+    @media #{var.$mq-sm} {
+        padding: 24px 28px;
+    }
+}
+
+.hatena-module {
+    min-width: 0;
+    font-size: .875rem;
+    line-height: 1.7;
+}
+
+.hatena-module-title {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    margin: 0 0 1em;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-header);
+
+    &::before {
+        content: "";
+        flex: none;
+        width: .5em;
+        height: .5em;
+        border-radius: 50%;
+        background-color: var(--accent);
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+}
+
+/* 記事の一覧などのリスト */
+.hatena-urllist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    > li {
+        padding: .6em 0;
+        border-top: 1px solid var(--border);
+
+        &:first-child {
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        &:last-child {
+            padding-bottom: 0;
+        }
+    }
+
+    a {
+        color: var(--text-body);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+
+    .urllist-date-link,
+    .urllist-date-link a {
+        font-size: .75rem;
+        color: var(--text-light);
+        font-variant-numeric: tabular-nums;
+    }
+
+    // 小さい文字のリンクは、タップ領域の高さを24px確保する(WCAG 2.5.8)
+    .urllist-date-link a,
+    .archive-module-year-title,
+    .archive-module-month-title {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+    }
+
+    .urllist-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: .3em;
+    }
+
+    .urllist-category-link {
+        @include var.category-chip;
+        font-size: .6875rem;
+    }
+
+    .urllist-entry-body {
+        margin-top: .3em;
+        color: var(--text-light);
+    }
+}
+
+/*
+ * サムネイル付きのリスト(最新記事・関連記事・注目記事)。サムネイルを左に、タイトルと日付を右に並べる。
+ * はてなはサムネイルを float: left にしている
+ */
+.urllist-with-thumbnails .urllist-item-inner {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-areas:
+        "image title"
+        "image date"
+        "image categories"
+        "image body";
+    column-gap: 12px;
+    align-items: start;
+
+    // サムネイルのない記事は1列にする
+    &:not(:has(> .urllist-image-link)) {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "title"
+            "date"
+            "categories"
+            "body";
+    }
+
+    .urllist-image-link {
+        grid-area: image;
+    }
+
+    .urllist-image {
+        float: none;
+        width: 72px;
+        height: 72px;
+        margin: 0;
+        border-radius: var(--radius-small);
+        object-fit: cover;
+    }
+
+    .urllist-title-link {
+        grid-area: title;
+        font-weight: 700;
+        line-height: 1.5;
+        color: var(--text-header);
+    }
+
+    .urllist-date-link {
+        grid-area: date;
+        margin-top: .2em;
+    }
+
+    // はてなブックマーク数は日付の行の右端に置く
+    .bookmark-widget-counter {
+        grid-area: date;
+        justify-self: end;
+        align-self: center;
+    }
+
+    .urllist-categories {
+        grid-area: categories;
+    }
+
+    .urllist-entry-body {
+        grid-area: body;
+    }
+}
+
+// 記事下の関連記事は横に2列並べる
+.customized-footer .hatena-module-related-entries .related-entries {
+    display: grid;
+    gap: 16px 24px;
+
+    @media #{var.$mq-sm} {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    > li {
+        padding: 0;
+        border-top: 0;
+    }
+}
+
+/* もっと見る */
+.urllist-see-more {
+    margin-top: 1em;
+    text-align: right;
+
+    a {
+        font-size: .8125rem;
+        font-weight: 700;
+        color: var(--link);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+/* Profile module */
+.hatena-module-profile {
+    .profile-icon {
+        float: left;
+        margin: 0 12px 8px 0;
+        border-radius: 50%;
+    }
+
+    .id {
+        display: block;
+        margin-bottom: .5em;
+        font-weight: 700;
+        color: var(--text-header);
+        text-decoration: none;
+    }
+
+    .profile-description p {
+        margin-top: 0;
+    }
+}
+
+/* Category module: カテゴリの丸いラベルを並べる */
+.hatena-module-category .hatena-urllist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    > li {
+        padding: 0;
+        border-top: 0;
+    }
+
+    a {
+        @include var.category-chip;
+        font-weight: normal;
+        font-size: .8125rem;
+        color: var(--text-body);
+
+        &:hover {
+            color: var(--link-hover);
+            text-decoration: none;
+        }
+    }
+}
+
+/* Recent comments module */
+.hatena-module-recent-comments {
+    // 日時。はてな側のopacityが入れ子で二重に掛かって読めなくなるため打ち消し、薄さは色で表現する
+    // (theme-design-spec.md の「配色」を参照)
+    .recent-comment-time {
+        color: var(--text-light);
+        opacity: 1;
+    }
+}
+
+/* Search module */
+.hatena-module-search-box {
+    .search-form {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 2px 6px 2px 14px;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        background-color: var(--surface);
+
+        // 入力欄のキーボードフォーカスはフォーム全体を囲んで示す(theme-design-spec.md の「フォーカス表示」を参照)
+        &:has(.search-module-input:focus-visible) {
+            outline: 2px solid var(--accent-strong);
+            outline-offset: 2px;
+        }
+    }
+
+    .search-module-input {
+        flex: 1 0;
+        min-width: 0;
+        height: 32px;
+        padding: 0;
+        border: none;
+        background: none;
+        color: var(--text-body);
+        // フォーカスはフォーム側で囲って示すため、入力欄自身には枠を出さない
+        outline: none;
+    }
+
+    .search-module-button {
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 50%;
+        background: transparent fn.url-svg(var.$svg-search, var.$color-gray-600) no-repeat center;
+        background-size: 18px 18px;
+        color: transparent;
+        overflow: hidden;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--accent-soft);
+        }
+    }
+}

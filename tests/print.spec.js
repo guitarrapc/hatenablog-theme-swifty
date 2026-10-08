@@ -92,6 +92,28 @@ test.describe('印刷スタイルのテスト', () => {
     expect(print.height).not.toBe(screen.height);
   });
 
+  test('印刷時は目次を本文の横に止めず、本文中にすべて出す', async ({ page }) => {
+    // 横向きの紙のように幅が広くても、止める・中でスクロールする目次は紙では途中が切れる
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-content > .table-of-contents')).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    const measureToc = () => page.evaluate(() => {
+      const toc = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
+      return {
+        position: getComputedStyle(toc).position,
+        clipped: toc.scrollHeight - toc.clientHeight,
+      };
+    });
+    // 前提: 画面では本文の横に止めていること
+    expect((await measureToc()).position).toBe('sticky');
+
+    await page.emulateMedia({ media: 'print' });
+    const print = await measureToc();
+    expect(print.position).toBe('static');
+    expect(print.clipped).toBe(0);
+  });
+
   test('印刷時に操作専用のUIとサイドバーが出力されない', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });

@@ -1,16 +1,47 @@
 @use "./_variable" as var;
-@use "./_functions" as fn;
 
 :root {
-    // ライトテーマの色 (_variable.scss の $light-theme)
-    @include var.theme-variables(var.$light-theme);
+    // 配色 (_variable.scss の $light-theme)
+    @include var.css-variables(var.$light-theme);
+    // レイアウト (_variable.scss の $layout)
+    @include var.css-variables(var.$layout);
+
+    // 目次の見出し。デザインCSSで `:root { --toc-label: "Contents"; }` のように変えられる
+    --toc-label: "目次";
+
+    // 画面端とカードの間の余白と、カードの内側の余白。スマホではカードを画面幅いっぱいにする
+    --gutter: 0px;
+    --card-padding-block: 28px;
+    --card-padding-inline: 16px;
+
+    @media #{var.$mq-sm} {
+        --gutter: 24px;
+        --card-padding-block: 40px;
+        --card-padding-inline: 40px;
+    }
+
+    @media #{var.$mq-lg} {
+        --card-padding-block: 48px;
+        --card-padding-inline: 48px;
+    }
+
+    // ヘッダー・本文・ブログパーツが揃える最大幅。本文の横の目次まで含めたカードの幅
+    --layout-max: calc(var(--content-max) + var(--toc-width) + var(--toc-gap) + var(--card-padding-inline) * 2);
+    // ヘッダーとフッターの左右の余白。カードの外端に揃え、カードが画面幅いっぱいになるスマホではカードの文字に揃える
+    --header-gutter: max(var(--gutter), 16px);
+}
+
+html {
+    // 目次などからページ内の見出しへ飛んだとき、見出しを画面の上端に貼り付けない
+    scroll-padding-top: 24px;
 }
 
 html,
 body {
     font-family: var.$font-family-base;
     color: var(--text-body);
-    line-height: 1.6;
+    line-height: 1.8;
+    text-size-adjust: 100%;
 }
 
 /*
@@ -27,16 +58,24 @@ body {
 
 a {
     color: var(--link);
+    text-underline-offset: .2em;
 
     &:hover {
         color: var(--link-hover);
     }
 
+    // はてなキーワードのリンクは本文の一部として目立たせない
     &.keyword {
         text-decoration: none;
-        border-bottom: 1px dotted var(--border);
+        border-bottom: 1px dotted var(--border-strong);
         color: var(--text-body);
     }
+}
+
+// キーボード操作の位置を示す枠。アクセントの非テキストのコントラスト(3:1)を満たす色にする
+:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
 }
 
 h1,
@@ -46,700 +85,90 @@ h4,
 h5,
 h6 {
     color: var(--text-header);
-    line-height: 1.3;
+    line-height: 1.4;
 
     a {
-        color: var(--text-header);
+        color: inherit;
         text-decoration: none;
 
         &:hover {
-            color: var(--link-hover);
+            color: var(--link);
         }
     }
 }
 
-/* container */
-#container,
-#footer {
-    padding-left: 10px;
-    padding-right: 10px;
-
-    @media #{var.$mq-sm} {
-        width: 720px;
-        margin: auto;
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    @media #{var.$mq-md} {
-        width: 940px;
-    }
-}
-
-/* 2カラムレイアウト */
-#content-inner {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    @media #{var.$mq-sm} {
-        flex-direction: row;
-    }
-}
-
-#wrapper {
-    @media #{var.$mq-sm} {
-        width: 480px;
-    }
-
-    @media #{var.$mq-md} {
-        width: 600px;
-    }
-}
-
-#box2 {
-    @media #{var.$mq-sm} {
-        width: 200px;
-    }
-
-    @media #{var.$mq-md} {
-        width: 300px;
-    }
-}
-
-// 下記のスタイルを適用するとテーマを1カラムレイアウトにできます。
-// 利用するにはコメントアウトを解除してください。
-// （2カラムレイアウトの場合はコメントアウト全体が不要です）
-//
-// #content-inner {
-//     flex-direction: column;
-//     align-items: center;
-// }
-// #wrapper {
-//     @media #{var.$mq-sm} {
-//         width: 100%;
-//     }
-//     @media #{var.$mq-md} {
-//         max-width: 720px;
-//     }
-// }
-// #box2 {
-//     width: 100%;
-//     @media #{var.$mq-sm} {
-//         width: 100%;
-//     }
-//     @media #{var.$mq-md} {
-//         width: 100%;
-//     }
-// }
-//
-// #box2-inner {
-//     display: flex;
-//     flex-wrap: wrap;
-//     flex-direction: column;
-//     justify-content: flex-start;
-//     @media #{var.$mq-sm} {
-//         margin-left: -20px;
-//         flex-direction: row;
-//     }
-//     @media #{var.$mq-md} {
-//         margin-left: -30px;
-//     }
-// }
-// .hatena-module {
-//     width: 100%;
-//     @media #{var.$mq-sm} {
-//         width: 33.3333%;
-//     }
-//     @media #{var.$mq-md} {
-//         padding-left: 30px;
-//     }
-// }
-//
-// ---- END 1カラム
-
-/* ヘッダ */
-#blog-title {
-    margin: 2em 0;
-    text-align: center;
-
-    @media #{var.$mq-sm} {
-        margin: 3em 0;
-        text-align: left;
-    }
-}
-
-#title {
-    margin: 0;
-    font-size: 1.5rem;
-
-    @media #{var.$mq-md} {
-        font-size: 1.7rem;
-    }
-
-    a {
-        color: var(--text-body);
-    }
-}
-
-#blog-description {
-    font-weight: normal;
-    font-size: .8rem;
-    margin: 1em 0 0;
-}
-
-/* ヘッダ画像を設定したとき */
-.header-image-enable {
-    #blog-title {
-        margin: 0 0 2em;
-    }
-
-    #blog-title-inner {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
-
-    #blog-title-content {
-        margin-left: 10px;
-        margin-right: 10px;
-    }
+/*
+ * ページ全体の配置 (theme-design-spec.md の「レイアウト」を参照)
+ * ヘッダーとフッターは画面幅いっぱいの帯、それ以外はカードの外端に揃えて中央に置くワンカラム
+ */
+#top-editarea,
+#top-box,
+#content {
+    box-sizing: border-box;
+    max-width: calc(var(--layout-max) + var(--gutter) * 2);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
 }
 
 /* タイトル下HTML */
 #top-editarea {
-    margin-bottom: 1em;
+    margin-top: 16px;
 }
 
 /* パンくず（カテゴリー、記事ページで表示されます） */
+#top-box {
+    margin-top: 16px;
+}
+
 .breadcrumb {
-    font-size: .9rem;
-}
-
-/* entry */
-.entry {
-    position: relative;
-    margin-bottom: 4em;
-}
-
-.entry-header {
-    padding-bottom: 1em;
-    margin-bottom: 2em;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-}
-
-.date {
-    margin-bottom: .5em;
-    font-size: .9rem;
-
-    a {
-        color: var(--text-light);
-        text-decoration: none;
-
-        &:hover {
-            text-decoration: underline;
-        }
-    }
-}
-
-.entry-title {
-    margin: 0 0 .3em;
-    font-size: 1.5rem;
-
-    @media #{var.$mq-md} {
-        font-size: 1.6rem;
-    }
-}
-
-.categories {
-    margin: .5em 0;
-    font-size: .9rem;
-
-    a {
-        margin-right: .5em;
-    }
-}
-
-/* 「編集する」ボタン */
-.entry-header-menu {
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-
-/* 記事内の書式 */
-.entry-content {
-
-    img,
-    video {
-        max-width: 100%;
-        height: auto;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        margin: 1em 0 0.8em 0;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-
-        @media #{var.$mq-md} {
-            font-size: 1.7rem;
-        }
-    }
-
-    h2 {
-        font-size: 1.4rem;
-
-        @media #{var.$mq-md} {
-            font-size: 1.5rem;
-        }
-    }
-
-    h3 {
-        font-size: 1.2rem;
-
-        @media #{var.$mq-md} {
-            font-size: 1.3rem;
-        }
-    }
-
-    h4 {
-        font-size: 1.1rem;
-    }
-
-    h5 {
-        font-size: 1rem;
-    }
-
-    h6 {
-        font-size: .9rem;
-    }
-
-    ul,
-    ol,
-    dd {
-        margin: 0 0 1em 1.5em;
-        padding: 0;
-
-        li {
-
-            ul,
-            ol {
-                margin-bottom: 0;
-            }
-        }
-    }
-
-    table {
-        border-collapse: collapse;
-        border-spacing: 0;
-        border-bottom: 1em;
-        margin-bottom: 1em;
-        width: 100%;
-        overflow: auto;
-        display: block;
-        font-size: .8rem;
-
-        @media #{var.$mq-md} {
-            font-size: .9rem;
-        }
-    }
-
-    table th,
-    table td {
-        border: 1px solid var(--border);
-        padding: 5px 10px;
-    }
-
-    table th {
-        background: var(--bg-light);
-    }
-
-    blockquote {
-        border: 1px solid var(--border);
-        margin: 0 0 10px;
-        padding: 20px;
-
-        // 段落に限らず最初と最後の要素(リストやコードブロックなど)の外側の余白をなくし、枠線の上下の余白を揃える
-        > :first-child {
-            margin-top: 0;
-        }
-
-        // はてなブログがホバー時に末尾へ追加する引用ボタン(.js-requote-button)は除いて最後の要素を数える
-        > :nth-last-child(1 of :not(.js-requote-button)) {
-            margin-bottom: 0;
-
-            // 最後がリストのとき、最後の項目の余白がリストを突き抜けて下端に残らないようにする
-            li:last-child,
-            dd:last-child {
-                margin-bottom: 0;
-            }
-        }
-    }
-
-    pre,
-    code {
-        font-family: var.$font-family-monospace;
-    }
-
-    pre {
-        background: var(--bg-light);
-        border: none;
-        white-space: pre-wrap;
-        text-overflow: ellipsis;
-        line-height: 1.3;
-        font-size: .8rem;
-        padding: 10px;
-
-        & > code {
-            margin: 0;
-            padding: 0;
-            white-space: pre;
-            border: none;
-            background-color: transparent;
-            font-family: var.$font-family-monospace;
-        }
-    }
-
-    code {
-        font-size: 90%;
-        margin: 0 2px;
-        padding: 0px 5px;
-        background-color: var(--bg-light);
-        border-radius: 3px;
-    }
-
-    hr {
-        width: 50%;
-        border: 0;
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 2em auto;
-    }
-
-    .table-of-contents {
-        padding: 1em 1em 1em 2em;
-        margin: 1em 0;
-        border: 1px solid var(--border);
-    }
-}
-
-/* 記事下 */
-.entry-footer {
-    .social-buttons {
-        margin-bottom: 1em;
-    }
-}
-
-.entry-footer-section {
+    padding-inline: var(--card-padding-inline);
+    font-size: .8125rem;
     color: var(--text-light);
-    font-size: .9rem;
-
-    a {
-        color: var(--text-light);
-    }
-}
-
-/* コメント */
-.comment-box {
-    margin: 1em 0;
-
-    .comment {
-        list-style: none;
-        margin: 0 0 15px 0;
-        padding: 0;
-        line-height: 1.7;
-        font-size: .85rem;
-
-        @media #{var.$mq-sm} {
-            font-size: .9rem;
-        }
-    }
-
-    .entry-comment {
-        padding: 10px 0 10px 60px;
-        border-bottom: 1px solid var(--border);
-        position: relative;
-
-        &:first-child {
-            border-top: 1px solid var(--border);
-        }
-    }
-
-    .read-more-comments {
-        padding: 10px 0;
-    }
-
-    .hatena-id-icon {
-        position: absolute;
-        top: 10px;
-        left: 0;
-        width: 50px !important;
-        height: 50px !important;
-        border-radius: 3px;
-    }
-}
-
-.comment-user-name {
-    margin: 0 0 .4em 0;
-    font-weight: bold;
-}
-
-.comment-content {
-    margin: 0 0 .4em 0;
-    word-wrap: break-word;
-    color: var(--text-body);
-    font-size: .85rem;
-
-    p {
-        margin: 0 0 .6em 0;
-    }
-}
-
-.comment-metadata {
-    color: var(--text-light);
-    margin: 0;
-    font-size: .8rem;
-
-    a {
-        color: var(--text-light);
-    }
-}
-
-.leave-comment-title {
-    padding: .6em 1em;
-    font-size: .85rem;
-    border: 1px solid var(--border);
-}
-
-/* Pager */
-
-.pager {
-    margin: 2em 0;
-    display: flex;
-    justify-content: space-between;
-}
-
-/* サイドバーモジュール */
-.hatena-module {
-    box-sizing: border-box;
-    margin-bottom: 3em;
-    font-size: .85rem;
 
     @media #{var.$mq-sm} {
-        font-size: .9rem;
+        padding-inline: 0;
     }
-}
-
-.hatena-module-title {
-    margin-bottom: .6em;
-    padding-bottom: .2em;
-    border-bottom: 1px solid var(--border);
-    font-size: 1rem;
-    font-weight: bold;
 
     a {
-        color: var(--text-body);
+        color: var(--text-light);
         text-decoration: none;
 
         &:hover {
+            color: var(--link);
             text-decoration: underline;
         }
     }
-}
 
-/* Profile module */
-.hatena-module-profile {
-    .profile-icon {
-        float: left;
-        margin: 0 10px 10px 0;
-    }
-
-    .id {
-        display: block;
-        font-weight: bold;
-        margin-bottom: .5em;
-    }
-
-    .profile-description {
-        p {
-            margin-top: 0;
-        }
+    // はてなの「.page-entry .breadcrumb」の2emを詰める
+    .page-entry & {
+        margin-bottom: 12px;
     }
 }
 
-/* urllist module */
-.hatena-urllist {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-
-    li {
-        padding: .5em 0;
-
-        &:last-child {
-            padding-bottom: 0;
-        }
-
-        a {
-            text-decoration: none;
-
-            &:hover {
-                text-decoration: underline;
-            }
-        }
-    }
-
-    .urllist-category-link {
-        font-size: .7rem;
-        padding: .1em .3em;
-    }
-
-    .urllist-date-link a {
-        color: var(--text-light);
-    }
-
-    .urllist-entry-body {
-        margin-top: .3em;
-    }
+#content {
+    margin-top: 16px;
+    margin-bottom: 48px;
 }
 
-/* Recent comments module */
-.hatena-module-recent-comments {
-    // 日時。はてな側のopacityが入れ子で二重に掛かって読めなくなるため打ち消し、薄さは色で表現する
-    // (theme-design-spec.md の「配色」を参照)
-    .recent-comment-time {
-        color: var(--text-light);
-        opacity: 1;
-    }
+#content-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-/* Search module */
-.hatena-module-search-box {
-    .search-form {
-        border: 1px solid var(--border);
-        border-radius: 3px;
-        width: 100%;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-
-        // 入力欄のキーボードフォーカスはフォーム全体を囲んで示す(theme-design-spec.md の「フォーカス表示」を参照)
-        &:has(.search-module-input:focus-visible) {
-            outline: 2px solid var(--link);
-            outline-offset: 2px;
-        }
-    }
-
-    .search-module-input {
-        flex: 1 0;
-        padding: 5px;
-        color: var(--text-body);
-        background: none;
-        border: none;
-        // フォーカスはフォーム側で囲って示すため、入力欄自身には枠を出さない
-        outline: none;
-        height: 20px;
-    }
-
-    .search-module-button {
-        width: 24px;
-        height: 24px;
-        margin-right: 5px;
-        background: transparent fn.url-svg(var.$svg-search, #000) no-repeat center;
-        background-size: 20px 20px;
-        border: none;
-        color: transparent;
-        overflow: hidden;
-        opacity: .5;
-        cursor: pointer;
-
-        &:hover {
-            opacity: .85;
-        }
-
-        // ボタン自身にもフォーカスの枠を出し、不透明にする
-        &:focus-visible {
-            outline: 2px solid var(--link);
-            outline-offset: 2px;
-            opacity: 1;
-        }
-    }
+#wrapper,
+#box2 {
+    width: 100%;
 }
-
-/* About ページ */
-.page-about {
-    .entry-content {
-        dt {
-            font-weight: bold;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: .5em;
-        }
-
-        dd {
-            margin-left: 0;
-            margin-bottom: 2em;
-        }
-    }
-}
-
-/* Archive */
-.archive-header-category {
-    text-align: center;
-}
-
-.page-archive {
-    .archive-entry {
-        margin-bottom: 3em;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.3;
-    }
-
-    .entry-title {
-        margin: .3em auto;
-    }
-
-    .entry-thumb {
-        width: 80px;
-        height: 80px;
-        background-size: cover;
-
-        @media #{var.$mq-sm} {
-            width: 120px;
-            height: 120px;
-        }
-    }
-
-    .entry-description {
-        margin: 0;
-        font-size: .85rem;
-
-        @media #{var.$mq-sm} {
-            font-size: .9rem;
-        }
-    }
-
-    .social-buttons {
-        display: block;
-        margin-top: .3em;
-    }
-}
-
 
 /* footer */
+// ヘッダーと対になる白の帯にする
 #footer {
-    margin-top: 2em;
-    padding-bottom: 2rem;
+    padding: 32px var(--header-gutter) 40px;
+    background-color: var(--surface);
+    border-top: 1px solid var(--border);
     text-align: center;
-    font-size: .8rem;
+    font-size: .8125rem;
     color: var(--text-light);
 
     a {
@@ -748,6 +177,19 @@ h6 {
 
     p {
         margin: .5em auto;
+    }
+
+    // はてなが置く「はてなブログをはじめる(無料)」ボタン。
+    // はてな既定の緑地(#25ab5d)に白文字は2.97:1で読みにくい。文字色ははてな側が !important で白にしているため、
+    // 背景をリンク色にして白文字とのコントラストを確保する(theme-design-spec.md の「配色」を参照)
+    .guest-footer .btn-register {
+        padding: .6em 1.6em;
+        border-radius: 999px;
+        background-color: var(--link);
+
+        &:hover {
+            background-color: var(--link-hover);
+        }
     }
 }
 
@@ -762,10 +204,5 @@ h6 {
 }
 
 #box2 {
-    contain-intrinsic-size: auto 2000px; // サイドバー全体で1要素なので大きめにする
-}
-
-// 包含により末尾の子のマージンがリストの外へ相殺されなくなるため、リスト自身のマージンに任せる
-.entry-content > dl > :last-child {
-    margin-bottom: 0;
+    contain-intrinsic-size: auto 1200px; // ブログパーツ全体で1要素なので大きめにする
 }

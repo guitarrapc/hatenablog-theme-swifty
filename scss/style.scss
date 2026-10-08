@@ -1,5 +1,11 @@
 @charset "utf-8";
 @use "./lib/_core";
+@use "./lib/_header";
+@use "./lib/_entry";
+// 目次は本文のリストの指定を上書きするため、記事の後に読み込む
+@use "./lib/_table_of_contents";
+@use "./lib/_archive";
+@use "./lib/_modules";
 // 印刷用スタイルは各コンポーネントを上書きするため最後に読み込む
 @use "./lib/_print";
 
@@ -9,7 +15,19 @@
   Responsive: yes
   Description:
     * このテーマの特徴
-    はてなブログのデザインテーマ Swifty です。
+    さわやかで使いやすいワンカラムのテーマです。白と淡いミントを基調に、記事やブログパーツをカードにして読みやすく並べます。
+
+    * 特徴
+    はてなのヘッダーメニューとブログのヘッダーを1つのヘッダーにまとめ、「読者になる」ボタンをヘッダーの右端に置きます。
+    記事の目次は、PCやタブレットの広い画面では本文の横に常に表示し、スクロールしても画面に残ります。JavaScriptのカスタマイズは不要です。
+    Chrome・Edgeでは、いま読んでいる見出しを目次で示します。
+    レスポンシブデザインで、スマートフォンでは目次を本文中に表示します。
+
+    * カスタマイズ
+    デザインCSSでCSS変数を上書きして変えられます。
+    - 目次の見出し: :root { --toc-label: "Contents"; }
+    - 本文の最大幅: :root { --content-max: 720px; }
+    - 配色: :root { --link: #0b7268; --accent: #3cc4b0; } など
 
     * ソースコード
     [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています。(MITライセンス)

@@ -1,0 +1,130 @@
+@use "./_variable" as var;
+
+// 本文の横の目次が占める行の数。本文の直下の要素の数がこれを超えると、超えた先では目次が止まらずに流れる
+$toc-row-span: 1000;
+
+/*
+ * 目次 (theme-design-spec.md の「目次」を参照)
+ * はてなが本文中に出力する ul.table-of-contents を、JavaScriptを使わずに
+ * 広い画面では本文の横に常に表示し、狭い画面では書かれた位置にそのまま表示する
+ */
+.entry-content .table-of-contents {
+    margin-inline: 0;
+    padding: 1.25em 1.5em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    background-color: var(--surface-muted);
+    list-style: none;
+    font-size: .875rem;
+    line-height: 1.6;
+    letter-spacing: .01em;
+    // スクロール位置にある見出しへのリンクが :target-current になる(対応ブラウザのみ。非対応でも目次は使える)
+    scroll-target-group: auto;
+
+    &::before {
+        content: var(--toc-label);
+        display: block;
+        margin-bottom: .75em;
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .1em;
+        color: var(--text-light);
+    }
+
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    li {
+        margin: 0;
+    }
+
+    // 各リンクの左の線を縦に積み、目次全体で1本の線に見せる。入れ子の深さは線の内側の余白で表す
+    a {
+        display: block;
+        padding: .3em 0 .3em .9em;
+        border-left: 2px solid var(--border);
+        color: var(--text-body);
+        text-decoration: none;
+
+        &:hover {
+            border-left-color: var(--border-strong);
+            color: var(--link);
+        }
+    }
+
+    $nested: "ul";
+
+    @for $depth from 1 through 5 {
+        #{$nested} a {
+            padding-left: calc(.9em + #{$depth}em);
+        }
+
+        $nested: "#{$nested} ul";
+    }
+
+    ul a {
+        color: var(--text-light);
+    }
+
+    // いま読んでいる見出し。色だけに頼らず太字と線でも示す
+    a:target-current {
+        border-left-color: var(--accent-strong);
+        color: var(--link);
+        font-weight: 700;
+    }
+}
+
+/*
+ * 広い画面では本文の横に目次の列を足す。
+ * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、全行にまたがらせて position: sticky で止める。
+ * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
+ */
+@media screen and #{var.$mq-md} {
+    .entry:has(> .entry-inner > .entry-content > .table-of-contents) .entry-inner {
+        > * {
+            max-width: calc(var(--content-max) + var(--toc-width) + var(--toc-gap));
+        }
+
+        // ヘッダーと記事下は本文の列に揃える
+        > .entry-header,
+        > .entry-footer {
+            padding-right: calc(var(--toc-width) + var(--toc-gap));
+        }
+    }
+
+    .entry-content:has(> .table-of-contents) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--toc-width);
+        column-gap: var(--toc-gap);
+
+        > * {
+            grid-column: 1;
+        }
+
+        > .table-of-contents {
+            grid-column: 2;
+            grid-row: 1 / span $toc-row-span;
+            align-self: start;
+            position: sticky;
+            top: var(--toc-sticky-top);
+            // 目次が長いときは目次の中でスクロールする
+            max-height: calc(100vh - var(--toc-sticky-top) * 2);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            margin: 0;
+            // スクロール領域の外へ出るリンクのフォーカス枠(2px + 間隔2px)が切れないよう、そのぶん内側を空ける
+            padding: 4px;
+            border: 0;
+            border-radius: 0;
+            background: none;
+        }
+
+        // 目次が先頭にあると、本文の列では次の見出しが先頭になる
+        > .table-of-contents:first-child + :is(h1, h2, h3, h4, h5, h6) {
+            --heading-space: 0px;
+        }
+    }
+}

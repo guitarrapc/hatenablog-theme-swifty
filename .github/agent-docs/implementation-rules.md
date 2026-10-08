@@ -18,12 +18,18 @@
 
 * cssで`!important`は可能な限り避けます。使わないとあまりに長かったり実装困難な場合は、やむなく使用しますが回避手段を模索します。はてな側が `!important` を当てている場合など、使う場合は理由をコメントに残します。
 * レスポンシブデザインのテーマであるため、メディアクエリ(`var.$mq-*`)を使用して、デバイス幅に応じたスタイルを適用します。
+* 幅や余白はCSS変数(`--content-max`、`--gutter`、`--card-padding-inline` など)を使い、ヘッダー・カード・ブログパーツの端を揃えます(theme-design-spec.md の「レイアウト」を参照)。
+* カード、カテゴリのラベル、枠線のボタンは `_variable.scss` のmixin(`card`、`category-chip`、`outline-button`)を使い、形を揃えます。
+* 本文の見出しの形は段(`h2` など)に直接書かず、役割のmixin(`_entry.scss` の `heading-band` / `heading-bar` / `heading-dashed` / `heading-minor`)で当てます。記事でいちばん上に使われている段に合わせて割り当てが変わるためです(theme-design-spec.md の「見出しと引用」を参照)。
+* 本文の中で左に立てるミントの縦棒は、見出しだけの印にします。引用などほかの要素に左の線を付けるときは、ミント以外の色にします(theme-design-spec.md の「見出しと引用」を参照)。
+* 本文の直下の要素の余白は下方向(`margin-bottom`)と見出しの上(`padding-top`)だけで作り、上下のマージンの相殺に頼りません。目次を本文の横に置くと本文がグリッドになり、相殺が起きなくなるためです(theme-design-spec.md の「本文の余白」を参照)。
+* はてなのヘッダーメニュー(`#globalheader-container`)は移動したり隠したりせず、その上に要素を置きません(はてなのガイドライン)。
 * ユーザーがはてなの設定で変えられるもの(背景色・背景画像など)は、テーマの既定値がユーザーの指定に勝たないようにします(theme-design-spec.md の「背景色・背景画像」を参照)。
 * アクセシビリティ
   * `outline: none` でフォーカスを消すときは、代わりのフォーカス表示を用意します。
   * アニメーションやトランジションを足すときは、`prefers-reduced-motion: reduce` で止めます。
   * 押せる要素は24×24px以上のタップ領域を確保します(WCAG 2.5.8)。
-* 本文のマージンやはみ出しを変えたら、描画の後回し(`content-visibility`)で見た目がずれないか `tests/deferred-content.spec.js` で確認します。
+* 本文のマージンやはみ出しを変えたら、描画の後回し(`content-visibility`)と目次の有無で見た目がずれないか、`tests/deferred-content.spec.js` と `tests/toc.spec.js` で確認します。
 * 操作専用のUIを足したら、`_print.scss` で印刷時に隠します。
 
 ## JavaScriptのルール
@@ -31,7 +37,7 @@
 JavaScriptのルールは、以下のように実装します。
 
 * 可能な限りJavaScriptを用いてDOMを操作することは避けてください。JavaScriptを用いるのはSCSSで達成できない課題を解決するときだけにします。
-  * SCSSを選択する例: すでに存在するHTML構造の順序を変更する場合はSCSSでGridスタイルを用いることで解決できるケースが多くあります。
+  * SCSSを選択する例: すでに存在するHTML構造の順序を変更する場合はSCSSでGridスタイルを用いることで解決できるケースが多くあります。本文中の目次を本文の横に常に表示する機能も、グリッドと `position: sticky` で実現しています。
   * JavaScriptを選択する例: コードブロックのコピー機能はSCSSで実装できないため、JavaScriptを用います。
 * JavaScriptはESモジュール形式で書きます。CommonJS形式は使用しない。
 * JavaScriptは `js/` に置くと自動でビルド対象になります(`vite.config.js` の変更は不要)。開発用ブログのheadに `<script src="http://localhost:5173/js/<ファイル名>.js">` を足して確認します。

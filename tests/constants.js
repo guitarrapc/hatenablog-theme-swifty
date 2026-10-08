@@ -13,6 +13,8 @@ export const TEST_URLS = {
   CODE_HIGHLIGHT: '/entry/2025/05/12/131258',
   /** 本文の段落中にリンクがある記事 */
   ARTICLE_WITH_LINKS: '/entry/2025/05/17/015533',
+  /** 目次のない記事 */
+  ARTICLE_WITHOUT_TOC: '/entry/2025/05/15/015031',
   /** アーカイブページ */
   ARCHIVE: '/archive/author/guitarrapc_tech',
   /** アバウトページ */
@@ -30,6 +32,10 @@ export const VIEWPORTS = {
   DESKTOP: { width: 1440, height: 1440 },
   /** タブレット（iPad Pro 12.9インチ） */
   TABLET: { width: 1024, height: 1366 },
+  /** 目次を本文の横に出さない最大の幅(_variable.scss の $mq-md の1px手前) */
+  BELOW_SIDE_TOC: { width: 991, height: 1000 },
+  /** Surface Pro 7 */
+  SURFACE_PRO: { width: 912, height: 1368 },
   /** スマートフォン（iPhone 14 Pro Max） */
   MOBILE: { width: 430, height: 932 },
   /** スマートフォン（標準） */
@@ -38,9 +44,16 @@ export const VIEWPORTS = {
 
 // CSSセレクタ
 export const SELECTORS = {
+  // ヘッダー関連
+  GLOBAL_HEADER: '#globalheader-container',
+  BLOG_HEADER: '#blog-title',
+  SUBSCRIBE_BUTTON: '.blog-controlls-subscribe-btn',
+
   // 記事関連
+  ENTRY: '.entry',
   ENTRY_TITLE: '.entry-title',
   ENTRY_CONTENT: '.entry-content',
+  TABLE_OF_CONTENTS: '.entry-content > .table-of-contents',
   ENTRY_DATE: '.entry-date',
   ENTRY_CATEGORIES: '.entry-categories',
   ENTRY_HEADER: '.entry-header',
