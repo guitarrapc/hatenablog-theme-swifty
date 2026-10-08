@@ -66,6 +66,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`)、見た目、`customize-alert.html` が同じ処理であること |
 | `tests/heading.spec.js` | 本文の見出し(書き方に合わせた帯・破線・縦棒の割り当て、字間と間隔) |
 | `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ、`customize-toc-toggle.html` が同じ処理であること |
+| `tests/toc-follow.spec.js` | 本文の横の長い目次で、いま読んでいる見出しのリンクが見える位置まで目次の中をスクロールすること(`js/toc-toggle.js`) |
 | `tests/toc.spec.js` | 目次を本文の横に常に表示すること、いま読んでいる見出しの表示、本文の間隔が変わらないこと |
 | `tests/target-size.spec.js` | 小さいリンクやボタンのタップ領域(WCAG 2.5.8) |
 | `tests/responsive.spec.js` | 画面幅ごとの表示と、横スクロールが出ないこと |

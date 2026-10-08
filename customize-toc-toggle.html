@@ -1,14 +1,19 @@
 <!-- 目次の開閉機能のJavaScriptコード -->
 <script>
   // このスクリプトは記事内の目次を開け閉めできるようにします。閉じたかどうかはブラウザに記憶します
+  // 本文の横の長い目次は、いま読んでいる見出しが見える位置まで目次の中をスクロールします
   /**
-   * Script to make the table of contents in Hatena Blog articles collapsible
+   * Script to make the table of contents in Hatena Blog articles collapsible,
+   * and to keep the heading being read visible in a long table of contents
    */
   (function () {
     'use strict';
 
     // Remember whether the reader closed the table of contents, across pages
     const STORAGE_KEY = 'swifty-toc-collapsed';
+
+    // Space kept between the current link and the edges of the visible part of the table of contents
+    const FOLLOW_MARGIN = 32;
 
     function isCollapsed() {
       try {
@@ -48,6 +53,79 @@
 
       panel.addEventListener('toggle', function () {
         saveCollapsed(!panel.open);
+      });
+
+      followCurrent(panel, summary);
+    }
+
+    // Beside the article, the theme caps the table of contents at the screen height and scrolls it inside.
+    // The browser marks the link of the heading being read (:target-current) but does not scroll the
+    // table of contents to it, so the mark can be hidden below the visible part. When the page scrolls,
+    // scroll only the table of contents (never the page) to bring the current link into view
+    function followCurrent(panel, summary) {
+      let supported = false;
+      try {
+        supported = CSS.supports('selector(:target-current)');
+      } catch (e) {
+        // Without the mark there is nothing to follow
+      }
+      if (!supported) {
+        return;
+      }
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let scheduled = false;
+      // The link a smooth scroll is heading for, so it is not restarted on every frame
+      let following = null;
+
+      function update() {
+        scheduled = false;
+        // Not open, or not scrolling inside (in the article on narrow screens, or short enough to fit)
+        if (!panel.open || panel.scrollHeight <= panel.clientHeight) {
+          return;
+        }
+        const link = panel.querySelector('.table-of-contents a:target-current');
+        if (!link || link === following) {
+          return;
+        }
+
+        // The visible part of the list: below the heading row, and on the screen
+        // (at the end of the article the table of contents scrolls up with it)
+        const top = Math.max(summary.getBoundingClientRect().bottom, 0) + FOLLOW_MARGIN;
+        const bottom = Math.min(panel.getBoundingClientRect().bottom, window.innerHeight) - FOLLOW_MARGIN;
+        const rect = link.getBoundingClientRect();
+        if (bottom <= top || (rect.top >= top && rect.bottom <= bottom)) {
+          return;
+        }
+
+        // Put the link in the middle, so the headings before and after it are also visible
+        const max = panel.scrollHeight - panel.clientHeight;
+        const target = Math.min(max, Math.max(0, panel.scrollTop + (rect.top + rect.bottom) / 2 - (top + bottom) / 2));
+        if (Math.abs(target - panel.scrollTop) < 1) {
+          return;
+        }
+        following = link;
+        panel.scrollTo({ top: target, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+      }
+
+      // The browser moves the mark while rendering the frame after the scroll (even scrollend still sees the old one),
+      // so check on the frame after next
+      function schedule() {
+        if (!scheduled) {
+          scheduled = true;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(update);
+          });
+        }
+      }
+
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('scrollend', schedule);
+      window.addEventListener('resize', schedule);
+      panel.addEventListener('toggle', schedule);
+      panel.addEventListener('scrollend', function () {
+        following = null;
+        schedule();
       });
     }
 

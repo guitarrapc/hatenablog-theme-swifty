@@ -4,6 +4,9 @@
 // 本文の横の目次が占める行の数。本文の直下の要素の数がこれを超えると、超えた先では目次が止まらずに流れる
 $toc-row-span: 1000;
 
+// 本文の横の目次の内側の余白。スクロール領域の外へ出るリンクのフォーカス枠(2px + 間隔2px)が切れないよう、そのぶん空ける
+$toc-side-padding: 4px;
+
 // 本文の直下にある目次の入れ物。JavaScript(js/toc-toggle.js)がなければ ul.table-of-contents、あれば details.toc-panel
 $toc-item: ":is(.table-of-contents, .toc-panel)";
 
@@ -239,8 +242,7 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
             overflow-y: auto;
             overscroll-behavior: contain;
             margin: 0;
-            // スクロール領域の外へ出るリンクのフォーカス枠(2px + 間隔2px)が切れないよう、そのぶん内側を空ける
-            padding: 4px;
+            padding: $toc-side-padding;
             border: 0;
             border-radius: 0;
             background: none;
@@ -254,6 +256,17 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
         // 開いているときの山形は右向き(右へたたむ)
         > .toc-panel[open] > .toc-panel-summary::after {
             rotate: -90deg;
+        }
+
+        // 目次の中をスクロールしても(js/toc-toggle.js が現在地まで送るときも)、見出しの行を上に残し、閉じるボタンを見失わないようにする。
+        // 本文中の目次は目次の中でスクロールしないので、ここ(本文の横)だけにする。本文中で sticky にすると画面の上に張り付いてしまう
+        > .toc-panel[open] > .toc-panel-summary {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: var(--surface);
+            // 見出しの行は目次の内側の余白の下で止まるので、その隙間も塗って、上へ流れる項目を隠す
+            box-shadow: 0 (-$toc-side-padding) 0 var(--surface);
         }
 
         // 閉じているときは、一覧のアイコンと縦書きの「目次」を並べた細い帯にする
