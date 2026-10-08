@@ -21,6 +21,7 @@ const TARGETS = {
   カテゴリのブログパーツ: '.hatena-module-category .hatena-urllist a',
   ブログパーツの日付: '.hatena-urllist .urllist-date-link a',
   月別アーカイブの年: '.archive-module-year-title',
+  プロフィールのID: '.hatena-module-profile .id a',
 };
 
 test.describe('タップ領域', () => {

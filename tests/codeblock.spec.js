@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, VIEWPORTS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, VIEWPORTS, TIMEOUTS } from './constants.js';
 import { BLOG_URL } from '../blog.config.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -33,53 +33,63 @@ const contrast = (/** @type {string} */ foreground, /** @type {string} */ backgr
   return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
 };
 
-const openCodeArticle = async (/** @type {any} */ page) => {
-  await page.navigateTo(TEST_URLS.CODE_HIGHLIGHT, { waitFor: 'networkidle' });
+const openCodeArticle = async (/** @type {any} */ page, path = TEST_URLS.CODE_HIGHLIGHT) => {
+  await page.navigateTo(path, { waitFor: 'networkidle' });
   await expect(page.locator('.entry-content pre.code').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
   // 後回しにしている本文も測れるようにする
   await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
 };
 
+// 帯とボタンを確かめる記事。Fixture記事には言語名なし(data-lang="")、はてなが対応していない言語名(bash、js)、
+// 折りたたみやアラートの中のコードブロックがある
+const ARTICLES = {
+  コードハイライト記事: TEST_URLS.CODE_HIGHLIGHT,
+  コードブロックの記事: FIXTURE_URLS.CODEBLOCKS,
+};
+
 test.describe('コードブロック(CSS)', () => {
-  test('はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る', async ({ page }) => {
-    await openCodeArticle(page);
+  for (const [name, articlePath] of Object.entries(ARTICLES)) {
+    test(`はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る(${name})`, async ({ page }) => {
+      await openCodeArticle(page, articlePath);
 
-    const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
-      const header = getComputedStyle(pre, '::before');
-      const padding = getComputedStyle(pre).paddingLeft;
-      return {
-        lang: pre.getAttribute('data-lang'),
-        content: header.content,
-        position: header.position,
-        // 帯はコードブロックの内側の余白ぶん左へ広げ、その位置で止める。
-        // 帯は文字が小さいので、emで書くとコードブロックの余白と長さがずれて、スクロール時に左に隙間ができる
-        left: header.left,
-        marginLeft: header.marginLeft,
-        expectedOffset: `-${padding}`,
-        height: header.height,
-        color: header.color,
-        background: header.backgroundColor,
-      };
-    }));
+      const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
+        const header = getComputedStyle(pre, '::before');
+        const padding = getComputedStyle(pre).paddingLeft;
+        return {
+          lang: pre.getAttribute('data-lang'),
+          content: header.content,
+          position: header.position,
+          // 帯はコードブロックの内側の余白ぶん左へ広げ、その位置で止める。
+          // 帯は文字が小さいので、emで書くとコードブロックの余白と長さがずれて、スクロール時に左に隙間ができる
+          left: header.left,
+          marginLeft: header.marginLeft,
+          expectedOffset: `-${padding}`,
+          height: header.height,
+          color: header.color,
+          background: header.backgroundColor,
+        };
+      }));
 
-    expect(blocks.length, '前提: コードブロックがあること').toBeGreaterThan(0);
-    for (const b of blocks) {
-      expect(b.content, `${b.lang} の言語名`).toBe(`"${b.lang}"`);
-      expect(b.position).toBe('sticky');
-      expect(b.left, `${b.lang} の帯の止まる位置`).toBe(b.expectedOffset);
-      expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
-      expect(b.height).toBe(`${HEADER_HEIGHT}px`);
-      // 言語名は帯の背景に対してWCAG AA(4.5:1)
-      expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
-    }
-  });
+      expect(blocks.length, '前提: コードブロックがあること').toBeGreaterThan(0);
+      for (const b of blocks) {
+        expect(b.content, `${b.lang} の言語名`).toBe(`"${b.lang}"`);
+        expect(b.position).toBe('sticky');
+        expect(b.left, `${b.lang} の帯の止まる位置`).toBe(b.expectedOffset);
+        expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
+        expect(b.height).toBe(`${HEADER_HEIGHT}px`);
+        // 言語名は帯の背景に対してWCAG AA(4.5:1)
+        expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
 
   test('はてなのハイライトの種類ごとに色を分ける', async ({ page }) => {
     await openCodeArticle(page);
 
     const colors = await page.evaluate(() => Object.fromEntries(
       ['synStatement', 'synPreProc', 'synType', 'synIdentifier', 'synConstant', 'synSpecial', 'synComment'].map((cls) => {
-        const el = document.querySelector(`.entry-content pre.code .${cls}`);
+        // diffは追加・削除の行の色に置き換えるので除く
+        const el = document.querySelector(`.entry-content pre.code:not(.lang-diff) .${cls}`);
         return [cls, el ? getComputedStyle(el).color : null];
       })));
 
@@ -112,42 +122,121 @@ test.describe('コードブロック(CSS)', () => {
     expect(aa.header).toBe('none');
     expect(aa.wrapped).toBe(false);
   });
+
+  test('diffは追加と削除の行を、行頭の+/-に加えて枠の内側いっぱいの色で示す', async ({ page }) => {
+    await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
+
+    const measure = () => page.evaluate(() => {
+      const pre = /** @type {HTMLElement} */ (document.querySelector('.entry-content pre.code.lang-diff'));
+      const box = pre.getBoundingClientRect();
+      const style = getComputedStyle(pre);
+      const header = /** @type {Element} */ (pre.querySelector('.synType'));
+      return {
+        // 枠の内側(内側の余白を含む)の左右
+        left: box.left + parseFloat(style.borderLeftWidth),
+        right: box.left + parseFloat(style.borderLeftWidth) + pre.clientWidth,
+        scrollWidth: pre.scrollWidth,
+        clientWidth: pre.clientWidth,
+        text: style.color,
+        header: { color: getComputedStyle(header).color, weight: getComputedStyle(header).fontWeight },
+        rows: [...pre.querySelectorAll('.synIdentifier, .synSpecial')].map((row) => {
+          const rect = row.getBoundingClientRect();
+          return {
+            kind: row.classList.contains('synIdentifier') ? 'added' : 'removed',
+            mark: row.textContent?.charAt(0),
+            left: rect.left,
+            right: rect.right,
+            color: getComputedStyle(row).color,
+            background: getComputedStyle(row).backgroundColor,
+          };
+        }),
+      };
+    });
+
+    const unwrapped = await measure();
+    expect(unwrapped.rows.map((r) => r.kind).sort(), '前提: 追加と削除の行があること').toEqual(['added', 'removed']);
+    const [added, removed] = ['added', 'removed'].map((kind) => /** @type {any} */ (unwrapped.rows.find((r) => r.kind === kind)));
+    // 色だけに頼らず、行頭の+/-を残す
+    expect(added.mark).toBe('+');
+    expect(removed.mark).toBe('-');
+    expect(added.background).not.toBe(removed.background);
+    for (const r of unwrapped.rows) {
+      expect(contrast(r.color, r.background), `${r.kind} ${r.color} on ${r.background}`).toBeGreaterThanOrEqual(4.5);
+    }
+    // ファイル名の行は追加・削除の色と紛れないよう、本文の文字色の太字にする
+    expect(unwrapped.header.color).toBe(unwrapped.text);
+    expect(Number(unwrapped.header.weight)).toBeGreaterThanOrEqual(700);
+
+    // 行の塗りは枠の内側の左端から、少なくとも右端まで(長い行は横スクロールの先まで)
+    for (const r of unwrapped.rows) {
+      expect(Math.abs(r.left - unwrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+      expect(r.right, `${r.kind} の行の右端`).toBeGreaterThanOrEqual(unwrapped.right - 1);
+    }
+
+    // 折り返したときは、塗りも枠の内側にちょうど収まり、横にはみ出さない
+    await page.locator('.code-block:has(> pre.lang-diff) .code-block-wrap').click();
+    const wrapped = await measure();
+    expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
+    for (const r of wrapped.rows) {
+      expect(Math.abs(r.left - wrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+      expect(Math.abs(r.right - wrapped.right), `${r.kind} の行の右端`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('構文の誤り(synError)は色だけでなく波線でも示す', async ({ page }) => {
+    await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
+
+    const errors = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code .synError')].map((el) => ({
+      text: el.textContent,
+      line: getComputedStyle(el).textDecorationLine,
+      style: getComputedStyle(el).textDecorationStyle,
+    })));
+
+    expect(errors.length, '前提: synErrorがあること').toBeGreaterThan(0);
+    for (const e of errors) {
+      expect(e.line, e.text ?? '').toContain('underline');
+      expect(e.style, e.text ?? '').toBe('wavy');
+    }
+  });
 });
 
 test.describe('コードブロック(js/codeblock.js)', () => {
-  test('コードブロックごとに、帯の中に折り返しとコピーのボタンを1組置く', async ({ page }) => {
-    await openCodeArticle(page);
+  for (const [name, articlePath] of Object.entries(ARTICLES)) {
+    test(`コードブロックごとに、帯の中に折り返しとコピーのボタンを1組置く(${name})`, async ({ page }) => {
+      await openCodeArticle(page, articlePath);
 
-    const result = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
-      const wrapper = pre.parentElement;
-      const toolbar = wrapper?.querySelector(':scope > .code-block-toolbar');
-      const preRect = pre.getBoundingClientRect();
-      const toolbarRect = toolbar?.getBoundingClientRect();
-      return {
-        lang: pre.getAttribute('data-lang'),
-        wrapped: wrapper?.classList.contains('code-block'),
-        buttons: [...(toolbar?.querySelectorAll('button') ?? [])].map((b) => ({ text: b.textContent, type: b.getAttribute('type'), height: b.getBoundingClientRect().height })),
-        toolbarTop: toolbarRect ? toolbarRect.top - preRect.top : null,
-        toolbarBottom: toolbarRect ? toolbarRect.bottom - preRect.top : null,
-        toolbarRight: toolbarRect ? preRect.right - toolbarRect.right : null,
-      };
-    }));
+      // 閉じた折りたたみの中のコードブロックは寸法が測れないので、見えているものだけを測る
+      const result = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].filter((pre) => pre.checkVisibility()).map((pre) => {
+        const wrapper = pre.parentElement;
+        const toolbar = wrapper?.querySelector(':scope > .code-block-toolbar');
+        const preRect = pre.getBoundingClientRect();
+        const toolbarRect = toolbar?.getBoundingClientRect();
+        return {
+          lang: pre.getAttribute('data-lang'),
+          wrapped: wrapper?.classList.contains('code-block'),
+          buttons: [...(toolbar?.querySelectorAll('button') ?? [])].map((b) => ({ text: b.textContent, type: b.getAttribute('type'), height: b.getBoundingClientRect().height })),
+          toolbarTop: toolbarRect ? toolbarRect.top - preRect.top : null,
+          toolbarBottom: toolbarRect ? toolbarRect.bottom - preRect.top : null,
+          toolbarRight: toolbarRect ? preRect.right - toolbarRect.right : null,
+        };
+      }));
 
-    expect(result.length, '前提: コードブロックがあること').toBeGreaterThan(0);
-    for (const r of result) {
-      expect(r.wrapped, r.lang ?? '').toBe(true);
-      expect(r.buttons.map((b) => b.text), r.lang ?? '').toEqual(['Wrap', 'Copy']);
-      for (const b of r.buttons) {
-        expect(b.type).toBe('button');
-        // タップ領域(WCAG 2.5.8)
-        expect(b.height).toBeGreaterThanOrEqual(24);
+      expect(result.length, '前提: コードブロックがあること').toBeGreaterThan(0);
+      for (const r of result) {
+        expect(r.wrapped, r.lang ?? '').toBe(true);
+        expect(r.buttons.map((b) => b.text), r.lang ?? '').toEqual(['Wrap', 'Copy']);
+        for (const b of r.buttons) {
+          expect(b.type).toBe('button');
+          // タップ領域(WCAG 2.5.8)
+          expect(b.height).toBeGreaterThanOrEqual(24);
+        }
+        // ボタンは帯の中に収まり、コードに重ならない
+        expect(r.toolbarTop ?? -1).toBeGreaterThanOrEqual(0);
+        expect(r.toolbarBottom ?? Infinity).toBeLessThanOrEqual(HEADER_HEIGHT + 1);
+        expect(r.toolbarRight ?? -1).toBeGreaterThan(0);
       }
-      // ボタンは帯の中に収まり、コードに重ならない
-      expect(r.toolbarTop ?? -1).toBeGreaterThanOrEqual(0);
-      expect(r.toolbarBottom ?? Infinity).toBeLessThanOrEqual(HEADER_HEIGHT + 1);
-      expect(r.toolbarRight ?? -1).toBeGreaterThan(0);
-    }
-  });
+    });
+  }
 
   test('ボタンを置いてもコードブロックの高さもコードの位置も変わらない', async ({ page }) => {
     await openCodeArticle(page);

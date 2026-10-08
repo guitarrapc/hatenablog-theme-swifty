@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
 
 /**
  * 目次のテスト (theme-design-spec.md の「目次」を参照)
@@ -79,8 +79,10 @@ test.describe('目次を本文の横に常に表示する', () => {
     expect(Math.abs(layout.footerTextRight - layout.paragraph.right)).toBeLessThanOrEqual(1);
   });
 
-  test('スクロールしても目次が画面内に止まる', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+  test('画面より長い目次は、画面の上下に同じだけ空けて止まり、目次の中でスクロールする', async ({ page }) => {
+    const viewport = { width: VIEWPORTS.DESKTOP.width, height: 900 };
+    await page.setViewportSize(viewport);
+    await page.navigateTo(FIXTURE_URLS.TOC_LONG, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight / 2));
@@ -89,12 +91,39 @@ test.describe('目次を本文の横に常に表示する', () => {
     const toc = await page.evaluate(() => {
       const el = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
       const rect = el.getBoundingClientRect();
-      return { top: rect.top, bottom: rect.bottom, stickyTop: parseFloat(getComputedStyle(el).top) };
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        stickyTop: parseFloat(getComputedStyle(el).top),
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+      };
     });
 
-    // 画面の上端から --toc-sticky-top の位置に止まり、下端も画面内に収まる(長い目次は目次の中でスクロールする)
+    expect(toc.scrollHeight, '前提: 目次が画面より長いこと').toBeGreaterThan(viewport.height);
+    // 画面の上端から --toc-sticky-top の位置に止まり、下端も同じだけ空ける
     expect(Math.abs(toc.top - toc.stickyTop)).toBeLessThanOrEqual(1);
-    expect(toc.bottom).toBeLessThanOrEqual(VIEWPORTS.DESKTOP.height);
+    expect(Math.abs(viewport.height - toc.bottom - toc.stickyTop)).toBeLessThanOrEqual(1);
+    // 入りきらない項目は目次の中でスクロールして読める
+    expect(toc.clientHeight).toBeLessThan(toc.scrollHeight);
+  });
+
+  test('本文の途中に書いた目次も、本文の横では本文の先頭から並ぶ', async ({ page }) => {
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H3, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    const layout = await page.evaluate(() => {
+      const content = /** @type {Element} */ (document.querySelector('.entry-content'));
+      const toc = /** @type {Element} */ (content.querySelector(':scope > .table-of-contents'));
+      return {
+        index: [...content.children].indexOf(toc),
+        toc: toc.getBoundingClientRect().top,
+        content: content.getBoundingClientRect().top,
+      };
+    });
+
+    expect(layout.index, '前提: 目次が本文の先頭にないこと').toBeGreaterThan(0);
+    expect(Math.abs(layout.toc - layout.content)).toBeLessThanOrEqual(1);
   });
 
   test('いま読んでいる見出しを目次で示す', async ({ page }) => {
@@ -132,6 +161,10 @@ test.describe('目次を本文の横に常に表示する', () => {
   for (const [name, path] of Object.entries({
     サンプル記事: TEST_URLS.SAMPLE_ARTICLE,
     コードハイライト記事: TEST_URLS.CODE_HIGHLIGHT,
+    // 見出しの直後にいろいろな要素が続く
+    見出しの記事: FIXTURE_URLS.HEADINGS_H2,
+    // 目次が本文の途中にある
+    目次が途中にある記事: FIXTURE_URLS.HEADINGS_H3,
   })) {
     test(`目次を横に置いても本文の間隔が変わらない(${name})`, async ({ page }) => {
       await page.navigateTo(path, { waitFor: 'networkidle' });
@@ -180,30 +213,35 @@ test.describe('目次を本文の横に常に表示する', () => {
     expect(side).toEqual(flow);
   });
 
-  test('目次のない記事では本文を中央に置き、目次の列を作らない', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.ARTICLE_WITHOUT_TOC, { waitFor: 'networkidle' });
-    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+  for (const [name, path] of Object.entries({
+    目次のない記事: TEST_URLS.ARTICLE_WITHOUT_TOC,
+    目次がなく見出しの多い記事: FIXTURE_URLS.HEADINGS_H1_MIXED,
+  })) {
+    test(`目次がなければ本文を中央に置き、目次の列を作らない(${name})`, async ({ page }) => {
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-    const layout = await page.evaluate(() => {
-      const entry = /** @type {Element} */ (document.querySelector('.entry'));
-      const content = /** @type {Element} */ (document.querySelector('.entry-content'));
-      const e = entry.getBoundingClientRect();
-      const c = content.getBoundingClientRect();
-      return {
-        hasToc: !!content.querySelector(':scope > .table-of-contents'),
-        display: getComputedStyle(content).display,
-        contentWidth: c.width,
-        contentMax: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-max')),
-        leftSpace: c.left - e.left,
-        rightSpace: e.right - c.right,
-      };
+      const layout = await page.evaluate(() => {
+        const entry = /** @type {Element} */ (document.querySelector('.entry'));
+        const content = /** @type {Element} */ (document.querySelector('.entry-content'));
+        const e = entry.getBoundingClientRect();
+        const c = content.getBoundingClientRect();
+        return {
+          hasToc: !!content.querySelector(':scope > .table-of-contents'),
+          display: getComputedStyle(content).display,
+          contentWidth: c.width,
+          contentMax: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-max')),
+          leftSpace: c.left - e.left,
+          rightSpace: e.right - c.right,
+        };
+      });
+
+      expect(layout.hasToc, '前提: 目次のない記事であること').toBe(false);
+      expect(layout.display).not.toBe('grid');
+      expect(layout.contentWidth).toBeLessThanOrEqual(layout.contentMax);
+      expect(Math.abs(layout.leftSpace - layout.rightSpace)).toBeLessThanOrEqual(1);
     });
-
-    expect(layout.hasToc, '前提: 目次のない記事であること').toBe(false);
-    expect(layout.display).not.toBe('grid');
-    expect(layout.contentWidth).toBeLessThanOrEqual(layout.contentMax);
-    expect(Math.abs(layout.leftSpace - layout.rightSpace)).toBeLessThanOrEqual(1);
-  });
+  }
 });
 
 test.describe('狭い画面では目次を本文中に表示する', () => {
@@ -227,5 +265,24 @@ test.describe('狭い画面では目次を本文中に表示する', () => {
     expect(layout.position).toBe('static');
     expect(layout.toc.top).toBeGreaterThanOrEqual(layout.paragraph.bottom);
     expect(Math.abs(layout.toc.width - layout.content.width)).toBeLessThanOrEqual(1);
+  });
+
+  test('本文の途中に書いた目次は、書かれた位置に表示される', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.BELOW_SIDE_TOC);
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H3, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    const layout = await page.evaluate(() => {
+      const toc = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
+      return {
+        previous: toc.previousElementSibling?.getBoundingClientRect().bottom ?? null,
+        toc: toc.getBoundingClientRect().toJSON(),
+        next: toc.nextElementSibling?.getBoundingClientRect().top ?? null,
+      };
+    });
+
+    expect(layout.previous, '前提: 目次の前に本文があること').not.toBeNull();
+    expect(layout.toc.top).toBeGreaterThanOrEqual(layout.previous ?? 0);
+    expect(layout.next ?? 0).toBeGreaterThanOrEqual(layout.toc.bottom);
   });
 });

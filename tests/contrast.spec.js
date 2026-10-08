@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, TIMEOUTS } from './constants.js';
 
 /**
  * テキストのコントラストを検証する (theme-design-spec.md の「配色」を参照)。
@@ -33,6 +33,8 @@ const TARGETS = {
   // 指定色ではなく実際に描かれる色で見ないと見逃す
   最近のコメントの日時: '.hatena-module-recent-comments time.recent-comment-time',
   コードブロックのボタン: '.code-block-button',
+  // はてなの灰色のボタンのままだとテーマのリンク色が4.03:1になる。テーマのボタンにしている
+  商品紹介の購入ボタン: '.hatena-asin-detail .asin-detail-buy',
   ページ末尾フッタ: '#footer p',
   ページ末尾フッタのリンク: '#footer .services a',
   // はてなが文字色を !important で白にしているボタン。背景色で読めるようにしている
@@ -192,7 +194,8 @@ test.describe('テキストのコントラスト', () => {
   });
 
   test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.ARTICLE_WITH_LINKS, { waitFor: 'networkidle' });
+    // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
+    await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
     await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
     await resetToThemeBackground(page);
 

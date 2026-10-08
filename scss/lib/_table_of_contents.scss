@@ -233,7 +233,8 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
             align-self: start;
             position: sticky;
             top: var(--toc-sticky-top);
-            // 目次が長いときは目次の中でスクロールする
+            // 目次が長いときは目次の中でスクロールする。内側の余白を含めて、画面の上下に同じだけ空ける
+            box-sizing: border-box;
             max-height: calc(100vh - var(--toc-sticky-top) * 2);
             overflow-y: auto;
             overscroll-behavior: contain;

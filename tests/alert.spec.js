@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS } from './constants.js';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
@@ -747,4 +747,45 @@ test.describe('アラート記法', () => {
       }
     });
   }
+  test('Fixture記事(引用とアラート)で、アラートにする引用としない引用を見分ける', async ({ page }) => {
+    await page.navigateTo(FIXTURE_URLS.QUOTES_ALERTS, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-content > blockquote.markdown-alert').first()).toBeVisible();
+
+    // 見出しごとに、その下の引用がどのアラートになったか(通常の引用は quote)
+    const quotes = await page.evaluate(() => {
+      /** @type {Record<string, string[]>} */
+      const result = {};
+      let heading = '';
+      for (const el of /** @type {Element} */ (document.querySelector('.entry-content')).children) {
+        if (/^H[1-6]$/.test(el.tagName)) heading = el.textContent?.trim() ?? '';
+        if (el.tagName !== 'BLOCKQUOTE') continue;
+        const type = [...el.classList].find((name) => name.startsWith('markdown-alert-'))?.replace('markdown-alert-', '');
+        (result[heading] ??= []).push(type ?? 'quote');
+      }
+      return result;
+    });
+
+    expect(quotes).toEqual({
+      短い引用: ['quote'],
+      複数の段落を含む引用: ['quote'],
+      出典付きの引用: ['quote'],
+      入れ子の引用: ['quote'],
+      リストとコードブロックを含む引用: ['quote'],
+      見出しを含む引用: ['quote'],
+      '5種類のアラート': ['note', 'tip', 'important', 'warning', 'caution'],
+      複数の段落を含むアラート: ['note'],
+      マーカーの後に空行を入れたアラート: ['warning'],
+      リストとコードブロックを含むアラート: ['tip'],
+      装飾を含むアラート: ['important'],
+      画像を含むアラート: ['caution'],
+      小文字のマーカー: ['tip'],
+      // 空行で区切った通常の引用とアラートは、それぞれ別に扱う
+      通常の引用の直後のアラート: ['quote', 'note'],
+      // 空行で区切らずに続けた引用は、マークダウンではアラートの本文になる
+      アラートの直後の通常の引用: ['warning'],
+      マーカーと同じ行に本文がある引用: ['quote'],
+      マーカーだけの引用: ['quote'],
+      対応していない種類のマーカー: ['quote'],
+    });
+  });
 });

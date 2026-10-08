@@ -2,7 +2,7 @@
 title: "Fixture: 文字と段落"
 ---
 
-<!-- https://guitarrapc-theme.hatenablog.com/entry/2026/10/08/224746 -->
+<!-- https://guitarrapc-theme.hatenablog.com/entry/2026/10/08/224737 -->
 
 段落、文字の装飾、リンク、インラインコード、脚注など、文章の中に現れる要素を並べた確認用の記事です。
 

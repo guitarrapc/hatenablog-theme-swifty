@@ -23,8 +23,8 @@ import lighthouse from "lighthouse";
 import desktopConfig from "lighthouse/core/config/desktop-config.js";
 import { BLOG_URL, DEV_SERVER_URL } from "./blog.config.js";
 
-// 画像や埋め込みを含む長めの記事。実際の記事に近い条件で測る
-const DEFAULT_URL = `${BLOG_URL}/entry/2025/05/17/015533`;
+// 目次・コードブロック・画像・アラートを含むサンプル記事(tests/constants.js の SAMPLE_ARTICLE)。実際の記事に近い条件で測る
+const DEFAULT_URL = `${BLOG_URL}/entry/2025/05/10/204601`;
 const DEV_SERVER = DEV_SERVER_URL;
 const USERCSS_HOST = "usercss.blog.st-hatena.com";
 // リポジトリ直下の customize-*.html をすべて挿入する(無ければ何も挿入しない)

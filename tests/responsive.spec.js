@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
 
 /** ページ全体が横にはみ出していないか(横スクロールが出ていないか)を測る */
 const horizontalOverflow = (/** @type {any} */ page) => page.evaluate(() =>
@@ -53,4 +53,26 @@ test.describe('レスポンシブデザインのテスト', () => {
     await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeAttached();
     expect(await horizontalOverflow(page), '横スクロールが発生している').toBeLessThanOrEqual(0);
   });
+  // Fixture記事のはみ出しやすい要素(長いタイトル、区切りのない文字列、表、長い行のコード、数式、画像)で確かめる。
+  // Fixtureのカテゴリのページでは、記事の一覧に並ぶ長いタイトルとカテゴリを確かめる。
+  // 画面の幅はプロジェクト(playwright.config.js)ごとの幅
+  for (const [name, path] of Object.entries({ ...FIXTURE_URLS, CATEGORY: '/archive/category/Fixture' })) {
+    test(`記事が横にはみ出さない(Fixture: ${name})`, async ({ page }) => {
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator(SELECTORS.MAIN)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      // 後回しにしている本文は仮の大きさなので、描いてから測る
+      await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
+
+      // はみ出した要素を、横スクロールする枠の中のものを除いて挙げる(失敗したときの手がかり)
+      const offenders = await page.evaluate(() => [...document.querySelectorAll('body *')].filter((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.right <= document.documentElement.clientWidth + 0.5) return false;
+        for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+          if (getComputedStyle(parent).overflowX !== 'visible') return false;
+        }
+        return true;
+      }).slice(0, 5).map((el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${typeof el.className === 'string' && el.className ? `.${el.className.trim().split(/\s+/).join('.')}` : ''}`));
+      expect(await horizontalOverflow(page), `横スクロールが発生している: ${offenders.join(', ')}`).toBeLessThanOrEqual(0);
+    });
+  }
 });

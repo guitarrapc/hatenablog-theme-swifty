@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, SELECTORS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, SELECTORS, TIMEOUTS } from './constants.js';
 
 /**
  * 本文の見出しのテスト (theme-design-spec.md の「見出しと引用」を参照)
@@ -52,50 +52,47 @@ const rolesByTag = (/** @type {{tag: string, role: string}[]} */ headings) => {
   return roles;
 };
 
-/** 指定した段の見出しを本文から取り除き、その書き方の記事にする */
-const removeHeadings = (/** @type {any} */ page, /** @type {string[]} */ tags) => page.evaluate((tags) => {
-  for (const tag of tags) document.querySelectorAll(`.entry-content > ${tag}`).forEach((el) => el.remove());
-}, tags);
+/** 記事を開き、後回しにしている本文も測れるようにする */
+const openArticle = async (/** @type {any} */ page, /** @type {string} */ path) => {
+  await page.navigateTo(path, { waitFor: 'networkidle' });
+  await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+  await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
+};
+
+// 書き方ごとの記事と、見出しの段ごとに期待する役割
+const HEADING_ARTICLES = [
+  {
+    name: '「#」から書く記事',
+    path: TEST_URLS.SAMPLE_ARTICLE,
+    expected: { h1: 'band', h2: 'dashed', h3: 'bar', h4: 'minor', h5: 'minor', h6: 'minor' },
+  },
+  {
+    name: '「##」から書く記事',
+    path: FIXTURE_URLS.HEADINGS_H2,
+    expected: { h2: 'band', h3: 'dashed', h4: 'bar', h5: 'minor', h6: 'minor' },
+  },
+  {
+    name: 'はてな記法・見たままモードと同じh3から始まる記事',
+    path: FIXTURE_URLS.HEADINGS_H3,
+    expected: { h3: 'band', h4: 'dashed', h5: 'bar', h6: 'minor' },
+  },
+  {
+    // いちばん上に使われている段が帯になるので、h1が1つでも混ざればh1が帯、h2が破線になる
+    name: '「##」の記事にh1が1つ混ざる',
+    path: FIXTURE_URLS.HEADINGS_H1_MIXED,
+    expected: { h1: 'band', h2: 'dashed', h3: 'bar', h4: 'minor' },
+  },
+];
 
 test.describe('見出し', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
-    // 後回しにしている本文も測れるようにする
-    await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
-  });
-
-  for (const { name, removed, expected } of [
-    {
-      name: '「#」から書く記事',
-      removed: [],
-      expected: { h1: 'band', h2: 'dashed', h3: 'bar', h4: 'minor', h5: 'minor', h6: 'minor' },
-    },
-    {
-      name: '「##」から書く記事',
-      removed: ['h1'],
-      expected: { h2: 'band', h3: 'dashed', h4: 'bar', h5: 'minor', h6: 'minor' },
-    },
-    {
-      name: 'はてな記法・見たままモードの記事(h3から)',
-      removed: ['h1', 'h2'],
-      expected: { h3: 'band', h4: 'dashed', h5: 'bar', h6: 'minor' },
-    },
-  ]) {
+  for (const { name, path, expected } of HEADING_ARTICLES) {
     test(`いちばん上の段を帯にし、破線・縦棒と続ける(${name})`, async ({ page }) => {
-      const reference = await measureHeadings(page);
-      const bandSize = reference.find((h) => h.role === 'band')?.fontSize;
-
-      await removeHeadings(page, removed);
+      await openArticle(page, path);
       const headings = await measureHeadings(page);
 
       expect(rolesByTag(headings)).toEqual(expected);
-      // どの段が帯になっても、帯の見た目(大きさ)は同じ
-      for (const h of headings.filter((h) => h.role === 'band')) {
-        expect(h.fontSize, `${h.tag} の帯の文字の大きさ`).toBe(bandSize);
-      }
 
-      // 縦棒は上の余白に引かず、帯では帯の高さいっぱいに引く
+      // 縦棒は上の余白に引かず、帯では帯の高さいっぱいに引く(帯が折り返して何行になっても)
       for (const h of headings.filter((h) => h.barTop !== null)) {
         expect(h.barTop, `${h.id} の縦棒の上端`).toBeGreaterThanOrEqual(h.space - 0.5);
         expect(h.barHeight, `${h.id} の縦棒の高さ`).toBeGreaterThan(0);
@@ -106,16 +103,20 @@ test.describe('見出し', () => {
     });
   }
 
-  test('実際に「##」だけで書いた記事でも、大見出しが帯になる', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.CODE_HIGHLIGHT, { waitFor: 'networkidle' });
-    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
-
-    const headings = await measureHeadings(page);
-    expect(headings.some((h) => h.tag === 'h1'), '前提: h1を使っていない記事であること').toBe(false);
-    expect(rolesByTag(headings).h2).toBe('band');
+  test('どの段が帯や破線になっても、役割が同じなら見た目(文字の大きさ)は同じ', async ({ page }) => {
+    /** @type {Record<string, Set<string>>} */
+    const sizes = { band: new Set(), dashed: new Set(), bar: new Set() };
+    for (const { path } of HEADING_ARTICLES) {
+      await openArticle(page, path);
+      for (const h of await measureHeadings(page)) sizes[h.role]?.add(h.fontSize);
+    }
+    for (const [role, values] of Object.entries(sizes)) {
+      expect([...values], `${role} の文字の大きさ`).toHaveLength(1);
+    }
   });
 
   test('左の縦棒は見出しだけの印にし、引用の線とは色で区別する', async ({ page }) => {
+    await openArticle(page, TEST_URLS.SAMPLE_ARTICLE);
     const headings = await measureHeadings(page);
     const quoteLine = await page.evaluate(() => {
       const quote = document.querySelector('.entry-content blockquote');
@@ -129,6 +130,7 @@ test.describe('見出し', () => {
   });
 
   test('見出しは本文より字間を詰め、下に24px空ける', async ({ page }) => {
+    await openArticle(page, TEST_URLS.SAMPLE_ARTICLE);
     const result = await page.evaluate(() => {
       const letterSpacing = (/** @type {Element | null} */ el) => {
         if (!el) return null;

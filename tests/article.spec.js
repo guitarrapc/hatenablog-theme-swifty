@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, SELECTORS, VIEWPORTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, SELECTORS, VIEWPORTS } from './constants.js';
 
 test.describe('記事ページのテスト', () => {
   test('記事ページが正しくレンダリングされる', async ({ page }) => {
@@ -49,6 +49,47 @@ test.describe('記事ページのテスト', () => {
     expect(radii.quoteLeft).toBe('0px');
     // 画像は角丸を大きくすると画像の隅が欠けるので、カードより小さくする
     expect(parseFloat(radii.image ?? '0')).toBeLessThan(parseFloat(radii.card));
+  });
+
+  test('表のセルは単語の途中で縮めず、収まらない表は表の中で横にスクロールする', async ({ page }) => {
+    // 列の多い表が収まらない、スマートフォンの幅で測る
+    await page.setViewportSize(VIEWPORTS.MOBILE);
+    await page.navigateTo(FIXTURE_URLS.TABLES_DETAILS, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+    await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
+
+    const result = await page.evaluate(() => {
+      const tables = [...document.querySelectorAll('.entry-content > table')];
+      /** 文字列が描かれた行の数 */
+      const lines = (/** @type {Element} */ el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+      };
+      const cells = tables.flatMap((table) => [...table.querySelectorAll('th, td')]);
+      return {
+        overflowing: tables.filter((t) => t.scrollWidth > t.clientWidth).length,
+        pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        // 区切りのない英単語・数字だけのセル(Chrome、105など)
+        words: cells.filter((c) => /^[A-Za-z0-9.]+$/.test(c.textContent?.trim() ?? '')).map((c) => ({ text: c.textContent?.trim(), lines: lines(c) })),
+        // 日本語を含むセル
+        japanese: cells.filter((c) => /[぀-ヿ一-鿿]/.test(c.textContent ?? '')).map((c) => ({
+          text: c.textContent?.trim().slice(0, 10),
+          width: c.getBoundingClientRect().width,
+          fontSize: parseFloat(getComputedStyle(c).fontSize),
+        })),
+      };
+    });
+
+    expect(result.overflowing, '前提: 画面に収まらない表があること').toBeGreaterThan(0);
+    expect(result.pageOverflow).toBeLessThanOrEqual(0);
+    expect(result.words.length, '前提: 英単語や数字だけのセルがあること').toBeGreaterThan(0);
+    for (const w of result.words) {
+      expect(w.lines, `「${w.text}」が1行に収まる`).toBe(1);
+    }
+    for (const j of result.japanese) {
+      expect(j.width, `「${j.text}」の列の幅`).toBeGreaterThanOrEqual(j.fontSize * 5 - 1);
+    }
   });
 
   test('アバウトページが正しくレンダリングされる', async ({ page }) => {

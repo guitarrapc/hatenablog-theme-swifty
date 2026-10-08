@@ -51,14 +51,10 @@
       });
     }
 
-    function convert(isParsed) {
+    function convert() {
       // Only the table of contents placed directly in the article body, the same as the theme's layout
       document.querySelectorAll('.entry-content > ul.table-of-contents').forEach(function (list) {
         if (processed.has(list)) {
-          return;
-        }
-        // While loading, skip lists the parser may still be filling (nothing follows them yet)
-        if (!isParsed && !list.nextSibling && !list.parentNode.nextSibling) {
           return;
         }
         processed.add(list);
@@ -67,17 +63,16 @@
     }
 
     if (document.readyState === 'loading') {
-      // Convert as soon as the list is parsed, so a remembered closed state is applied before the article is painted
-      const observer = new MutationObserver(function () {
-        convert(false);
-      });
+      // Wrap the list as soon as it is inserted, before its items are parsed: the parser keeps adding items
+      // to the moved list, and a remembered closed state is applied before the list is ever painted open
+      const observer = new MutationObserver(convert);
       observer.observe(document.documentElement, { childList: true, subtree: true });
       document.addEventListener('DOMContentLoaded', function () {
         observer.disconnect();
-        convert(true);
+        convert();
       });
     } else {
-      convert(true);
+      convert();
     }
   })();
 </script>

@@ -132,6 +132,7 @@
     font-size: 1.625rem;
     line-height: 1.3;
     letter-spacing: -.02em;
+    overflow-wrap: anywhere; // 区切りのない長い英単語(名前空間など)も折り返す。記事の一覧のタイトルにも効く
 
     @media #{var.$mq-sm} {
         font-size: 2.125rem;
@@ -354,6 +355,12 @@ $heading-top-levels: (
         text-align: center;
     }
 
+    // 商品紹介(asin記法)の購入ボタン。はてなの灰色のボタンの上ではテーマのリンク色が4.5:1に届かないので、テーマのボタンにする
+    .hatena-asin-detail .asin-detail-buy {
+        @include var.outline-button;
+        justify-content: center;
+    }
+
     /* 表。はみ出す場合は表の中で横にスクロールする */
     table {
         display: block;
@@ -364,10 +371,15 @@ $heading-top-levels: (
         line-height: 1.6;
     }
 
+    // 列が多いときに列を縮めすぎず、表の中で横にスクロールさせる。
+    // 本文の overflow-wrap: anywhere のままだと単語の途中でも縮められ、英単語や数字が1文字ずつ縦に並ぶので戻す。
+    // 日本語はどの文字の間でも折り返せるので、列の最小の幅も決めておく
     th,
     td {
+        min-width: 5em;
         padding: .5em .9em;
         border: 1px solid var(--border);
+        overflow-wrap: break-word;
     }
 
     th {

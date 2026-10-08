@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from './helpers.js';
 import { expect } from '@playwright/test';
-import { TEST_URLS, VIEWPORTS, TIMEOUTS } from './constants.js';
+import { TEST_URLS, FIXTURE_URLS, VIEWPORTS, TIMEOUTS } from './constants.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -70,6 +70,26 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     await page.evaluate(tocToggleJs);
     await expect(page.locator('.toc-panel')).toHaveCount(1);
     await expect(page.locator('.toc-panel .toc-panel')).toHaveCount(0);
+  });
+
+  test('項目が出そろう前に包んでも、目次の項目はすべて包んだリストに入る', async ({ page }) => {
+    // 項目の多い長い目次で、はてなが目次に出す見出しの数と比べる
+    await page.navigateTo(FIXTURE_URLS.TOC_LONG, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-content > .toc-panel')).toHaveCount(1, { timeout: TIMEOUTS.VERY_LONG });
+
+    const result = await page.evaluate(() => {
+      const links = [...document.querySelectorAll('.entry-content > .toc-panel > .table-of-contents a')];
+      const headings = [...document.querySelectorAll('.entry-content > :is(h1, h2, h3, h4, h5, h6)')];
+      return {
+        links: links.map((a) => decodeURIComponent(/** @type {HTMLAnchorElement} */ (a).hash.slice(1))),
+        headings: headings.map((h) => h.id),
+        outside: document.querySelectorAll('.entry-content > :is(li, .table-of-contents)').length,
+      };
+    });
+
+    expect(result.links.length, '前提: 項目の多い目次であること').toBeGreaterThan(30);
+    expect(result.links).toEqual(result.headings);
+    expect(result.outside).toBe(0);
   });
 
   test('本文の横の目次は、閉じると細い帯になって本文が広がり、開くと元に戻る', async ({ page }) => {
@@ -149,37 +169,34 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     expect((await measure(page)).open).toBe(true);
   });
 
-  test('閉じたことを記憶し、次に開いたページでは最初から閉じていて表示がずれない', async ({ page }) => {
+  test('閉じたことを記憶し、次に開いたページでは目次を一度も開いた状態で描かない', async ({ page }) => {
     await page.setViewportSize(SIDE);
     await openArticle(page);
     await page.locator('.toc-panel-summary').click();
     expect((await measure(page)).stored).toBe('true');
 
-    // 次のページの読み込みで起きたレイアウトのずれを、動いた要素と一緒に記録する
+    // 次のページの読み込み中、描くフレームごとに目次の状態を記録する。
+    // 目次が本文の途中で届いて本文の横に移るのは目次のあるページの配置そのものなので、ページ全体のずれ(CLS)ではなく、
+    // スクリプトの約束(包む前のリストや開いたパネルを描かない)だけを確かめる
     await page.addInitScript(() => {
-      /** @type {any} */ (window).layoutShifts = [];
-      new PerformanceObserver((list) => {
-        for (const entry of /** @type {any[]} */ (list.getEntries())) {
-          /** @type {any} */ (window).layoutShifts.push({
-            value: entry.value,
-            sources: entry.sources.map((/** @type {any} */ s) => {
-              const node = s.node;
-              const name = node ? (node.id || (typeof node.className === 'string' && node.className) || node.nodeName) : '?';
-              return `${name} y${Math.round(s.previousRect.y)}->${Math.round(s.currentRect.y)} w${Math.round(s.previousRect.width)}->${Math.round(s.currentRect.width)}`;
-            }),
-          });
-        }
-      }).observe({ type: 'layout-shift', buffered: true });
+      const frames = /** @type {string[]} */ ([]);
+      /** @type {any} */ (window).tocFrames = frames;
+      const sample = () => {
+        const bare = document.querySelector('.entry-content > ul.table-of-contents');
+        const panel = /** @type {HTMLDetailsElement | null} */ (document.querySelector('.entry-content > .toc-panel'));
+        const state = bare ? 'bare' : panel ? (panel.open ? 'open' : 'closed') : 'none';
+        if (frames[frames.length - 1] !== state) frames.push(state);
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
     });
     await openArticle(page);
 
     const closed = await measure(page);
     expect(closed.open).toBe(false);
     expect(closed.text).toBeGreaterThan(closed.contentMax);
-    // 本文が描かれる前に閉じた状態にするので、開いた状態から広がるずれが起きない
-    const shifts = await page.evaluate(() => /** @type {any} */ (window).layoutShifts);
-    const total = shifts.reduce((/** @type {number} */ sum, /** @type {any} */ shift) => sum + shift.value, 0);
-    expect(total, JSON.stringify(shifts)).toBe(0);
+    const frames = await page.evaluate(() => /** @type {any} */ (window).tocFrames);
+    expect(frames.filter((/** @type {string} */ state) => state !== 'none')).toEqual(['closed']);
 
     // 開け直すと、それも記憶する
     await page.locator('.toc-panel-summary').click();

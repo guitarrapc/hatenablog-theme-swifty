@@ -122,6 +122,38 @@ $code-padding-inline: 1.125rem;
     .synUnderlined {
         text-decoration: underline;
     }
+
+    /*
+     * diff。はてなは追加の行を synIdentifier、削除の行を synSpecial で囲む。
+     * 色だけに頼らないよう行頭の+/-を残したまま、行を枠の内側いっぱいに塗る
+     */
+    pre.code.lang-diff {
+
+        // ファイル名の行(diff --git、---、+++)は追加・削除の色と紛れないよう、色を付けず太字にする
+        .synType {
+            color: var(--code-text);
+            font-weight: 700;
+        }
+
+        .synIdentifier,
+        .synSpecial {
+            display: inline-block;
+            box-sizing: border-box;
+            min-width: calc(100% + #{$code-padding-inline * 2});
+            margin-inline: (-$code-padding-inline);
+            padding-inline: $code-padding-inline;
+        }
+
+        .synIdentifier {
+            background-color: var(--code-diff-added-bg);
+            color: var(--code-diff-added);
+        }
+
+        .synSpecial {
+            background-color: var(--code-diff-removed-bg);
+            color: var(--code-diff-removed);
+        }
+    }
 }
 
 /*

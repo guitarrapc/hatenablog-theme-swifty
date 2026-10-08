@@ -58,7 +58,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | パス | 説明 |
 | ---- | ---- |
 | `tests/helpers.js` | リトライ付きのナビゲーションなど、テスト共通のフィクスチャ |
-| `tests/constants.js` | テスト対象の記事URL、ビューポート、セレクタなどの定数 |
+| `tests/constants.js` | テスト対象の記事URL(`TEST_URLS`、Fixture記事の `FIXTURE_URLS`)、ビューポート、セレクタなどの定数 |
 | `tests/home.spec.js` | トップページの表示と、テーマCSSが読み込まれていること |
 | `tests/header.spec.js` | はてなのヘッダーメニューとブログのヘッダーの一体化、「読者になる」ボタンの位置 |
 | `tests/article.spec.js` | 記事・アバウト・アーカイブページの表示 |

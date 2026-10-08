@@ -228,12 +228,22 @@
         border-radius: 50%;
     }
 
+    // IDとProのバッジのリンクを並べる。小さい文字のリンクなので、タップ領域の高さを24px確保する(WCAG 2.5.8)
     .id {
-        display: block;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: 8px;
         margin-bottom: .5em;
         font-weight: 700;
         color: var(--text-header);
         text-decoration: none;
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+        }
     }
 
     .profile-description p {

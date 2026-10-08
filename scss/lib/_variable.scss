@@ -85,6 +85,9 @@ $color-pink-600: #b2316b;
 $color-blue-600: #0e6e95;
 $color-green-700: #0a7350;
 $color-amber-700: #9a5b00;
+$color-green-50: #e3f5ea;
+$color-red-50: #fcebeb;
+$color-red-700: #b42318;
 
 // アラート用 (GitHubのアラート記法の配色)
 $color-alert-blue-600: #0969da;
@@ -132,6 +135,10 @@ $light-theme: (
     "code-constant": $color-amber-700, // synConstant: 文字列・数値
     "code-special": $color-pink-600, // synSpecial: エスケープ・文字列の埋め込みの括弧
     "code-comment": $color-gray-650, // synComment
+    "code-diff-added": $color-green-700, // diffの追加の行(synIdentifier)
+    "code-diff-added-bg": $color-green-50,
+    "code-diff-removed": $color-red-700, // diffの削除の行(synSpecial)
+    "code-diff-removed-bg": $color-red-50,
 
     // アラート記法(_alert.scss)。囲みの線・タイトル・アイコンの色。淡い背景もこの色から作る
     "alert-note": $color-alert-blue-600,
