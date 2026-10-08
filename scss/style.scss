@@ -1,0 +1,21 @@
+@charset "utf-8";
+@use "./lib/_core";
+// 印刷用スタイルは各コンポーネントを上書きするため最後に読み込む
+@use "./lib/_print";
+
+/*
+  Theme: Swifty
+  Author: guitarrapc_tech
+  Responsive: yes
+  Description:
+    * このテーマの特徴
+    はてなブログのデザインテーマ Swifty です。
+
+    * ソースコード
+    [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています。(MITライセンス)
+
+    * 変更履歴:
+  Released under the MIT License.
+*/
+
+@import "normalize.css";

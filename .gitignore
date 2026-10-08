@@ -12,3 +12,12 @@ node_modules/
 
 # Ignore build
 build/
+
+# Playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+/screenshots/
+
+# Lighthouse
+/lighthouse-report/

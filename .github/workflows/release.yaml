@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Zip build artifacts
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p release
+          cp -r build/* release/
+          # JavaScriptカスタマイズ用のHTML(customize-*.html)があれば同梱する
+          find . -maxdepth 1 -name 'customize-*.html' -exec cp {} release/ \;
+          cd release && zip -r ../theme-${TAG}.zip ./*
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" --draft --title "$TAG" --generate-notes ./theme-${TAG}.zip

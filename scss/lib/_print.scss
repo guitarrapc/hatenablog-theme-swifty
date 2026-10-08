@@ -1,0 +1,50 @@
+@use "./_variable" as var;
+
+/*
+ * 印刷用スタイル (theme-design-spec.md の「印刷」を参照)
+ * style.scssの最後に読み込み、各コンポーネントの指定を!importantなしで上書きする
+ */
+@media print {
+
+    /* はてなが置く操作専用のUI */
+    #globalheader-container,
+    .blog-controlls,
+    .entry-header-menu,
+    .hatena-star-container,
+    .social-buttons {
+        display: none;
+    }
+
+    /* ナビゲーション */
+    #box2,
+    #entry-footer-secondary-modules,
+    .pager {
+        display: none;
+    }
+
+    .entry-content {
+
+        // 紙は横スクロールできないため、必ず折り返す
+        pre,
+        pre > code {
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow: visible;
+        }
+
+        // 閉じたdetailsの中身も印刷する。古い書き方と::details-contentの両方を残す
+        details:not([open]) > *:not(summary) {
+            display: block;
+        }
+
+        details::details-content {
+            content-visibility: visible;
+            block-size: auto;
+        }
+    }
+
+    // 画面外の描画の後回し(_core.scss)を解除し、すべて描いてから刷る
+    #{var.$deferred-content} {
+        content-visibility: visible;
+    }
+}

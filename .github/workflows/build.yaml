@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      # はてなブログはCSS先頭のコメントにある「Responsive: yes」でレスポンシブテーマと判定する
+      - name: Verify theme header
+        run: |
+          head -n 10 build/style.css | grep -q "Responsive: yes"
+
+  test:
+    needs: [build]
+    # parallel playwright tests with.... project & shards
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ["desktop", "tablet", "mobile"]
+        shards: ["1", "2"]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install chromium
+      # 開発用ブログ(blog.config.js)のheadはlocalhost:5173を参照するので、ランナー上の開発サーバーがテーマを配信する
+      - name: Run server & Playwright Tests
+        env:
+          PROJECT: ${{ matrix.project }}
+          SHARD: ${{ matrix.shards }}
+        run: |
+          npm start &
+          for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:5173/scss/style.scss && break; sleep 1; done
+          npx playwright test --reporter=list --project="${PROJECT}" --shard="${SHARD}/2"
+
+  build-and-test:
+    needs: [build, test]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - name: success
+        run: exit 0
