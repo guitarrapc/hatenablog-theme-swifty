@@ -126,6 +126,16 @@ $color-linen-600: #63645c;
 $color-linen-800: #262724;
 $color-linen-900: #1a1b19;
 
+// Haze系 (わずかに青みを帯びた、くすんだグレー。配色 dusty-pink の地と文字)
+$color-haze-100: #f5f5f9;
+$color-haze-150: #e6e8f1;
+$color-haze-200: #dfe1ea;
+$color-haze-300: #c8cbd8;
+$color-haze-500: #858a96;
+$color-haze-600: #575d63;
+$color-haze-800: #22292c;
+$color-haze-900: #161b1d;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -180,6 +190,14 @@ $color-sage-500: #728771;
 $color-sage-700: #4f644e;
 $color-sage-800: #3b4c3a;
 
+// Dusty系 (配色 dusty-pink のアクセント。くすみピンクは白地で淡いので、文字と状態の印には濃くした色を使う)
+$color-dusty-50: #f7f0f1;
+$color-dusty-100: #eee1e3;
+$color-dusty-400: #ccb3b7;
+$color-dusty-500: #a3747c;
+$color-dusty-700: #85525b;
+$color-dusty-800: #683d45;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -205,6 +223,7 @@ $color-alpha-shadow-mauve: rgba(48, 24, 34, 0.06);
 $color-alpha-shadow-sand: rgba(45, 38, 20, 0.06);
 $color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
 $color-alpha-shadow-linen: rgba(38, 39, 36, 0.06);
+$color-alpha-shadow-haze: rgba(34, 41, 44, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -394,6 +413,33 @@ $schemes: (
 
         "code-text": $color-linen-800,
         "code-comment": $color-linen-600,
+    )),
+    // 青みのあるくすんだグレーを地に、くすみピンクをアクセントにした落ち着いた配色。カードは白のまま。
+    // くすみピンク(#ccb3b7)は白地で1.96:1しかないので飾りだけに使い、リンクと状態の印は同じ色相を濃くする
+    "dusty-pink": map.merge($light-theme, (
+        "background": $color-haze-150,
+        "surface-muted": $color-haze-100,
+
+        "text-body": $color-haze-800,
+        "text-header": $color-haze-900,
+        "text-light": $color-haze-600,
+
+        "link": $color-dusty-700,
+        "link-hover": $color-dusty-800,
+
+        "accent": $color-dusty-400,
+        "accent-strong": $color-dusty-500,
+        "accent-line": $color-dusty-400,
+        "accent-soft": $color-dusty-50,
+        "accent-soft-hover": $color-dusty-100,
+
+        "border": $color-haze-200,
+        "border-strong": $color-haze-300,
+        "border-quote": $color-haze-500,
+        "shadow": $color-alpha-shadow-haze,
+
+        "code-text": $color-haze-800,
+        "code-comment": $color-haze-600,
     )),
 );
 
