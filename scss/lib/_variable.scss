@@ -136,6 +136,16 @@ $color-haze-600: #575d63;
 $color-haze-800: #22292c;
 $color-haze-900: #161b1d;
 
+// Peach系 (ピーチベージュの地と、赤茶の文字。配色 apricot の地と文字)
+$color-peach-100: #fcf3ef;
+$color-peach-150: #efddd5;
+$color-peach-200: #f0e2dc;
+$color-peach-300: #dfc6bc;
+$color-peach-500: #9e7c73;
+$color-peach-600: #76524a;
+$color-peach-800: #482019;
+$color-peach-900: #331510;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -198,6 +208,15 @@ $color-dusty-500: #a3747c;
 $color-dusty-700: #85525b;
 $color-dusty-800: #683d45;
 
+// Apricot系 (配色 apricot のアクセント。アプリコットピンクは淡い地の上で3:1に届かないので、文字と状態の印には濃くした色を使う)
+$color-apricot-50: #fcebe7;
+$color-apricot-100: #f7d8d0;
+$color-apricot-300: #e2a89e;
+$color-apricot-400: #cf7f72;
+$color-apricot-500: #b8665a;
+$color-apricot-700: #9a4134;
+$color-apricot-800: #7f3326;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -224,6 +243,7 @@ $color-alpha-shadow-sand: rgba(45, 38, 20, 0.06);
 $color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
 $color-alpha-shadow-linen: rgba(38, 39, 36, 0.06);
 $color-alpha-shadow-haze: rgba(34, 41, 44, 0.06);
+$color-alpha-shadow-peach: rgba(72, 32, 25, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -440,6 +460,35 @@ $schemes: (
 
         "code-text": $color-haze-800,
         "code-comment": $color-haze-600,
+    )),
+    // ピーチベージュを地に、アプリコットピンクをアクセントにした配色。文字は赤茶。
+    // カードは白のまま(温かい白にすると、アラートのWarningのタイトルが淡い背景の上で4.5:1に届かない)。
+    // アプリコットピンク(#cf7f72)は白地で3.03:1、コードブロックやページの背景の上では3:1に届かないので飾りだけに使い、
+    // リンクと状態の印は同じ色相を濃くする
+    "apricot": map.merge($light-theme, (
+        "background": $color-peach-150,
+        "surface-muted": $color-peach-100,
+
+        "text-body": $color-peach-800,
+        "text-header": $color-peach-900,
+        "text-light": $color-peach-600,
+
+        "link": $color-apricot-700,
+        "link-hover": $color-apricot-800,
+
+        "accent": $color-apricot-400,
+        "accent-strong": $color-apricot-500,
+        "accent-line": $color-apricot-300,
+        "accent-soft": $color-apricot-50,
+        "accent-soft-hover": $color-apricot-100,
+
+        "border": $color-peach-200,
+        "border-strong": $color-peach-300,
+        "border-quote": $color-peach-500,
+        "shadow": $color-alpha-shadow-peach,
+
+        "code-text": $color-peach-800,
+        "code-comment": $color-peach-600,
     )),
 );
 
