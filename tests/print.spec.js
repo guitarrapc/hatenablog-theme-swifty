@@ -25,6 +25,7 @@ test.describe('印刷スタイルのテスト', () => {
       // 閉じたdetailsの高さ。summaryだけだと中身が印刷されない
       closedDetailsHeights: details.map((el) => Math.round(el.getBoundingClientRect().height)),
       hidden: {
+        codeBlockToolbar: displayOf('.code-block-toolbar'),
         sidebar: displayOf('#box2'),
         entryFooterModules: displayOf('#entry-footer-secondary-modules'),
         globalHeader: displayOf('#globalheader-container'),

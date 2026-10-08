@@ -6,6 +6,11 @@
  */
 @media print {
 
+    /* テーマが置く操作専用のUI */
+    .code-block-toolbar {
+        display: none;
+    }
+
     /* はてなが置く操作専用のUI */
     #globalheader-container,
     .blog-controlls,
@@ -31,9 +36,9 @@
 
     .entry-content {
 
-        // 紙は横スクロールできないため、必ず折り返す
-        pre,
-        pre > code {
+        // 紙は横スクロールできないため、必ず折り返す。画面用の指定(_codeblock.scss)と詳細度を揃える
+        pre:not(.lang-aa),
+        pre:not(.lang-aa) > code {
             white-space: pre-wrap;
             word-break: break-all;
             overflow: visible;

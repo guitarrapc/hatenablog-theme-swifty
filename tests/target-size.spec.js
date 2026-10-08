@@ -15,6 +15,7 @@ const TARGETS = {
   読者になるボタン: '.blog-controlls-subscribe-btn',
   記事のカテゴリ: '.entry-categories a',
   コメントを書く: '.leave-comment-title',
+  コードブロックのボタン: '.code-block-button',
   ページャー: '.pager a',
   カテゴリのブログパーツ: '.hatena-module-category .hatena-urllist a',
   ブログパーツの日付: '.hatena-urllist .urllist-date-link a',

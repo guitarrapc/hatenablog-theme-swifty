@@ -1,0 +1,230 @@
+@use "./_variable" as var;
+@use "./_functions" as fn;
+
+/*
+ * コード (theme-design-spec.md の「コードブロック」を参照)
+ * ハイライトははてなのコードブロック(サーバー側で synXxx のクラスを付ける)をそのまま使い、色だけをテーマで決める。
+ * はてなのアスキーアート(pre.lang-aa)は、はてなが等幅でないフォントで整えているので対象にしない
+ */
+$code-header-height: 2.25rem; // コードブロックの上の帯。言語名とボタン(js/codeblock.js)を置く
+$code-padding-inline: 1.25em;
+
+.entry-content {
+
+    // インラインコード
+    code {
+        padding: .15em .4em;
+        border-radius: 4px;
+        background-color: var(--accent-soft);
+        color: var(--code-text);
+        font-family: var.$font-family-monospace;
+        font-size: .875em;
+        letter-spacing: 0;
+    }
+
+    // コードブロック。折り返さずに横スクロールさせる。行が長くても形を崩さないため
+    pre:not(.lang-aa) {
+        padding: 1em $code-padding-inline;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-small);
+        background-color: var(--surface-muted);
+        color: var(--code-text);
+        font-family: var.$font-family-monospace;
+        font-size: .875rem;
+        line-height: 1.7;
+        letter-spacing: 0;
+        white-space: pre;
+        overflow-wrap: normal;
+        tab-size: 4;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+
+        > code {
+            padding: 0;
+            background: none;
+            font-size: inherit;
+        }
+    }
+
+    /*
+     * はてなのコードブロック(pre.code)は上に帯を付け、言語名(data-lang)を出す。
+     * 帯はJavaScriptの有無や言語の有無に関わらず常に取る。後からボタンが入っても高さが変わらず、表示がずれないため
+     */
+    pre.code:not(.lang-aa) {
+        padding-top: 0;
+
+        &::before {
+            content: attr(data-lang);
+            display: block;
+            // 横にスクロールしても帯と言語名が左端に残るようにする
+            position: sticky;
+            left: 0;
+            height: $code-header-height;
+            margin: 0 (-$code-padding-inline) 1em;
+            padding: 0 $code-padding-inline;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--surface);
+            color: var(--text-light);
+            font-size: .75rem;
+            font-weight: 700;
+            line-height: $code-header-height;
+            letter-spacing: .04em;
+            white-space: nowrap;
+            // 言語名をコピーやテキストの選択に含めない(疑似要素なので含まれないが、明示しておく)
+            user-select: none;
+        }
+    }
+
+    // シンタックスハイライト。はてなのハイライトの種類ごとに色相を分ける
+    .synStatement {
+        color: var(--code-keyword);
+    }
+
+    .synPreProc {
+        color: var(--code-preproc);
+    }
+
+    .synType {
+        color: var(--code-type);
+    }
+
+    .synIdentifier {
+        color: var(--code-function);
+    }
+
+    .synConstant {
+        color: var(--code-constant);
+    }
+
+    .synSpecial {
+        color: var(--code-special);
+    }
+
+    .synComment {
+        color: var(--code-comment);
+    }
+
+    .synTodo {
+        color: var(--code-keyword);
+        font-weight: 700;
+    }
+
+    // 構文の誤り。色だけに頼らず波線でも示す
+    .synError {
+        color: var(--code-special);
+        text-decoration: underline wavy;
+        text-decoration-thickness: 1px;
+    }
+
+    .synUnderlined {
+        text-decoration: underline;
+    }
+}
+
+/*
+ * js/codeblock.js がコードブロックを .code-block で包み、上の帯の右端にボタン(折り返し・コピー)を置く。
+ * ボタンは帯の中に収まるので、コードに重ならず、ホバーしなくても常に見える
+ */
+// :where() で詳細度を0にして、本文の直下の余白(_entry.scss の .entry-content > *)を優先する
+:where(.code-block) {
+    position: relative;
+    margin-block: 1em;
+}
+
+.code-block > pre.code {
+    margin: 0;
+}
+
+.code-block-toolbar {
+    position: absolute;
+    top: 1px; // コードブロックの枠のぶん
+    right: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    height: $code-header-height;
+}
+
+.code-block-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .35em;
+    min-height: 28px;
+    padding: 0 .6em;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-light);
+    font: inherit;
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+
+    // アイコンはmaskで切り抜き、currentColorで塗る
+    &::before {
+        content: "";
+        flex-shrink: 0;
+        width: 1.2em;
+        height: 1.2em;
+        background-color: currentColor;
+        mask: no-repeat center / contain;
+
+        // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            background-color: ButtonText;
+        }
+    }
+
+    &:hover {
+        border-color: var(--border);
+        background-color: var(--surface-muted);
+        color: var(--link);
+    }
+}
+
+.code-block-copy::before {
+    mask-image: fn.url-svg(var.$svg-code-copy, #000);
+}
+
+// コピーできたら、チェックの印と「Copied!」に変わる
+.code-block-copy.is-copied {
+    color: var(--link);
+
+    &::before {
+        mask-image: fn.url-svg(var.$svg-code-check, #000);
+    }
+}
+
+.code-block-copy.is-failed {
+    color: var(--code-special);
+}
+
+.code-block-wrap::before {
+    mask-image: fn.url-svg(var.$svg-code-wrap, #000);
+}
+
+// 折り返しが有効なときは、押された状態を見た目でも示す
+.code-block-wrap[aria-pressed="true"] {
+    border-color: var(--border);
+    background-color: var(--accent-soft);
+    color: var(--link);
+}
+
+// 折り返しあり。行が長いときだけ単語の途中でも折り返す
+.code-block > pre.code.is-wrapped {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+// スクリーンリーダーに「コピーしました」などを伝える領域。画面には出さない
+.code-block-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}

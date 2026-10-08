@@ -1,6 +1,6 @@
 # 個別コンポーネント仕様
 
-JavaScriptを使う機能の仕様です。見た目は theme-design-spec.md を参照してください。
+JavaScriptを使う機能(アラート記法、コードブロック)の仕様です。見た目は theme-design-spec.md を参照してください。
 
 ## アラート記法
 
@@ -82,3 +82,43 @@ theme-design-spec.md の「アラート記法」を参照。
 * 変数定義: `scss/lib/_variable.scss` - アラートの色(`$light-theme` の `alert-*`)とアイコン(`$svg-alerts`)
 * ユーザー設定用: `customize-alert.html` - はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けるコード。`js/alert.js` と同じ処理であることをE2Eテストで確認する
 * テスト: `tests/alert.spec.js`
+
+## コードブロック
+
+記事内のはてなのコードブロック(`pre.code`)に、折り返しの切り替えボタンとコピーボタンを足す機能です。ハイライトと言語名の帯はCSSだけで出すので、この機能がなくても表示されます(theme-design-spec.md の「コードブロック」を参照)。
+
+### 1. 対象
+
+* 記事本文(`.entry-content`)の中の `pre.code` すべて。リストや引用の中のコードブロックも対象にする
+* アスキーアート(`pre.lang-aa`)はコードではないので対象にしない
+* 変換済み(親が `.code-block`)のコードブロックはスキップし、複数回実行しても結果は変わらない
+
+### 2. 変換
+
+* `pre.code` を `div.code-block` で包み、その中にボタンの入れ物(`div.code-block-toolbar`)と、結果を伝える領域(`span.code-block-status`)を置く
+* ボタンはテーマが常に取っているコードブロックの上の帯に収まる位置に置く。ボタンを足してもコードブロックの高さもコードの位置も変わらない
+* 変換はDOMContentLoaded(スクリプトがそれより後に実行されたらすぐ)に行う。帯が先に取られているので、ボタンが後から出ても表示はずれない。アラート記法のように読み込み中に変換する必要はない
+
+### 3. ボタン
+
+* ボタンは `<button type="button">` で、アイコンと文字(`Wrap` / `Copy`)を持つ。文字がそのままアクセシブルな名前になる
+* 折り返し(`Wrap`)
+  * 押すと `pre` に `is-wrapped` を付け外しし、横スクロールと折り返しを切り替える。既定は横スクロール
+  * 状態を `aria-pressed` で伝え、押されている間は見た目でも示す
+  * 折り返しは行が長いときだけ単語の途中でも折る(`overflow-wrap: anywhere`)
+* コピー(`Copy`)
+  * `pre` の `textContent` を `navigator.clipboard.writeText` でコピーする。言語名は疑似要素、ボタンは `pre` の外にあるので、コードだけがコピーされる
+  * 成功するとボタンが「Copied!」とチェックの印に、失敗するとボタンが「Copy failed」に変わり、2秒で戻る。Clipboard APIがない環境も失敗として扱う
+  * ボタンの文字の変化はスクリーンリーダーに読み上げられないため、同じ文言を `role="status"` の領域にも入れる(画面には出さない)
+
+### 4. ユーザー設定方法
+
+* `customize-codeblock.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。`js/codeblock.js` と同じ処理であることをE2Eテストで確認する
+
+### 5. ファイル構成
+
+* JavaScript: `js/codeblock.js`
+* SCSS: `scss/lib/_codeblock.scss` - コードブロック・インラインコード・ハイライトの色・ボタン
+* 変数定義: `scss/lib/_variable.scss` - ハイライトの色(`$light-theme` の `code-*`)とボタンのアイコン(`$svg-code-*`)
+* ユーザー設定用: `customize-codeblock.html`
+* テスト: `tests/codeblock.spec.js`

@@ -10,6 +10,7 @@
 - 記事の目次は、PCやタブレットの広い画面(992px以上)では本文の横に常に表示し、スクロールしても画面に残ります。**JavaScriptのカスタマイズは不要です。**
 - Chrome・Edgeでは、いま読んでいる見出しを目次で示します(CSSの `:target-current`)。
 - スマートフォンでは目次を本文中に表示します。
+- コードブロックは、はてなのハイライトを種類ごとに色分けし、上の帯に言語名を表示します。JavaScriptのカスタマイズを追加すると、帯にコピーボタンと折り返しの切り替えボタンが付きます。
 - GitHubと同じアラート記法(`> [!NOTE]` など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示できます(JavaScriptのカスタマイズが必要です)。
 
 デザインCSSでCSS変数を上書きすると、目次の見出し(`--toc-label`)、本文の最大幅(`--content-max`)、配色(`--link`、`--accent` など)を変えられます。
@@ -23,6 +24,16 @@
 - https://github.com/guitarrapc/hatenablog-theme-swifty/releases/latest
 
 中のスタイルシート`style.css`を、はてなブログの「デザイン」->「カスタマイズ」->「デザインCSS」に貼り付けて利用します。
+
+### コードブロックの機能
+
+コードブロックの上の帯の右端に、次のボタンを追加します。ボタンは帯の中にあるので、コードに重ならず、スマートフォンでも常に表示されます。
+
+- Copy: コードをコピーします。言語名やボタンの文字はコピーに含まれません。
+- Wrap: 長い行を折り返すか、横スクロールするかを切り替えます。既定は横スクロールです。
+
+> [!TIP]
+> zipの中の[customize-codeblock.html](customize-codeblock.html)を、はてなブログの「デザイン」->「カスタマイズ」->「ヘッダ」->「ブログタイトル下」に貼り付けます。
 
 ### アラート記法の機能
 
@@ -74,6 +85,7 @@ npx playwright install chromium
     ```html
     <script type="module" src="http://localhost:5173/@vite/client" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="http://localhost:5173/scss/style.scss" crossorigin="anonymous" />
+    <script type="text/javascript" src="http://localhost:5173/js/codeblock.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/alert.js" crossorigin="anonymous"></script>
     ```
 4. [blog.config.js](blog.config.js) の `BLOG_HOST` を1.のブログのドメイン名 (例: `example.hatenablog.com`) にします。開発サーバー、E2Eテスト、Lighthouseはこの設定を参照します。
@@ -150,19 +162,22 @@ hatenablog-theme-swifty/
 ┃   ┣ _core.scss                ... ページ全体の配置、フッター
 ┃   ┣ _header.scss              ... ヘッダー(はてなのヘッダーメニュー・読者になるボタンとの一体化)
 ┃   ┣ _entry.scss               ... 記事(本文、コード、コメント、ページャー)
+┃   ┣ _codeblock.scss           ... コードブロック(言語名の帯、ハイライトの色、ボタン)
 ┃   ┣ _alert.scss               ... アラート記法
 ┃   ┣ _table_of_contents.scss   ... 目次(本文の横に常に表示)
 ┃   ┣ _archive.scss             ... 記事の一覧
 ┃   ┣ _modules.scss             ... ブログパーツ
 ┃   ┗ _print.scss               ... 印刷用のスタイル
 ┣ js/
+┃ ┣ codeblock.js        ... コードブロックのボタン
 ┃ ┗ alert.js            ... アラート記法の変換
+┣ customize-codeblock.html ... コードブロックのボタンの配布用(js/codeblock.jsと同じ処理)
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/
   ┣ style.css           ... ビルド成果物
-  ┗ js/alert.js
+  ┗ js/
 ```
 
 詳しくは [.github/agent-docs/project-structure.md](.github/agent-docs/project-structure.md) を参照してください。

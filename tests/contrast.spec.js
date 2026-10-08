@@ -31,6 +31,7 @@ const TARGETS = {
   // はてな側のCSSがopacity: 0.7を当てており、spanとtimeに入れ子で掛かって0.49になる。
   // 指定色ではなく実際に描かれる色で見ないと見逃す
   最近のコメントの日時: '.hatena-module-recent-comments time.recent-comment-time',
+  コードブロックのボタン: '.code-block-button',
   ページ末尾フッタ: '#footer p',
   ページ末尾フッタのリンク: '#footer .services a',
   // はてなが文字色を !important で白にしているボタン。背景色で読めるようにしている

@@ -43,7 +43,11 @@ $svg-alerts: (
     "warning": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7.13 2.5a1 1 0 0 1 1.74 0l5.63 9.99a1 1 0 0 1-.87 1.49H2.37a1 1 0 0 1-.87-1.49z'/><path d='M8 6.25v3'/><path d='M8 11.4v.01'/></svg>", // 三角(!)
     "caution": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M5.3 1.75h5.4l3.55 3.55v5.4l-3.55 3.55H5.3l-3.55-3.55V5.3z'/><path d='M8 4.9v3.6'/><path d='M8 10.9v.01'/></svg>" // 八角形(!)
 );
-$svg-search:"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='currentColor' d='M16.7,15l-3.4-3.3h-.1a5.4,5.4,0,0,0,.9-3.1,5.6,5.6,0,1,0-5.6,5.6,5.4,5.4,0,0,0,3.1-.9.1.1,0,0,0,.1.1L15,16.7a1.1,1.1,0,0,0,.8.3,1.6,1.6,0,0,0,.9-.3,1.4,1.4,0,0,0,0-1.7M8.5,12.3A3.8,3.8,0,0,1,4.8,8.5,3.8,3.8,0,0,1,8.5,4.7a3.9,3.9,0,0,1,3.8,3.8,3.8,3.8,0,0,1-3.8,3.8'/></svg>"; // 検索モジュールのボタン
+// コードブロックのボタンのアイコン(mask-imageで使うため色はcurrentColorのままでよい)
+$svg-code-copy: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 10.5V3.5a1 1 0 0 1 1-1h7'/><rect x='5.5' y='5.5' width='8' height='8' rx='1.5'/></svg>"; // 重なった四角
+$svg-code-check: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3.2L13 4.8'/></svg>"; // チェック
+$svg-code-wrap: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 4h11'/><path d='M2.5 8h9a2 2 0 0 1 0 4h-3'/><path d='M10 10.5 8.5 12l1.5 1.5'/><path d='M2.5 12h3'/></svg>"; // 折り返す行
+$svg-search: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='currentColor' d='M16.7,15l-3.4-3.3h-.1a5.4,5.4,0,0,0,.9-3.1,5.6,5.6,0,1,0-5.6,5.6,5.4,5.4,0,0,0,3.1-.9.1.1,0,0,0,.1.1L15,16.7a1.1,1.1,0,0,0,.8.3,1.6,1.6,0,0,0,.9-.3,1.4,1.4,0,0,0,0-1.7M8.5,12.3A3.8,3.8,0,0,1,4.8,8.5,3.8,3.8,0,0,1,8.5,4.7a3.9,3.9,0,0,1,3.8,3.8,3.8,3.8,0,0,1-3.8,3.8'/></svg>"; // 検索モジュールのボタン
 
 // カラーパレット - 基本色定義
 // 色の命名規則: 番号が大きくなるほど濃くなる。ここに置くのは色の値だけで、用途はテーマ側で決める
@@ -56,7 +60,6 @@ $color-gray-300: #c9d8d4;
 $color-gray-500: #7e8e8a;
 $color-gray-600: #5b6b67;
 $color-gray-650: #5f6e68;
-$color-gray-700: #4f5f5b;
 $color-gray-800: #2b3836;
 $color-gray-850: #24312f;
 $color-gray-900: #172321;
@@ -72,8 +75,10 @@ $color-mint-800: #075a52;
 
 // コードハイライト用
 $color-purple-600: #7b3fb3;
+$color-indigo-600: #4a4fbf;
 $color-pink-600: #b2316b;
 $color-blue-600: #0e6e95;
+$color-green-700: #0a7350;
 $color-amber-700: #9a5b00;
 
 // アラート用 (GitHubのアラート記法の配色)
@@ -113,13 +118,15 @@ $light-theme: (
     "border-quote": $color-gray-500, // 引用の左の線。カードと引用の背景の両方に対して非テキストの3:1を満たす
     "shadow": $color-alpha-shadow,
 
+    // コードハイライト(_codeblock.scss)。はてなのハイライトの種類ごとに色相を分ける(theme-design-spec.md の「コードブロック」を参照)
     "code-text": $color-gray-850,
-    "code-keyword": $color-purple-600,
-    "code-preproc": $color-pink-600,
-    "code-function": $color-blue-600,
-    "code-punctuation": $color-gray-700,
-    "code-constant": $color-amber-700,
-    "code-comment": $color-gray-650,
+    "code-keyword": $color-purple-600, // synStatement: 制御構文・宣言のキーワード
+    "code-preproc": $color-indigo-600, // synPreProc: import / from / デコレータの@
+    "code-type": $color-green-700, // synType: 型・修飾子・CSSのプロパティ
+    "code-function": $color-blue-600, // synIdentifier: 関数名・クラス名・組み込み・CSSのセレクタ
+    "code-constant": $color-amber-700, // synConstant: 文字列・数値
+    "code-special": $color-pink-600, // synSpecial: エスケープ・文字列の埋め込みの括弧
+    "code-comment": $color-gray-650, // synComment
 
     // アラート記法(_alert.scss)。囲みの線・タイトル・アイコンの色。淡い背景もこの色から作る
     "alert-note": $color-alert-blue-600,
