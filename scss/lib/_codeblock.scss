@@ -7,7 +7,8 @@
  * はてなのアスキーアート(pre.lang-aa)は、はてなが等幅でないフォントで整えているので対象にしない
  */
 $code-header-height: 2.25rem; // コードブロックの上の帯。言語名とボタン(js/codeblock.js)を置く
-$code-padding-inline: 1.25em;
+// remで持つ。帯(::before)は文字が小さいので、emだとコードブロックと違う長さになり、帯の端がずれる
+$code-padding-inline: 1.125rem;
 
 .entry-content {
 
@@ -27,7 +28,7 @@ $code-padding-inline: 1.25em;
         padding: 1em $code-padding-inline;
         overflow-x: auto;
         border: 1px solid var(--border);
-        border-radius: var(--radius-small);
+        border-radius: var(--radius);
         background-color: var(--surface-muted);
         color: var(--code-text);
         font-family: var.$font-family-monospace;
@@ -57,9 +58,10 @@ $code-padding-inline: 1.25em;
         &::before {
             content: attr(data-lang);
             display: block;
-            // 横にスクロールしても帯と言語名が左端に残るようにする
+            // 横にスクロールしても帯と言語名が左端に残るようにする。
+            // stickyはスクロール領域の内側の余白の位置で止まるため、余白のぶん左へずらして枠の内側いっぱいで止める
             position: sticky;
-            left: 0;
+            left: (-$code-padding-inline);
             height: $code-header-height;
             margin: 0 (-$code-padding-inline) 1em;
             padding: 0 $code-padding-inline;

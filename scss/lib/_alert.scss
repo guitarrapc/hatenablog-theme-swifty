@@ -10,7 +10,7 @@
     padding: .8em 1.1em;
     // 枠は箱の範囲を示す手がかりなので、カードに対して3:1以上ある種類の色そのものにする
     border: 1px solid var(--alert-color);
-    border-radius: var(--radius-small);
+    border-radius: var(--radius);
     // 背景は種類の色をわずかに混ぜる。タイトルの文字(種類の色)が4.5:1を保てる薄さにする
     background-color: color-mix(in srgb, var(--alert-color) 4%, var(--surface));
     color: var(--text-body);

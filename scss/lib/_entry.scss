@@ -383,7 +383,7 @@ $heading-top-levels: (
         margin-inline: 0;
         padding: 1em 1.25em;
         border-left: 3px solid var(--border-quote);
-        border-radius: 0 var(--radius-small) var(--radius-small) 0;
+        border-radius: 0 var(--radius) var(--radius) 0;
         background-color: var(--surface-muted);
 
         // 段落に限らず最初と最後の要素(リストやコードブロックなど)の外側の余白をなくし、上下の余白を揃える
@@ -409,7 +409,7 @@ $heading-top-levels: (
     details {
         padding: 0 1.1em;
         border: 1px solid var(--border);
-        border-radius: var(--radius-small);
+        border-radius: var(--radius);
 
         > summary {
             padding-block: .7em;

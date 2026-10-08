@@ -46,11 +46,16 @@ test.describe('コードブロック(CSS)', () => {
 
     const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
       const header = getComputedStyle(pre, '::before');
+      const padding = getComputedStyle(pre).paddingLeft;
       return {
         lang: pre.getAttribute('data-lang'),
         content: header.content,
         position: header.position,
+        // 帯はコードブロックの内側の余白ぶん左へ広げ、その位置で止める。
+        // 帯は文字が小さいので、emで書くとコードブロックの余白と長さがずれて、スクロール時に左に隙間ができる
         left: header.left,
+        marginLeft: header.marginLeft,
+        expectedOffset: `-${padding}`,
         height: header.height,
         color: header.color,
         background: header.backgroundColor,
@@ -61,7 +66,8 @@ test.describe('コードブロック(CSS)', () => {
     for (const b of blocks) {
       expect(b.content, `${b.lang} の言語名`).toBe(`"${b.lang}"`);
       expect(b.position).toBe('sticky');
-      expect(b.left).toBe('0px');
+      expect(b.left, `${b.lang} の帯の止まる位置`).toBe(b.expectedOffset);
+      expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
       expect(b.height).toBe(`${HEADER_HEIGHT}px`);
       // 言語名は帯の背景に対してWCAG AA(4.5:1)
       expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
