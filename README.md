@@ -189,6 +189,7 @@ hatenablog-theme-swifty/
 ┣ customize-toc-toggle.html ... 目次の開閉の配布用(js/toc-toggle.jsと同じ処理)
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
+┣ articles/             ... 開発用ブログに投稿して見た目を確かめるFixture記事
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/
   ┣ style.css           ... ビルド成果物

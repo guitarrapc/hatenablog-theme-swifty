@@ -12,6 +12,7 @@
 ## E2Eテスト
 
 * テーマのレンダリング結果は、開発用ブログの[トップページ](https://guitarrapc-theme.hatenablog.com/)、[サンプル記事](https://guitarrapc-theme.hatenablog.com/entry/2025/05/10/204601)、[アーカイブ](https://guitarrapc-theme.hatenablog.com/archive/author/guitarrapc_tech)、[アバウト](https://guitarrapc-theme.hatenablog.com/about)を参照してください。テストで使う記事は `tests/constants.js` の `TEST_URLS` にまとめています。
+  * 要素ごとの見た目を確かめるFixture記事の原稿は `articles/` に置いています。開発用ブログの記事にない要素を確かめるときは、ここに足して投稿します(`articles/README.md` を参照)。
 * SCSSやJavaScriptの変更をした場合、PlaywrightでE2Eテストを実行します。
   * E2Eテストは`npm run test`で実行し、コマンドが終了するまでテスト結果の判断を待ってください。テスト結果`test-results/`でエラーが発生しているかどうかを確認できます。
   * E2Eテストは自動化、繰り返し実行を前提とするため、ユーザープロンプトやキャンセルをしないと完了しないようなテストコマンドは使用しないでください。

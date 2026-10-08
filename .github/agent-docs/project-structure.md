@@ -8,6 +8,7 @@
 | ---- | ---- |
 | .github/ | GitHub Actionsの設定ファイルとエージェント向けの指示ドキュメント |
 | .vscode/ | VSCodeの設定ファイル(scssのフォーマット調整に利用) |
+| articles/ | 開発用ブログに投稿して見た目を確かめるFixture記事(Markdown)。投稿のしかたと記事の一覧は `articles/README.md` |
 | build/ | ビルド成果物となるテーマ、本番はてなブログにはこのファイルを配布する |
 | js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉) |
 | lighthouse-report/ | Lighthouseの計測結果 |
