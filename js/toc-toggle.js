@@ -1,0 +1,79 @@
+/**
+ * Script to make the table of contents in Hatena Blog articles collapsible
+ */
+(function () {
+  'use strict';
+
+  // Remember whether the reader closed the table of contents, across pages
+  const STORAGE_KEY = 'swifty-toc-collapsed';
+
+  function isCollapsed() {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === 'true';
+    } catch (e) {
+      // Storage can be unavailable (e.g. blocked cookies); start open
+      return false;
+    }
+  }
+
+  function saveCollapsed(collapsed) {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(collapsed));
+    } catch (e) {
+      // Without storage the toggle still works on this page
+    }
+  }
+
+  // Lists already handled while the page was loading
+  const processed = new WeakSet();
+
+  // Wrap the list Hatena outputs in <details>, so the browser handles opening and closing
+  // and tells assistive technology whether it is open. The label text comes from the theme's CSS (--toc-label)
+  function enhance(list) {
+    const panel = document.createElement('details');
+    panel.className = 'toc-panel';
+    panel.open = !isCollapsed();
+
+    const summary = document.createElement('summary');
+    summary.className = 'toc-panel-summary';
+    const label = document.createElement('span');
+    label.className = 'toc-panel-label';
+    summary.appendChild(label);
+
+    list.before(panel);
+    panel.append(summary, list);
+
+    panel.addEventListener('toggle', function () {
+      saveCollapsed(!panel.open);
+    });
+  }
+
+  function convert(isParsed) {
+    // Only the table of contents placed directly in the article body, the same as the theme's layout
+    document.querySelectorAll('.entry-content > ul.table-of-contents').forEach(function (list) {
+      if (processed.has(list)) {
+        return;
+      }
+      // While loading, skip lists the parser may still be filling (nothing follows them yet)
+      if (!isParsed && !list.nextSibling && !list.parentNode.nextSibling) {
+        return;
+      }
+      processed.add(list);
+      enhance(list);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    // Convert as soon as the list is parsed, so a remembered closed state is applied before the article is painted
+    const observer = new MutationObserver(function () {
+      convert(false);
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    document.addEventListener('DOMContentLoaded', function () {
+      observer.disconnect();
+      convert(true);
+    });
+  } else {
+    convert(true);
+  }
+})();

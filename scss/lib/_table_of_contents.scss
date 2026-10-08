@@ -1,7 +1,11 @@
 @use "./_variable" as var;
+@use "./_functions" as fn;
 
 // 本文の横の目次が占める行の数。本文の直下の要素の数がこれを超えると、超えた先では目次が止まらずに流れる
 $toc-row-span: 1000;
+
+// 本文の直下にある目次の入れ物。JavaScript(js/toc-toggle.js)がなければ ul.table-of-contents、あれば details.toc-panel
+$toc-item: ":is(.table-of-contents, .toc-panel)";
 
 /*
  * 目次 (theme-design-spec.md の「目次」を参照)
@@ -78,33 +82,151 @@ $toc-row-span: 1000;
 }
 
 /*
- * 広い画面では本文の横に目次の列を足す。
- * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、全行にまたがらせて position: sticky で止める。
- * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
+ * 目次の開閉 (js/toc-toggle.js。component-specs.md の「目次の開閉」を参照)
+ * JavaScriptが ul.table-of-contents を details.toc-panel で包み、開閉はブラウザの details に任せる。
+ * 見出し(目次)は summary に出し、目次のリスト自体の箱と見出しはなくす
  */
-@media screen and #{var.$mq-lg} {
-    .entry:has(> .entry-inner > .entry-content > .table-of-contents) .entry-inner {
-        > * {
-            max-width: calc(var(--content-max) + var(--toc-width) + var(--toc-gap));
-        }
+.entry-content .toc-panel {
+    margin-inline: 0;
+    padding: 1.25em 1.5em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface-muted);
 
-        // ヘッダーと記事下は本文の列に揃える
-        > .entry-header,
-        > .entry-footer {
-            padding-right: calc(var(--toc-width) + var(--toc-gap));
+    > .table-of-contents {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+
+        &::before {
+            content: none;
         }
     }
 
-    .entry-content:has(> .table-of-contents) {
+    // 本文の折りたたみ(_entry.scss の details)の summary の余白と区切り線は使わず、ここで決める
+    > .toc-panel-summary {
+        margin: 0;
+        padding-block: 0;
+        border-bottom: 0;
+    }
+
+    // 閉じているときは見出しの行だけにする
+    &:not([open]) {
+        padding-block: .75em;
+    }
+
+    // 開いているときは見出しの行とリストの間に線を引く
+    &[open] > .toc-panel-summary {
+        margin-bottom: .75em;
+        padding-bottom: .5em;
+        border-bottom: 1px solid var(--border);
+    }
+}
+
+// 見出しの行。先頭に一覧のアイコン、右端に開閉の向きを示す山形のアイコンを置く
+.toc-panel-summary {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    min-height: 28px;
+    list-style: none;
+    color: var(--text-light);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+        display: none;
+    }
+
+    &::before,
+    &::after {
+        content: "";
+        flex: none;
+        width: 1.4em;
+        height: 1.4em;
+        background-color: currentColor;
+        mask: no-repeat center / contain;
+
+        // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            background-color: CanvasText;
+        }
+    }
+
+    &::before {
+        mask-image: fn.url-svg(var.$svg-toc-list, #000);
+    }
+
+    // 閉じているときは下向き(開ける)、開いているときは上向き(閉じる)
+    &::after {
+        margin-left: auto;
+        mask-image: fn.url-svg(var.$svg-toc-chevron, #000);
+        transition: rotate .2s ease;
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+    }
+
+    &:hover {
+        color: var(--link);
+    }
+}
+
+// 見出しの文字。目次のリストの見出しと同じく --toc-label から出す(デザインCSSで変えられる)
+.toc-panel-label::before {
+    content: var(--toc-label);
+}
+
+.toc-panel[open] > .toc-panel-summary::after {
+    rotate: 180deg;
+}
+
+/*
+ * 広い画面では本文の横に目次の列を足す。
+ * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、全行にまたがらせて position: sticky で止める。
+ * 目次を閉じると目次の列を細い帯の幅に縮め、そのぶん本文を広げる。
+ * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
+ */
+@media screen and #{var.$mq-lg} {
+    .entry:has(> .entry-inner > .entry-content > #{$toc-item}) {
+        // 目次の列と間隔。目次を閉じると細い帯の幅になる
+        --toc-column: var(--toc-width);
+        --toc-column-gap: var(--toc-gap);
+
+        .entry-inner {
+            > * {
+                max-width: calc(var(--content-max) + var(--toc-width) + var(--toc-gap));
+            }
+
+            // ヘッダーと記事下は本文の列に揃える
+            > .entry-header,
+            > .entry-footer {
+                padding-right: calc(var(--toc-column) + var(--toc-column-gap));
+            }
+        }
+    }
+
+    .entry:has(> .entry-inner > .entry-content > .toc-panel:not([open])) {
+        --toc-column: var(--toc-rail-width);
+        --toc-column-gap: var(--toc-rail-gap);
+    }
+
+    .entry-content:has(> #{$toc-item}) {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) var(--toc-width);
-        column-gap: var(--toc-gap);
+        grid-template-columns: minmax(0, 1fr) var(--toc-column);
+        column-gap: var(--toc-column-gap);
 
         > * {
             grid-column: 1;
         }
 
-        > .table-of-contents {
+        > #{$toc-item} {
             grid-column: 2;
             grid-row: 1 / span $toc-row-span;
             align-self: start;
@@ -123,8 +245,37 @@ $toc-row-span: 1000;
         }
 
         // 目次が先頭にあると、本文の列では次の見出しが先頭になる
-        > .table-of-contents:first-child + :is(h1, h2, h3, h4, h5, h6) {
+        > #{$toc-item}:first-child + :is(h1, h2, h3, h4, h5, h6) {
             --heading-space: 0px;
+        }
+
+        // 開いているときの山形は右向き(右へたたむ)
+        > .toc-panel[open] > .toc-panel-summary::after {
+            rotate: -90deg;
+        }
+
+        // 閉じているときは、一覧のアイコンと縦書きの「目次」を並べた細い帯にする
+        > .toc-panel:not([open]) > .toc-panel-summary {
+            flex-direction: column;
+            gap: .6em;
+            min-height: 0;
+            padding: .9em 0;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background-color: var(--surface);
+
+            &::after {
+                display: none;
+            }
+
+            &:hover {
+                border-color: var(--accent-strong);
+            }
+
+            .toc-panel-label {
+                writing-mode: vertical-rl;
+                letter-spacing: .2em;
+            }
         }
     }
 }

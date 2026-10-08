@@ -16,6 +16,7 @@ const TARGETS = {
   記事のカテゴリ: '.entry-categories a',
   コメントを書く: '.leave-comment-title',
   コードブロックのボタン: '.code-block-button',
+  目次の開閉: '.toc-panel-summary',
   ページャー: '.pager a',
   カテゴリのブログパーツ: '.hatena-module-category .hatena-urllist a',
   ブログパーツの日付: '.hatena-urllist .urllist-date-link a',

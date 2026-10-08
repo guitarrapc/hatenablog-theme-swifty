@@ -10,6 +10,7 @@
 - 記事の目次は、PCの広い画面(1200px以上)では本文の横に常に表示し、スクロールしても画面に残ります。**JavaScriptのカスタマイズは不要です。**
 - Chrome・Edgeでは、いま読んでいる見出しを目次で示します(CSSの `:target-current`)。
 - 1200pxより狭い画面では目次を本文中に表示し、本文を広く取ります。
+- JavaScriptのカスタマイズを追加すると、目次を開け閉めできます。本文の横の目次は閉じると細い帯になり、本文が広がります。閉じたかどうかはブラウザに記憶します。
 - コードブロックは、はてなのハイライトを種類ごとに色分けし、上の帯に言語名を表示します。JavaScriptのカスタマイズを追加すると、帯にコピーボタンと折り返しの切り替えボタンが付きます。
 - GitHubと同じアラート記法(`> [!NOTE]` など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示できます(JavaScriptのカスタマイズが必要です)。
 
@@ -34,6 +35,17 @@
 
 > [!TIP]
 > zipの中の[customize-codeblock.html](customize-codeblock.html)を、はてなブログの「デザイン」->「カスタマイズ」->「ヘッダ」->「ブログタイトル下」に貼り付けます。
+
+### 目次の開閉の機能
+
+目次の先頭に「目次」の見出しの行が付き、押すと開け閉めできます。
+
+- 本文の横の目次(1200px以上): 閉じると、一覧のアイコンと縦書きの「目次」だけの細い帯になり、そのぶん本文が広がります。
+- 本文中の目次: 閉じると見出しの行だけになります。
+- 閉じたかどうかはブラウザに記憶し、次に開いたページでも同じ状態で表示します。
+
+> [!TIP]
+> zipの中の[customize-toc-toggle.html](customize-toc-toggle.html)を、はてなブログの「デザイン」->「カスタマイズ」->「ヘッダ」->「ブログタイトル下」に貼り付けます。
 
 ### アラート記法の機能
 
@@ -86,6 +98,7 @@ npx playwright install chromium
     <script type="module" src="http://localhost:5173/@vite/client" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="http://localhost:5173/scss/style.scss" crossorigin="anonymous" />
     <script type="text/javascript" src="http://localhost:5173/js/codeblock.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://localhost:5173/js/toc-toggle.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/alert.js" crossorigin="anonymous"></script>
     ```
 4. [blog.config.js](blog.config.js) の `BLOG_HOST` を1.のブログのドメイン名 (例: `example.hatenablog.com`) にします。開発サーバー、E2Eテスト、Lighthouseはこの設定を参照します。
@@ -170,8 +183,10 @@ hatenablog-theme-swifty/
 ┃   ┗ _print.scss               ... 印刷用のスタイル
 ┣ js/
 ┃ ┣ codeblock.js        ... コードブロックのボタン
+┃ ┣ toc-toggle.js       ... 目次の開閉
 ┃ ┗ alert.js            ... アラート記法の変換
 ┣ customize-codeblock.html ... コードブロックのボタンの配布用(js/codeblock.jsと同じ処理)
+┣ customize-toc-toggle.html ... 目次の開閉の配布用(js/toc-toggle.jsと同じ処理)
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ blog.config.js        ... 開発用ブログの設定

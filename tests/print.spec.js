@@ -97,10 +97,10 @@ test.describe('印刷スタイルのテスト', () => {
     // 横向きの紙のように幅が広くても、止める・中でスクロールする目次は紙では途中が切れる
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator('.entry-content > .table-of-contents')).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    await expect(page.locator('.entry-content > :is(.table-of-contents, .toc-panel)')).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
     const measureToc = () => page.evaluate(() => {
-      const toc = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
+      const toc = /** @type {Element} */ (document.querySelector('.entry-content > :is(.table-of-contents, .toc-panel)'));
       return {
         position: getComputedStyle(toc).position,
         clipped: toc.scrollHeight - toc.clientHeight,

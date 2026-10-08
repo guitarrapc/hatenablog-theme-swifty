@@ -34,7 +34,7 @@ test.describe('記事ページのテスト', () => {
           // 引用は左に線があるので右の角だけ丸める
           引用: radius('.entry-content > blockquote:not(.markdown-alert)'),
           折りたたみ: radius('.entry-content details'),
-          目次: radius('.entry-content > .table-of-contents'),
+          目次: radius('.entry-content > :is(.table-of-contents, .toc-panel)'),
         },
         quoteLeft: radius('.entry-content > blockquote:not(.markdown-alert)', 'borderTopLeftRadius'),
         image: radius('.entry-content img.hatena-fotolife'),

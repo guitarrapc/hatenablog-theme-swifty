@@ -9,7 +9,7 @@
 | .github/ | GitHub Actionsの設定ファイルとエージェント向けの指示ドキュメント |
 | .vscode/ | VSCodeの設定ファイル(scssのフォーマット調整に利用) |
 | build/ | ビルド成果物となるテーマ、本番はてなブログにはこのファイルを配布する |
-| js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン) |
+| js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉) |
 | lighthouse-report/ | Lighthouseの計測結果 |
 | node_modules/ | npmのモジュール |
 | screenshots/ | Playwrightで取得したスクリーンショット |
@@ -21,7 +21,7 @@
 | .npmrc | npmの設定(バージョン固定、公開から14日未満のパッケージを入れない) |
 | blog.config.js | 開発用ブログのドメインと開発サーバーのポート。開発サーバー、E2Eテスト、Lighthouseが共通で参照する |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |
-| customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン) |
+| customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン)、`customize-toc-toggle.html`(目次の開閉) |
 | LICENSE.md | ライセンスファイル |
 | lighthouse.js | 開発用ブログに対してLighthouseを実行するスクリプト |
 | package-lock.json | npmのパッケージロックファイル |
@@ -45,7 +45,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `lib/_entry.scss` | 記事(ヘッダー、本文、コード、脚注、記事下、コメント、ページャー)を定義します。 |
 | `lib/_codeblock.scss` | コードブロック、インラインコード、ハイライトの色、コードブロックのボタン(`js/codeblock.js`)を定義します。 |
 | `lib/_alert.scss` | アラート記法(`js/alert.js` で変換した引用)を定義します。本文の引用の指定を上書きするため `_entry.scss` の後に読み込みます。 |
-| `lib/_table_of_contents.scss` | 目次を定義します。広い画面では本文の横に常に表示します。本文のリストの指定を上書きするため `_entry.scss` の後に読み込みます。 |
+| `lib/_table_of_contents.scss` | 目次を定義します。広い画面では本文の横に常に表示し、開閉(`js/toc-toggle.js`)の見出しの行と閉じたときの帯も定義します。本文のリストの指定を上書きするため `_entry.scss` の後に読み込みます。 |
 | `lib/_archive.scss` | 記事の一覧(トップページの一覧表示、アーカイブ、カテゴリー)を定義します。 |
 | `lib/_modules.scss` | ブログパーツ(サイドバーと記事下)を定義します。 |
 | `lib/_print.scss` | 印刷用のスタイルを定義します。各コンポーネントを上書きするため最後に読み込みます。 |
@@ -64,6 +64,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `tests/codeblock.spec.js` | コードブロックの言語名の帯、ハイライトの色分け、アスキーアートの除外、ボタン(`js/codeblock.js`)、`customize-codeblock.html` が同じ処理であること |
 | `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`)、見た目、`customize-alert.html` が同じ処理であること |
 | `tests/heading.spec.js` | 本文の見出し(書き方に合わせた帯・破線・縦棒の割り当て、字間と間隔) |
+| `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ、`customize-toc-toggle.html` が同じ処理であること |
 | `tests/toc.spec.js` | 目次を本文の横に常に表示すること、いま読んでいる見出しの表示、本文の間隔が変わらないこと |
 | `tests/target-size.spec.js` | 小さいリンクやボタンのタップ領域(WCAG 2.5.8) |
 | `tests/responsive.spec.js` | 画面幅ごとの表示と、横スクロールが出ないこと |

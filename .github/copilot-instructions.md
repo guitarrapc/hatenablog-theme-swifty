@@ -32,7 +32,7 @@
 ### デザイン仕様
 
 * [テーマデザイン仕様](agent-docs/theme-design-spec.md) - レイアウト、ヘッダー、見出し、コードブロック、アラート記法、目次、配色(CSS変数)、背景、描画の後回し、印刷などの仕様と、未対応の項目
-* [個別コンポーネント仕様](agent-docs/component-specs.md) - JavaScriptを使う機能(アラート記法、コードブロック)の仕様
+* [個別コンポーネント仕様](agent-docs/component-specs.md) - JavaScriptを使う機能(アラート記法、コードブロック、目次の開閉)の仕様
 
 ## 開発時の重要な注意事項
 

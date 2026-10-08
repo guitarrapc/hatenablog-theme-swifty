@@ -1,6 +1,6 @@
 # 個別コンポーネント仕様
 
-JavaScriptを使う機能(アラート記法、コードブロック)の仕様です。見た目は theme-design-spec.md を参照してください。
+JavaScriptを使う機能(アラート記法、コードブロック、目次の開閉)の仕様です。見た目は theme-design-spec.md を参照してください。
 
 ## アラート記法
 
@@ -122,3 +122,42 @@ theme-design-spec.md の「アラート記法」を参照。
 * 変数定義: `scss/lib/_variable.scss` - ハイライトの色(`$light-theme` の `code-*`)とボタンのアイコン(`$svg-code-*`)
 * ユーザー設定用: `customize-codeblock.html`
 * テスト: `tests/codeblock.spec.js`
+
+## 目次の開閉
+
+記事内の目次(`ul.table-of-contents`)を開け閉めできるようにする機能です。見た目と、JavaScriptなしでは実現できない理由は theme-design-spec.md の「目次」の「開け閉めする」を参照してください。この機能がなくても、目次は常に開いた状態で表示されます。
+
+### 1. 対象
+
+* 記事本文の直下(`.entry-content > ul.table-of-contents`)の目次。テーマのレイアウト(本文の横に置く)と同じ対象にする
+* 包み終えた目次は本文の直下ではなくなるため、複数回実行しても包み直さない
+
+### 2. 変換
+
+* リストを `details.toc-panel` で包み、先頭に `summary.toc-panel-summary` を置く。summary の中の `span.toc-panel-label` は空で、文字はCSSの `--toc-label` から出す(CSSの生成コンテンツもアクセシブルな名前に含まれる)
+* はてなのリストはそのまま移し、リンクを作り直さない
+* 開閉はブラウザの `<details>` に任せる。クリック、Enter、Spaceで開け閉めでき、開いているかどうかは支援技術に伝わる
+* 最初は開いている。記憶した状態があればそれに従う
+
+### 3. 状態の記憶
+
+* `toggle` イベントで、閉じたかどうかを `localStorage` の `swifty-toc-collapsed`(`true` / `false`)に保存する
+* `localStorage` が使えない環境では例外を握りつぶし、最初は開いた状態にする。そのページの中では開け閉めできる
+
+### 4. 変換のタイミング
+
+* 記憶した「閉じた」状態を、本文が描かれる前に反映するため、アラート記法と同じく読み込み中に変換する
+* ページの読み込み中は `MutationObserver` で要素の追加を監視し、パーサーが閉じたリスト(後ろに兄弟ノードがある、または親の後ろに兄弟ノードがある)から包む。閉じる前のリストは項目が増える途中なので包まない
+* DOMContentLoadedで監視をやめ、残ったリストをまとめて包む。スクリプトがDOMContentLoaded後に実行された場合は、すぐに包む
+
+### 5. ユーザー設定方法
+
+* `customize-toc-toggle.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。記事より前に置くことで、読み込み中の変換が本文より先に動く。`js/toc-toggle.js` と同じ処理であることをE2Eテストで確認する
+
+### 6. ファイル構成
+
+* JavaScript: `js/toc-toggle.js`
+* SCSS: `scss/lib/_table_of_contents.scss` - 目次、開閉の見出しの行、閉じたときの帯
+* 変数定義: `scss/lib/_variable.scss` - 帯の幅(`$layout` の `toc-rail-width` / `toc-rail-gap`)とアイコン(`$svg-toc-list` / `$svg-toc-chevron`)
+* ユーザー設定用: `customize-toc-toggle.html`
+* テスト: `tests/toc-toggle.spec.js`(JavaScriptありの開閉)、`tests/toc.spec.js`(JavaScriptなしの表示。スクリプトを止めて確かめる)

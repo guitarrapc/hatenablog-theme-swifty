@@ -12,6 +12,8 @@ $layout: (
     "content-max": 820px, // 本文の最大幅(1行に約51文字)。目次の有無に関わらず揃える
     "toc-width": 220px, // 本文の横に置く目次の幅
     "toc-gap": 40px, // 本文と目次の間隔
+    "toc-rail-width": 40px, // 本文の横の目次を閉じたときの帯の幅(js/toc-toggle.js)
+    "toc-rail-gap": 24px, // 本文と閉じた目次の帯の間隔
     "toc-sticky-top": 24px, // 本文の横の目次をスクロールで止める位置
     "radius": 16px, // カードと、本文中の箱(コードブロック・アラート・引用・折りたたみ・目次)の角丸
     "radius-small": 8px, // 画像とサムネイルの角丸。大きくすると画像の隅が欠けるので小さくする
@@ -28,7 +30,7 @@ $blog-header-height-xs: 64px;
 // 画面外の描画を後回しにする要素 (theme-design-spec.md の「描画の後回し」を参照)。
 // 本文の先頭の5要素は最初の画面にあることが多く、後回しにすると仮の高さから実際の高さに変わってずれるので外す。
 // 印刷で戻すときは詳細度を揃える必要があるため、同じセレクタを使う
-$deferred-content: ".entry-content > :not(:nth-child(-n + 5), .footnotes, .footnote, ul, ol, :empty), #box2";
+$deferred-content: ".entry-content > :not(:nth-child(-n + 5), .footnotes, .footnote, ul, ol, :empty, .toc-panel), #box2";
 
 // Font
 $font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "BIZ UDPGothic", Meiryo, sans-serif, "Segoe UI Emoji";
@@ -43,6 +45,9 @@ $svg-alerts: (
     "warning": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7.13 2.5a1 1 0 0 1 1.74 0l5.63 9.99a1 1 0 0 1-.87 1.49H2.37a1 1 0 0 1-.87-1.49z'/><path d='M8 6.25v3'/><path d='M8 11.4v.01'/></svg>", // 三角(!)
     "caution": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M5.3 1.75h5.4l3.55 3.55v5.4l-3.55 3.55H5.3l-3.55-3.55V5.3z'/><path d='M8 4.9v3.6'/><path d='M8 10.9v.01'/></svg>" // 八角形(!)
 );
+// 目次の開閉(js/toc-toggle.js)のアイコン
+$svg-toc-list: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round'><path d='M5.5 4h8'/><path d='M5.5 8h8'/><path d='M5.5 12h8'/><path d='M2.5 4h.01'/><path d='M2.5 8h.01'/><path d='M2.5 12h.01'/></svg>"; // 一覧
+$svg-toc-chevron: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l4 4 4-4'/></svg>"; // 下向きの山形
 // コードブロックのボタンのアイコン(mask-imageで使うため色はcurrentColorのままでよい)
 $svg-code-copy: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M2.5 10.5V3.5a1 1 0 0 1 1-1h7'/><rect x='5.5' y='5.5' width='8' height='8' rx='1.5'/></svg>"; // 重なった四角
 $svg-code-check: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3.2L13 4.8'/></svg>"; // チェック

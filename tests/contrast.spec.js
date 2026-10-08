@@ -26,6 +26,7 @@ const TARGETS = {
   記事下フッタ: '.entry-footer-section',
   記事下フッタのリンク: '.entry-footer-section a',
   引用: '.entry-content blockquote',
+  目次の開閉の見出し: '.toc-panel-summary',
   ページ内目次のリンク: '.entry-content .table-of-contents a',
   ページ内目次の入れ子のリンク: '.entry-content .table-of-contents ul a',
   // はてな側のCSSがopacity: 0.7を当てており、spanとtimeに入れ子で掛かって0.49になる。

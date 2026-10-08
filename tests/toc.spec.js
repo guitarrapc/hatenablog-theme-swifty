@@ -8,7 +8,13 @@ import { TEST_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
  *
  * はてなが本文中に出力する ul.table-of-contents を、JavaScriptなしで
  * 広い画面では本文の横に常に表示し、狭い画面では書かれた位置に表示する。
+ *
+ * 開閉のJavaScript(js/toc-toggle.js)を導入していないブログでの表示を確かめるため、
+ * 開発用ブログのheadが読み込むそのスクリプトを止めて測る。開閉は toc-toggle.spec.js で確かめる
  */
+test.beforeEach(async ({ page }) => {
+  await page.route('**/js/toc-toggle.js', (route) => route.abort());
+});
 
 /** 後回しにしている本文を一度描かせて、実際の高さで測れるようにする */
 const renderAll = (/** @type {any} */ page) => page.evaluate(async () => {
