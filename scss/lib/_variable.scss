@@ -146,6 +146,16 @@ $color-peach-600: #76524a;
 $color-peach-800: #482019;
 $color-peach-900: #331510;
 
+// Frost系 (わずかに青みを帯びた、ほぼ白の地とグレーの文字。配色 navy の地と文字)
+$color-frost-100: #f3f6f9;
+$color-frost-150: #fbfeff;
+$color-frost-200: #e3e8ee;
+$color-frost-300: #cbd3dc;
+$color-frost-500: #7f8792;
+$color-frost-600: #5b616a;
+$color-frost-800: #30343a;
+$color-frost-900: #1c1f24;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -217,6 +227,13 @@ $color-apricot-500: #b8665a;
 $color-apricot-700: #9a4134;
 $color-apricot-800: #7f3326;
 
+// Navy系 (配色 navy のアクセント。明度が低く白地で8.00:1あるので、飾りにも文字にも状態の印にも使える)
+$color-navy-50: #e9f0f7;
+$color-navy-100: #d5e2ef;
+$color-navy-300: #9fb8d2;
+$color-navy-700: #135389;
+$color-navy-800: #0d3a61;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -244,6 +261,7 @@ $color-alpha-shadow-lilac: rgba(32, 24, 48, 0.06);
 $color-alpha-shadow-linen: rgba(38, 39, 36, 0.06);
 $color-alpha-shadow-haze: rgba(34, 41, 44, 0.06);
 $color-alpha-shadow-peach: rgba(72, 32, 25, 0.06);
+$color-alpha-shadow-frost: rgba(19, 40, 64, 0.07);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -489,6 +507,34 @@ $schemes: (
 
         "code-text": $color-peach-800,
         "code-comment": $color-peach-600,
+    )),
+    // ほぼ白の地に、明度を落としたネイビーをアクセントにした落ち着いた配色。
+    // ネイビー(#135389)は白地で8.00:1あるので、ほかの配色と違い、飾り・リンク・状態の印に同じ色を使う。
+    // 地がカードの白とほとんど同じなので、カードは枠と影で分け、影をほかの配色より少し濃くする
+    "navy": map.merge($light-theme, (
+        "background": $color-frost-150,
+        "surface-muted": $color-frost-100,
+
+        "text-body": $color-frost-800,
+        "text-header": $color-frost-900,
+        "text-light": $color-frost-600,
+
+        "link": $color-navy-700,
+        "link-hover": $color-navy-800,
+
+        "accent": $color-navy-700,
+        "accent-strong": $color-navy-700,
+        "accent-line": $color-navy-300,
+        "accent-soft": $color-navy-50,
+        "accent-soft-hover": $color-navy-100,
+
+        "border": $color-frost-200,
+        "border-strong": $color-frost-300,
+        "border-quote": $color-frost-500,
+        "shadow": $color-alpha-shadow-frost,
+
+        "code-text": $color-frost-800,
+        "code-comment": $color-frost-600,
     )),
 );
 

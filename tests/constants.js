@@ -52,7 +52,7 @@ export const FIXTURE_URLS = {
 
 // 配色(theme-design-spec.md の「配色の切り替え」)。先頭が既定の配色で、残りは _variable.scss の $schemes と揃える。
 // 配色を足したら、ここにも足す。切り替わること(scheme.spec.js)と、配色ごとのAA(contrast.spec.js、alert.spec.js)を確かめる
-export const SCHEMES = ['mint', 'blue', 'pink', 'yellow', 'purple', 'beige', 'dusty-pink', 'apricot'];
+export const SCHEMES = ['mint', 'blue', 'pink', 'yellow', 'purple', 'beige', 'dusty-pink', 'apricot', 'navy'];
 
 /**
  * 配色を切り替えるデザインCSS。開発用ブログのデザインCSSで配色を切り替えていても狙った配色で測れるよう、既定の配色(mint)も明示する
