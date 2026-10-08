@@ -97,6 +97,31 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     expect(reopened.text).toBeCloseTo(opened.text, 0);
   });
 
+  test('本文の横の目次を開け閉めしても、タイトルの折り返しは変わらない', async ({ page }) => {
+    await page.setViewportSize(SIDE);
+    await openArticle(page);
+
+    const header = () => page.evaluate(() => {
+      const title = /** @type {Element} */ (document.querySelector('.entry-header .entry-title'));
+      const footer = /** @type {Element} */ (document.querySelector('.entry-footer'));
+      return {
+        title: title.getBoundingClientRect().toJSON(),
+        // 記事下は本文の列に揃うので、目次を閉じると本文と一緒に広がる
+        footerTextWidth: footer.getBoundingClientRect().width - parseFloat(getComputedStyle(footer).paddingRight),
+        text: document.querySelector('.entry-content > p')?.getBoundingClientRect().width ?? 0,
+      };
+    });
+
+    const opened = await header();
+    await page.locator('.toc-panel-summary').click();
+    const closed = await header();
+
+    // タイトルは目次の列と重ならない位置にあるので、目次の状態に関わらずカードの内側いっぱいで同じ形
+    expect(closed.title).toEqual(opened.title);
+    expect(closed.footerTextWidth).toBeCloseTo(closed.text, 0);
+    expect(opened.footerTextWidth).toBeCloseTo(opened.text, 0);
+  });
+
   test('本文中の目次は、閉じると見出しの行だけになる', async ({ page }) => {
     await page.setViewportSize(INLINE);
     await openArticle(page);
@@ -130,11 +155,20 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     await page.locator('.toc-panel-summary').click();
     expect((await measure(page)).stored).toBe('true');
 
-    // 次のページの読み込みで起きたレイアウトのずれを記録する
+    // 次のページの読み込みで起きたレイアウトのずれを、動いた要素と一緒に記録する
     await page.addInitScript(() => {
       /** @type {any} */ (window).layoutShifts = [];
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) /** @type {any} */ (window).layoutShifts.push(/** @type {any} */ (entry).value);
+        for (const entry of /** @type {any[]} */ (list.getEntries())) {
+          /** @type {any} */ (window).layoutShifts.push({
+            value: entry.value,
+            sources: entry.sources.map((/** @type {any} */ s) => {
+              const node = s.node;
+              const name = node ? (node.id || (typeof node.className === 'string' && node.className) || node.nodeName) : '?';
+              return `${name} y${Math.round(s.previousRect.y)}->${Math.round(s.currentRect.y)} w${Math.round(s.previousRect.width)}->${Math.round(s.currentRect.width)}`;
+            }),
+          });
+        }
       }).observe({ type: 'layout-shift', buffered: true });
     });
     await openArticle(page);
@@ -144,7 +178,8 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     expect(closed.text).toBeGreaterThan(closed.contentMax);
     // 本文が描かれる前に閉じた状態にするので、開いた状態から広がるずれが起きない
     const shifts = await page.evaluate(() => /** @type {any} */ (window).layoutShifts);
-    expect(shifts.reduce((/** @type {number} */ sum, /** @type {number} */ value) => sum + value, 0)).toBe(0);
+    const total = shifts.reduce((/** @type {number} */ sum, /** @type {any} */ shift) => sum + shift.value, 0);
+    expect(total, JSON.stringify(shifts)).toBe(0);
 
     // 開け直すと、それも記憶する
     await page.locator('.toc-panel-summary').click();

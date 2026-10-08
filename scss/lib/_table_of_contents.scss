@@ -204,8 +204,9 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
                 max-width: calc(var(--content-max) + var(--toc-width) + var(--toc-gap));
             }
 
-            // ヘッダーと記事下は本文の列に揃える
-            > .entry-header,
+            // 記事のヘッダー(タイトル)はカードの内側いっぱいに置く。目次の列は本文の先頭から下にしかなく、
+            // ヘッダーとは重ならないので、目次の幅や開閉でタイトルの折り返しを変えない。
+            // 記事下(コメントなど)は長い文章が入るので、本文の列に揃えて1行の長さを抑える
             > .entry-footer {
                 padding-right: calc(var(--toc-column) + var(--toc-column-gap));
             }

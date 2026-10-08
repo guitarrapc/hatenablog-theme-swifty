@@ -56,10 +56,13 @@ test.describe('目次を本文の横に常に表示する', () => {
       const toc = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
       const paragraph = /** @type {Element} */ (document.querySelector('.entry-content > p'));
       const header = /** @type {Element} */ (document.querySelector('.entry-header .entry-title'));
+      const footer = /** @type {Element} */ (document.querySelector('.entry-footer'));
       return {
         toc: toc.getBoundingClientRect().toJSON(),
         paragraph: paragraph.getBoundingClientRect().toJSON(),
+        content: /** @type {Element} */ (document.querySelector('.entry-content')).getBoundingClientRect().toJSON(),
         title: header.getBoundingClientRect().toJSON(),
+        footerTextRight: footer.getBoundingClientRect().right - parseFloat(getComputedStyle(footer).paddingRight),
         position: getComputedStyle(toc).position,
       };
     });
@@ -69,8 +72,11 @@ test.describe('目次を本文の横に常に表示する', () => {
     expect(layout.toc.left).toBeGreaterThan(layout.paragraph.right);
     // 目次は本文の先頭の高さから始まる
     expect(Math.abs(layout.toc.top - layout.paragraph.top)).toBeLessThan(40);
-    // 記事のタイトルは本文の列に揃い、目次の列にはみ出さない
-    expect(layout.title.right).toBeLessThanOrEqual(layout.paragraph.right + 1);
+    // 記事のタイトルは目次の列の上まで、カードの内側いっぱいに置く(目次は本文の先頭から下にしかないので重ならない)
+    expect(Math.abs(layout.title.left - layout.paragraph.left)).toBeLessThanOrEqual(1);
+    expect(Math.abs(layout.title.right - layout.content.right)).toBeLessThanOrEqual(1);
+    // 記事下は本文の列に揃える(コメントなどの長い文章の1行を抑える)
+    expect(Math.abs(layout.footerTextRight - layout.paragraph.right)).toBeLessThanOrEqual(1);
   });
 
   test('スクロールしても目次が画面内に止まる', async ({ page }) => {
