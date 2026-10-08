@@ -146,6 +146,7 @@ const SCHEMES = {
   ミント: ':root { --swifty-scheme: mint; }',
   ブルー: ':root { --swifty-scheme: blue; }',
   ピンク: ':root { --swifty-scheme: pink; }',
+  イエロー: ':root { --swifty-scheme: yellow; }',
 };
 
 /** デザインCSSで配色を切り替える。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */

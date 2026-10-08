@@ -13,7 +13,7 @@ import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET } from './constants.js';
  */
 
 // テーマが持つ配色(既定の mint 以外)。_variable.scss の $schemes と揃える
-const SCHEMES = ['blue', 'pink'];
+const SCHEMES = ['blue', 'pink', 'yellow'];
 const BLUE = ':root { --swifty-scheme: blue; }';
 
 // 切り替えで変わる配色の変数のうち、見た目の要になるもの

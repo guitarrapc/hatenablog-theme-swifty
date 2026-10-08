@@ -93,6 +93,17 @@ $color-mauve-800: #3a2e33;
 $color-mauve-850: #30262a;
 $color-mauve-900: #21181c;
 
+// Sand系 (わずかに黄みを帯びたグレー。配色 yellow の地と文字)
+$color-sand-100: #fbf9f2;
+$color-sand-150: #f7f4e9;
+$color-sand-200: #ebe5d5;
+$color-sand-300: #d9cfb6;
+$color-sand-500: #8e8570;
+$color-sand-600: #665e4b;
+$color-sand-800: #37322a;
+$color-sand-850: #2f2b24;
+$color-sand-900: #1e1b16;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -120,6 +131,15 @@ $color-rose-500: #d6457f;
 $color-rose-700: #b3245e;
 $color-rose-800: #8c1a48;
 
+// Honey系 (配色 yellow のアクセント。黄色は明るく文字や状態の印には使えないので、濃い側は琥珀から茶色にする)
+$color-honey-50: #fdf5d8;
+$color-honey-100: #f9e9b0;
+$color-honey-300: #ebcb62;
+$color-honey-400: #f2c230;
+$color-honey-500: #b07c00;
+$color-honey-700: #8a5a00;
+$color-honey-800: #6b4500;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -142,6 +162,7 @@ $color-alert-red-600: #d1242f;
 $color-alpha-shadow: rgba(23, 35, 33, 0.06);
 $color-alpha-shadow-slate: rgba(17, 24, 39, 0.06);
 $color-alpha-shadow-mauve: rgba(48, 24, 34, 0.06);
+$color-alpha-shadow-sand: rgba(45, 38, 20, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -247,6 +268,33 @@ $schemes: (
 
         "code-text": $color-mauve-850,
         "code-comment": $color-mauve-600,
+    )),
+    // わずかに黄みを帯びたグレーを地に、黄色をアクセントにする。
+    // 黄色は白地で1.68:1しかないので、見出しの縦棒や塗りなどの飾りだけに使い、リンクと状態の印は琥珀から茶色にする
+    "yellow": map.merge($light-theme, (
+        "background": $color-sand-150,
+        "surface-muted": $color-sand-100,
+
+        "text-body": $color-sand-800,
+        "text-header": $color-sand-900,
+        "text-light": $color-sand-600,
+
+        "link": $color-honey-700,
+        "link-hover": $color-honey-800,
+
+        "accent": $color-honey-400,
+        "accent-strong": $color-honey-500,
+        "accent-line": $color-honey-300,
+        "accent-soft": $color-honey-50,
+        "accent-soft-hover": $color-honey-100,
+
+        "border": $color-sand-200,
+        "border-strong": $color-sand-300,
+        "border-quote": $color-sand-500,
+        "shadow": $color-alpha-shadow-sand,
+
+        "code-text": $color-sand-850,
+        "code-comment": $color-sand-600,
     )),
 );
 
