@@ -11,6 +11,7 @@
 * 色を足すときは、`_variable.scss` で次の順に定義します。
   1. カラーパレットに色の値を足す(`$color-<色名>-<濃さ>`。番号が大きいほど濃い)
   2. テーマの配色マップ(`$light-theme`)に用途の名前を足す。キーがそのままCSS変数名になる
+  3. 切り替えられる配色(`$schemes`)で既定と違う色にしたいときは、その配色の差分に足す。足さなければ既定の配色の色を使う
 * data URIのSVGはCSS変数を参照できないため、`_functions.scss` の `url-svg($svg, $color)` で色を焼き込みます。SVGは `_variable.scss` に読める形のまま置き、色を差し込む箇所は `currentColor` と書きます。
 * テキストはWCAG 2.2 AA(4.5:1以上)を満たす色にします。色を変えたら `tests/contrast.spec.js` が通ることを確認し、選定理由を theme-design-spec.md に残します。
 

@@ -28,6 +28,22 @@
     --header-gutter: max(var(--gutter), 16px);
 }
 
+/*
+ * 配色の切り替え (theme-design-spec.md の「配色の切り替え」を参照)。
+ * コンテナのスタイルクエリは、要素自身ではなく祖先の値で判定する。:root の --swifty-scheme で判定できるのは
+ * その子の body からなので、切り替えた配色の変数は body に置く(ページの背景も body に置く)。
+ * スタイルクエリに対応していないブラウザでは、既定の配色のまま表示する。
+ * テーマは --swifty-scheme を宣言しない(書かれていなければ既定の配色)。テーマが既定値を宣言すると、
+ * デザインCSSがテーマより前に読み込まれるとき(開発用ブログなど)に、デザインCSSの指定がテーマの既定値に負けるため
+ */
+@each $name, $map in var.$schemes {
+    @container style(--swifty-scheme: #{$name}) {
+        body {
+            @include var.css-variables(var.changed-entries(var.$light-theme, $map));
+        }
+    }
+}
+
 html {
     // 目次などからページ内の見出しへ飛んだとき、見出しを画面の上端に貼り付けない
     scroll-padding-top: 24px;
@@ -43,11 +59,12 @@ body {
 
 /*
  * 既定の背景色。ユーザーの背景設定が勝つようカスケードレイヤーに入れる
- * (theme-design-spec.md の「背景色・背景画像」を参照)
+ * (theme-design-spec.md の「背景色・背景画像」を参照)。
+ * html には置かない。html に背景がなければ body の背景がページ全体(キャンバス)に広がるので、
+ * body に置いた切り替え後の配色の背景も、はてなの背景設定(body に出力される)もページ全体に効く
  */
 @layer swifty-background {
 
-    html,
     body {
         background-color: var(--background);
     }

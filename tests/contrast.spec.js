@@ -138,74 +138,124 @@ const measure = (/** @type {any} */ page, /** @type {Record<string,string>} */ t
  *
  * @param {any} page
  */
-const resetToThemeBackground = (page) => page.addStyleTag({ content: 'html, body { background: var(--background); }' });
+const resetToThemeBackground = (page) => page.addStyleTag({ content: 'body { background: var(--background); }' });
 
-test.describe('テキストのコントラスト', () => {
-  for (const [name, { path, targets }] of Object.entries({
-    本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
-    コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
-  })) {
-    test(`${name}がWCAG AAを満たす`, async ({ page }) => {
-      await page.navigateTo(path, { waitFor: 'networkidle' });
-      await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+// 配色ごとに測る(theme-design-spec.md の「配色の切り替え」)。切り替えはデザインCSSに書く1行
+const SCHEMES = {
+  // 開発用ブログのデザインCSSで配色を切り替えていても既定の配色を測れるよう、ミントも明示する
+  ミント: ':root { --swifty-scheme: mint; }',
+  ブルー: ':root { --swifty-scheme: blue; }',
+  ピンク: ':root { --swifty-scheme: pink; }',
+};
+
+/** デザインCSSで配色を切り替える。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */
+const applyScheme = async (/** @type {any} */ page, /** @type {string} */ css) => {
+  if (css) await page.addStyleTag({ content: css });
+};
+
+for (const [schemeName, schemeCss] of Object.entries(SCHEMES)) {
+  test.describe(`テキストのコントラスト(配色: ${schemeName})`, () => {
+    for (const [name, { path, targets }] of Object.entries({
+      本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
+      コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
+    })) {
+      test(`${name}がWCAG AAを満たす`, async ({ page }) => {
+        await page.navigateTo(path, { waitFor: 'networkidle' });
+      await applyScheme(page, schemeCss);
+        await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+        await resetToThemeBackground(page);
+
+        const { result } = await measure(page, targets);
+
+        for (const [target, measured] of Object.entries(result)) {
+          expect(measured, `${target} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
+          // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
+          expect(measured?.ratio,
+            `${target}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
+            .toBeGreaterThanOrEqual(AA_TEXT);
+        }
+      });
+    }
+
+    test('引用の左の線がカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await applyScheme(page, schemeCss);
+      await expect(page.locator('.entry-content blockquote').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+
+      // 引用であることを示す主な手がかり(背景はカードとほとんど差がなく、Windowsのハイコントラストでは消える)なので、
+      // 非テキストのコントラスト(WCAG 1.4.11)を満たす
+      const result = await page.evaluate(() => {
+        const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+        const luminance = (/** @type {number[]} */ rgb) => {
+          const [r, g, b] = rgb.map((v) => {
+            const c = v / 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+          });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const contrast = (/** @type {string} */ fg, /** @type {string} */ bg) => {
+          const a = luminance(channels(fg)) + 0.05;
+          const b = luminance(channels(bg)) + 0.05;
+          return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
+        };
+        const quote = /** @type {Element} */ (document.querySelector('.entry-content blockquote'));
+        const line = getComputedStyle(quote).borderLeftColor;
+        const card = getComputedStyle(/** @type {Element} */(quote.closest('.entry'))).backgroundColor;
+        const inside = getComputedStyle(quote).backgroundColor;
+        return { line, card, inside, vsCard: contrast(line, card), vsInside: contrast(line, inside) };
+      });
+
+      expect(result.vsCard, `引用の線 ${result.line} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+      expect(result.vsInside, `引用の線 ${result.line} と引用の背景 ${result.inside}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+    });
+
+    test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {
+      // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
+      await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
+      await applyScheme(page, schemeCss);
+      await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
       await resetToThemeBackground(page);
 
-      const { result } = await measure(page, targets);
+      const { link } = await measure(page, {});
 
-      for (const [target, measured] of Object.entries(result)) {
-        expect(measured, `${target} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
-        // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
-        expect(measured?.ratio,
-          `${target}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
-          .toBeGreaterThanOrEqual(AA_TEXT);
+      expect(link, '本文中のリンクが見つからない。テストデータを確認する').not.toBeNull();
+      expect(link?.vsBackground, `リンク ${link?.color} と背景`).toBeGreaterThanOrEqual(AA_TEXT);
+      // 下線があれば色の差に頼らなくてよい
+      if (link?.decoration !== 'underline') {
+        expect(link?.vsText, `下線のないリンク ${link?.color} と本文 ${link?.body}`).toBeGreaterThanOrEqual(DISTINCT_FROM_TEXT);
       }
     });
-  }
 
-  test('引用の左の線がカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator('.entry-content blockquote').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+    test('状態を示す印の色(目次の現在位置・フォーカスの枠)がカードの背景に対して3:1以上ある', async ({ page }) => {
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await applyScheme(page, schemeCss);
+      await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-    // 引用であることを示す主な手がかり(背景はカードとほとんど差がなく、Windowsのハイコントラストでは消える)なので、
-    // 非テキストのコントラスト(WCAG 1.4.11)を満たす
-    const result = await page.evaluate(() => {
-      const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
-      const luminance = (/** @type {number[]} */ rgb) => {
-        const [r, g, b] = rgb.map((v) => {
-          const c = v / 255;
-          return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-        });
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      };
-      const contrast = (/** @type {string} */ fg, /** @type {string} */ bg) => {
-        const a = luminance(channels(fg)) + 0.05;
-        const b = luminance(channels(bg)) + 0.05;
-        return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
-      };
-      const quote = /** @type {Element} */ (document.querySelector('.entry-content blockquote'));
-      const line = getComputedStyle(quote).borderLeftColor;
-      const card = getComputedStyle(/** @type {Element} */(quote.closest('.entry'))).backgroundColor;
-      const inside = getComputedStyle(quote).backgroundColor;
-      return { line, card, inside, vsCard: contrast(line, card), vsInside: contrast(line, inside) };
+      const result = await page.evaluate(() => {
+        const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
+        const luminance = (/** @type {number[]} */ rgb) => {
+          const [r, g, b] = rgb.map((v) => {
+            const c = v / 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+          });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        // 変数の値を、本文の中で描いたときの色にする
+        const probe = document.createElement('span');
+        /** @type {Element} */ (document.querySelector('.entry-content')).appendChild(probe);
+        const resolve = (/** @type {string} */ name) => {
+          probe.style.color = `var(--${name})`;
+          return getComputedStyle(probe).color;
+        };
+        const mark = resolve('accent-strong');
+        const card = resolve('surface');
+        probe.remove();
+        const a = luminance(channels(mark)) + 0.05;
+        const b = luminance(channels(card)) + 0.05;
+        return { mark, card, ratio: Number((Math.max(a, b) / Math.min(a, b)).toFixed(2)) };
+      });
+
+      expect(result.ratio, `印 ${result.mark} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
     });
-
-    expect(result.vsCard, `引用の線 ${result.line} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
-    expect(result.vsInside, `引用の線 ${result.line} と引用の背景 ${result.inside}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
   });
-
-  test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {
-    // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
-    await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
-    await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
-    await resetToThemeBackground(page);
-
-    const { link } = await measure(page, {});
-
-    expect(link, '本文中のリンクが見つからない。テストデータを確認する').not.toBeNull();
-    expect(link?.vsBackground, `リンク ${link?.color} と背景`).toBeGreaterThanOrEqual(AA_TEXT);
-    // 下線があれば色の差に頼らなくてよい
-    if (link?.decoration !== 'underline') {
-      expect(link?.vsText, `下線のないリンク ${link?.color} と本文 ${link?.body}`).toBeGreaterThanOrEqual(DISTINCT_FROM_TEXT);
-    }
-  });
-});
+}

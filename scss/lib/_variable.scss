@@ -1,3 +1,5 @@
+@use "sass:map";
+
 // Variables
 
 // Media Queries
@@ -69,6 +71,28 @@ $color-gray-800: #2b3836;
 $color-gray-850: #24312f;
 $color-gray-900: #172321;
 
+// Slate系 (わずかに青みを帯びた、ほぼ無彩色のグレー。配色 blue の地と文字)
+$color-slate-100: #f6f7f9;
+$color-slate-150: #f3f4f6;
+$color-slate-200: #e2e5ea;
+$color-slate-300: #c9ced6;
+$color-slate-500: #7d8592;
+$color-slate-600: #5a6270;
+$color-slate-800: #2a2f37;
+$color-slate-850: #24292f;
+$color-slate-900: #161a20;
+
+// Mauve系 (わずかに赤みを帯びたグレー。配色 pink の地と文字)
+$color-mauve-100: #faf5f7;
+$color-mauve-150: #f7f1f3;
+$color-mauve-200: #efe4e8;
+$color-mauve-300: #ddccd2;
+$color-mauve-500: #958389;
+$color-mauve-600: #6b5a61;
+$color-mauve-800: #3a2e33;
+$color-mauve-850: #30262a;
+$color-mauve-900: #21181c;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -77,6 +101,24 @@ $color-mint-400: #3cc4b0;
 $color-mint-500: #1fa593;
 $color-mint-700: #0b7268;
 $color-mint-800: #075a52;
+
+// Azure系 (配色 blue のアクセント)
+$color-azure-50: #edf3fd;
+$color-azure-100: #dce8fb;
+$color-azure-300: #a8c8f8;
+$color-azure-400: #4a8ff0;
+$color-azure-500: #2f74e0;
+$color-azure-700: #1a5fc8;
+$color-azure-800: #154c9e;
+
+// Rose系 (配色 pink のアクセント)
+$color-rose-50: #fdedf3;
+$color-rose-100: #fbdbe7;
+$color-rose-300: #f5b3cb;
+$color-rose-400: #f07fa8;
+$color-rose-500: #d6457f;
+$color-rose-700: #b3245e;
+$color-rose-800: #8c1a48;
 
 // コードハイライト用
 $color-purple-600: #7b3fb3;
@@ -98,6 +140,8 @@ $color-alert-red-600: #d1242f;
 
 // 半透明色
 $color-alpha-shadow: rgba(23, 35, 33, 0.06);
+$color-alpha-shadow-slate: rgba(17, 24, 39, 0.06);
+$color-alpha-shadow-mauve: rgba(48, 24, 34, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -147,6 +191,75 @@ $light-theme: (
     "alert-warning": $color-alert-yellow-700,
     "alert-caution": $color-alert-red-600,
 );
+
+// 配色の切り替え (theme-design-spec.md の「配色の切り替え」を参照)
+// デザインCSSに :root { --swifty-scheme: blue; } と書くと切り替わる。書かなければ(または mint なら)既定の配色($light-theme)
+$schemes: (
+    // ほぼ白のグレーを地に、青をアクセントにする
+    "blue": map.merge($light-theme, (
+        "background": $color-slate-150,
+        "surface-muted": $color-slate-100,
+
+        "text-body": $color-slate-800,
+        "text-header": $color-slate-900,
+        "text-light": $color-slate-600,
+
+        "link": $color-azure-700,
+        "link-hover": $color-azure-800,
+
+        "accent": $color-azure-400,
+        "accent-strong": $color-azure-500,
+        "accent-line": $color-azure-300,
+        "accent-soft": $color-azure-50,
+        "accent-soft-hover": $color-azure-100,
+
+        "border": $color-slate-200,
+        "border-strong": $color-slate-300,
+        "border-quote": $color-slate-500,
+        "shadow": $color-alpha-shadow-slate,
+
+        // ハイライトの色相はそのままで、地のグレーに合わせて文字とコメントだけ変える
+        "code-text": $color-slate-850,
+        "code-comment": $color-slate-600,
+    )),
+    // わずかに赤みを帯びたグレーを地に、ピンクをアクセントにする
+    "pink": map.merge($light-theme, (
+        "background": $color-mauve-150,
+        "surface-muted": $color-mauve-100,
+
+        "text-body": $color-mauve-800,
+        "text-header": $color-mauve-900,
+        "text-light": $color-mauve-600,
+
+        "link": $color-rose-700,
+        "link-hover": $color-rose-800,
+
+        "accent": $color-rose-400,
+        "accent-strong": $color-rose-500,
+        "accent-line": $color-rose-300,
+        "accent-soft": $color-rose-50,
+        "accent-soft-hover": $color-rose-100,
+
+        "border": $color-mauve-200,
+        "border-strong": $color-mauve-300,
+        "border-quote": $color-mauve-500,
+        "shadow": $color-alpha-shadow-mauve,
+
+        "code-text": $color-mauve-850,
+        "code-comment": $color-mauve-600,
+    )),
+);
+
+// $map のうち、$base と値が違うものだけを返す。切り替えた配色では、既定の配色と違う変数だけを出力する
+@function changed-entries($base, $map) {
+    $result: ();
+    @each $name, $value in $map {
+        @if map.get($base, $name) != $value {
+            $result: map.merge($result, ($name: $value));
+        }
+    }
+    @return $result;
+}
 
 // マップをCSS変数として出力する。:root(_core.scss)で配色($light-theme)とレイアウト($layout)に使う
 // ダークテーマを足すときは、$light-theme と同じキーを持つマップを用意して切り替えのセレクタで呼ぶ
