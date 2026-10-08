@@ -7,8 +7,10 @@ import { DEV_SERVER_URL } from '../blog.config.js';
 
 // テスト対象URL (開発用ブログの記事。blog.config.js のブログを変えたらここも合わせる)
 export const TEST_URLS = {
-  /** サンプル記事（目次・コードブロック・detailsあり） */
+  /** サンプル記事（目次・コードブロック・details・アラート記法あり） */
   SAMPLE_ARTICLE: '/entry/2025/05/10/204601',
+  /** サンプル記事（英語版。アラート記法あり） */
+  SAMPLE_ARTICLE_EN: '/entry/2026/01/08/004234',
   /** コードハイライト記事 */
   CODE_HIGHLIGHT: '/entry/2025/05/12/131258',
   /** 本文の段落中にリンクがある記事 */

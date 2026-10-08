@@ -31,7 +31,8 @@
 
 ### デザイン仕様
 
-* [テーマデザイン仕様](agent-docs/theme-design-spec.md) - 配色(CSS変数)、背景、描画の後回し、印刷などの仕様と、未対応の項目
+* [テーマデザイン仕様](agent-docs/theme-design-spec.md) - レイアウト、ヘッダー、見出し、アラート記法、目次、配色(CSS変数)、背景、描画の後回し、印刷などの仕様と、未対応の項目
+* [個別コンポーネント仕様](agent-docs/component-specs.md) - JavaScriptを使う機能(アラート記法)の仕様
 
 ## 開発時の重要な注意事項
 
@@ -43,6 +44,7 @@
 
 2. **デザインを実装する際は**
    - [テーマデザイン仕様](agent-docs/theme-design-spec.md) - 全体のデザイン仕様を確認
+   - [個別コンポーネント仕様](agent-docs/component-specs.md) - JavaScriptを使う機能の仕様を確認
    - [はてなブログHTML構造](agent-docs/hatena-blog-html-structure.md) - HTML構造を理解
 
 3. **テストとデプロイ**

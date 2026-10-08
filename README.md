@@ -10,6 +10,7 @@
 - 記事の目次は、PCやタブレットの広い画面(992px以上)では本文の横に常に表示し、スクロールしても画面に残ります。**JavaScriptのカスタマイズは不要です。**
 - Chrome・Edgeでは、いま読んでいる見出しを目次で示します(CSSの `:target-current`)。
 - スマートフォンでは目次を本文中に表示します。
+- GitHubと同じアラート記法(`> [!NOTE]` など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示できます(JavaScriptのカスタマイズが必要です)。
 
 デザインCSSでCSS変数を上書きすると、目次の見出し(`--toc-label`)、本文の最大幅(`--content-max`)、配色(`--link`、`--accent` など)を変えられます。
 
@@ -22,6 +23,25 @@
 - https://github.com/guitarrapc/hatenablog-theme-swifty/releases/latest
 
 中のスタイルシート`style.css`を、はてなブログの「デザイン」->「カスタマイズ」->「デザインCSS」に貼り付けて利用します。
+
+### アラート記法の機能
+
+引用の1行目に`[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]`、`[!CAUTION]`のいずれかを書くと、アラートとして表示します。同じ原稿はGitHubでもアラートとして表示され、スクリプトが動かない環境(RSSリーダーなど)では通常の引用として表示されます。
+
+```markdown
+> [!NOTE]
+> 流し読みでも把握しておいてほしい情報です。
+```
+
+GitHubと同じく、アラートは空行で区切って続けて書けます。また、`[!NOTE]`だけで本文のない引用はアラートにせずそのまま表示します。
+
+ただし、はてなブログは空行で区切った連続する引用を1つの引用にまとめて出力するため、次の点がGitHubと異なります。
+
+- アラートの直後に空行だけで区切って通常の引用を書くと、その引用もアラートの本文に含まれます。間に通常の段落を書いてください。
+- 引用の途中に、`[!NOTE]`などで始まり本文が続く段落があると、そこから新しいアラートになります。`[!NOTE]`だけの引用の直後に空行で区切って通常の引用を書いた場合も、1つのアラートになります。
+
+> [!TIP]
+> zipの中の[customize-alert.html](customize-alert.html)を、はてなブログの「デザイン」->「カスタマイズ」->「ヘッダ」->「ブログタイトル下」に貼り付けます。
 
 ## 開発環境を構築する
 
@@ -54,6 +74,7 @@ npx playwright install chromium
     ```html
     <script type="module" src="http://localhost:5173/@vite/client" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="http://localhost:5173/scss/style.scss" crossorigin="anonymous" />
+    <script type="text/javascript" src="http://localhost:5173/js/alert.js" crossorigin="anonymous"></script>
     ```
 4. [blog.config.js](blog.config.js) の `BLOG_HOST` を1.のブログのドメイン名 (例: `example.hatenablog.com`) にします。開発サーバー、E2Eテスト、Lighthouseはこの設定を参照します。
 
@@ -129,14 +150,19 @@ hatenablog-theme-swifty/
 ┃   ┣ _core.scss                ... ページ全体の配置、フッター
 ┃   ┣ _header.scss              ... ヘッダー(はてなのヘッダーメニュー・読者になるボタンとの一体化)
 ┃   ┣ _entry.scss               ... 記事(本文、コード、コメント、ページャー)
+┃   ┣ _alert.scss               ... アラート記法
 ┃   ┣ _table_of_contents.scss   ... 目次(本文の横に常に表示)
 ┃   ┣ _archive.scss             ... 記事の一覧
 ┃   ┣ _modules.scss             ... ブログパーツ
 ┃   ┗ _print.scss               ... 印刷用のスタイル
+┣ js/
+┃ ┗ alert.js            ... アラート記法の変換
+┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/
-  ┗ style.css           ... ビルド成果物
+  ┣ style.css           ... ビルド成果物
+  ┗ js/alert.js
 ```
 
 詳しくは [.github/agent-docs/project-structure.md](.github/agent-docs/project-structure.md) を参照してください。
