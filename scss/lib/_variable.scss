@@ -156,6 +156,19 @@ $color-frost-600: #5b616a;
 $color-frost-800: #30343a;
 $color-frost-900: #1c1f24;
 
+// Blush系 (わずかに赤みを帯びた、ほぼ白の地と線。配色 pink-green の地)
+$color-blush-100: #fbf2f0;
+$color-blush-150: #fdf7f5;
+$color-blush-200: #f2e4e0;
+$color-blush-300: #e0ccc6;
+
+// Olive系 (くすんだ緑の文字と線。配色 pink-green の文字)
+$color-olive-500: #7f8875;
+$color-olive-600: #626b58;
+$color-olive-700: #515d46;
+$color-olive-800: #3f4836;
+$color-olive-900: #333c2b;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -234,6 +247,14 @@ $color-navy-300: #9fb8d2;
 $color-navy-700: #135389;
 $color-navy-800: #0d3a61;
 
+// Rouge系 (配色 pink-green のアクセント。濃いピンクは白地で4.25:1あり、飾りと状態の印に使える。文字には少し濃くした色を使う)
+$color-rouge-50: #fbeaea;
+$color-rouge-100: #f6d5d6;
+$color-rouge-300: #e7a2a3;
+$color-rouge-500: #cb5457;
+$color-rouge-700: #b43f45;
+$color-rouge-800: #8f2f35;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -262,6 +283,7 @@ $color-alpha-shadow-linen: rgba(38, 39, 36, 0.06);
 $color-alpha-shadow-haze: rgba(34, 41, 44, 0.06);
 $color-alpha-shadow-peach: rgba(72, 32, 25, 0.06);
 $color-alpha-shadow-frost: rgba(19, 40, 64, 0.07);
+$color-alpha-shadow-olive: rgba(81, 93, 70, 0.07);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -535,6 +557,34 @@ $schemes: (
 
         "code-text": $color-frost-800,
         "code-comment": $color-frost-600,
+    )),
+    // ほぼ白の地に、濃いピンクのアクセントとくすんだ緑の文字を合わせた配色。
+    // 濃いピンク(#cb5457)は白地で4.25:1あるので飾りと状態の印に使い、文字(リンク)には少し濃くした色を使う。
+    // 地がカードの白とほとんど同じなので、カードは枠と影で分け、影をほかの配色より少し濃くする
+    "pink-green": map.merge($light-theme, (
+        "background": $color-blush-150,
+        "surface-muted": $color-blush-100,
+
+        "text-body": $color-olive-700,
+        "text-header": $color-olive-900,
+        "text-light": $color-olive-600,
+
+        "link": $color-rouge-700,
+        "link-hover": $color-rouge-800,
+
+        "accent": $color-rouge-500,
+        "accent-strong": $color-rouge-500,
+        "accent-line": $color-rouge-300,
+        "accent-soft": $color-rouge-50,
+        "accent-soft-hover": $color-rouge-100,
+
+        "border": $color-blush-200,
+        "border-strong": $color-blush-300,
+        "border-quote": $color-olive-500,
+        "shadow": $color-alpha-shadow-olive,
+
+        "code-text": $color-olive-800,
+        "code-comment": $color-olive-600,
     )),
 );
 
