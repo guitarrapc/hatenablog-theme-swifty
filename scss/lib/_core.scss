@@ -44,6 +44,56 @@
     }
 }
 
+/*
+ * ダークテーマ (theme-design-spec.md の「ダークテーマ」を参照)。
+ * OSのダークモードに合わせる。デザインCSSの --swifty-color-mode で、常にライト(light)・常にダーク(dark)にもできる。
+ * 配色の切り替えと同じく、:root の値をスタイルクエリで判定して、ダークの変数を body に置く。
+ * OSのダークモードはメディアクエリでしか分からないので、テーマの内部用の変数(--swifty-os-color-mode)に移し、
+ * 「ダークにするか」を1つのスタイルクエリで判定する。
+ * 印刷では使わない(@media screen)。紙は白地で、明るい文字が読めなくなるため
+ */
+@media screen and (prefers-color-scheme: dark) {
+    :root {
+        --swifty-os-color-mode: dark;
+        // ページのスクロールバーなど、ブラウザが描く部品をダークにする。:root は自分の値をスタイルクエリで判定できないので、
+        // デザインCSSで常にライト・常にダークにしたときも、ここだけはOSの設定に従う
+        color-scheme: dark;
+    }
+}
+
+// body の中のブラウザが描く部品(入力欄など)は、ライトのときはライトにする(:root がOSに合わせてダークになっても引きずらない)
+body {
+    color-scheme: light;
+}
+
+// ダークにする条件: 常にダーク、または、OSがダークで常にライトではない
+$dark-condition: "(style(--swifty-color-mode: dark) or (style(--swifty-os-color-mode: dark) and (not style(--swifty-color-mode: light))))";
+
+@media screen {
+    // 既定の配色のダーク。ライトの配色の変数をすべて上書きする(切り替えた配色のライトの変数も残さない)
+    @container #{$dark-condition} {
+        body {
+            @include var.css-variables(var.$dark-theme);
+            color-scheme: dark;
+        }
+
+        // ユーザーの背景設定(はてなの背景設定は body に出力される)より優先する。
+        // 明るい背景が残ると、明るい文字が読めなくなるため(「背景色・背景画像」を参照)
+        html body {
+            background: var(--background);
+        }
+    }
+
+    // 切り替えた配色のダーク。既定の配色のダークのあとに置き、それと違う変数だけを出力する
+    @each $name, $map in var.$dark-schemes {
+        @container #{$dark-condition} and style(--swifty-scheme: #{$name}) {
+            body {
+                @include var.css-variables(var.changed-entries(var.$dark-theme, $map));
+            }
+        }
+    }
+}
+
 html {
     // 目次などからページ内の見出しへ飛んだとき、見出しを画面の上端に貼り付けない
     scroll-padding-top: 24px;
@@ -196,13 +246,14 @@ h6 {
     // はてなが置く「はてなブログをはじめる(無料)」ボタン。
     // はてな既定の緑地(#25ab5d)に白文字は2.97:1で読みにくい。文字色ははてな側が !important で白にしているため、
     // 背景をリンク色にして白文字とのコントラストを確保する(theme-design-spec.md の「配色」を参照)
+    // ダークのリンク色は明るく白文字が読めないので、ダークでは白文字用の色(--button-solid)を使う
     .guest-footer .btn-register {
         padding: .6em 1.6em;
         border-radius: 999px;
-        background-color: var(--link);
+        background-color: var(--button-solid, var(--link));
 
         &:hover {
-            background-color: var(--link-hover);
+            background-color: var(--button-solid-hover, var(--link-hover));
         }
     }
 }

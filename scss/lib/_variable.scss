@@ -1,4 +1,5 @@
 @use "sass:map";
+@use "./_functions" as fn;
 
 // Variables
 
@@ -587,6 +588,291 @@ $schemes: (
         "code-comment": $color-olive-600,
     )),
 );
+
+// ダークテーマ (theme-design-spec.md の「ダークテーマ」を参照)
+// OSのダークモード(prefers-color-scheme: dark)か、デザインCSSの :root { --swifty-color-mode: dark; } で使う。
+// 配色ごとに、ライトと同じ色相で明るさを入れ替えた色を持つ。ほかの配色と共有する色がほとんどないので、
+// ライトのようにカラーパレットを経由せず、配色ごとの暗い色をそのまま書く。
+// 選び方: 背景は純黒にしない。カードとコードブロックは背景より少し明るい面にし、影ではなく明るさの差で階層を作る。文字は純白にしない。
+// 文字(本文・補助テキスト・リンク)は背景・カード・コードブロックのどれに対しても4.5:1以上、状態の印と引用の線は3:1以上にする
+
+// 配色によらない暗い色(影、コードハイライト、diff、アラート)。どの配色のコードブロック・カードの上でもAAを満たす
+$dark-shared: (
+    "shadow": rgba(0, 0, 0, 0.35),
+    "code-keyword": #d2a8ff,
+    "code-preproc": #a5b4fc,
+    "code-type": #7ee787,
+    "code-function": #79c0ff,
+    "code-constant": #f0b45a,
+    "code-special": #ff9bce,
+    "code-diff-added": #7ee2a8,
+    "code-diff-added-bg": #173a2a,
+    "code-diff-removed": #ffa8a0,
+    "code-diff-removed-bg": #47201e,
+    "alert-note": #4493f8,
+    "alert-tip": #3fb950,
+    "alert-important": #ab7df8,
+    "alert-warning": #d29922,
+    "alert-caution": #f85149,
+    // 検索ボタンのアイコン。データURIのSVGはCSS変数を参照できないので、暗い背景で見える色を焼き込む。
+    // ライトではこの変数を出力せず、_modules.scss の既定のアイコンを使う
+    "icon-search": fn.url-svg($svg-search, #82908c),
+);
+
+// 配色ごとの暗い色。キーは $light-theme の配色の部分と同じで、ダークにだけある変数は次の2つ。
+// - button-solid / button-solid-hover: はてなが文字色を白に固定するボタン(ページ末尾の「はてなブログをはじめる」)の背景。
+//   ライトではリンク色を使う(_core.scss)。ダークのリンク色は明るく白文字が読めないので、白文字で4.5:1を満たす色を別に持つ
+$dark-scheme-colors: (
+    "mint": (
+        "background": #0e1614,
+        "surface": #161e1c,
+        "surface-muted": #1d2523,
+        "surface-header": #161e1c,
+        "text-body": #d9e4e1,
+        "text-header": #edf3f2,
+        "text-light": #82908c,
+        "link": #31bca9,
+        "link-hover": #9ff1e1,
+        "accent": #31bca9,
+        "accent-strong": #099b8a,
+        "accent-line": #057a6c,
+        "accent-soft": #12352f,
+        "accent-soft-hover": #1a433c,
+        "border": #2d3533,
+        "border-strong": #464f4d,
+        "border-quote": #697471,
+        "button-solid": #048475,
+        "button-solid-hover": #077366,
+        "code-text": #d9e4e1,
+        "code-comment": #82908c,
+    ),
+    "blue": (
+        "background": #111419,
+        "surface": #191c22,
+        "surface-muted": #202329,
+        "surface-header": #191c22,
+        "text-body": #dde1ea,
+        "text-header": #eff2f7,
+        "text-light": #868b95,
+        "link": #6fa6f5,
+        "link-hover": #cae0ff,
+        "accent": #6fa6f5,
+        "accent-strong": #5187d3,
+        "accent-line": #4069a4,
+        "accent-soft": #1f2e44,
+        "accent-soft-hover": #2a3b54,
+        "border": #303339,
+        "border-strong": #4a4d54,
+        "border-quote": #6d727a,
+        "button-solid": #3f74bf,
+        "button-solid-hover": #3065af,
+        "code-text": #dde1ea,
+        "code-comment": #868b95,
+    ),
+    "pink": (
+        "background": #181214,
+        "surface": #21191c,
+        "surface-muted": #282023,
+        "surface-header": #21191c,
+        "text-body": #e8dee2,
+        "text-header": #f6f0f2,
+        "text-light": #94878b,
+        "link": #e580a4,
+        "link-hover": #ffcfde,
+        "accent": #e580a4,
+        "accent-strong": #c36285,
+        "accent-line": #984d68,
+        "accent-soft": #40242e,
+        "accent-soft-hover": #502f3a,
+        "border": #383033,
+        "border-strong": #534a4d,
+        "border-quote": #796e72,
+        "button-solid": #b45478,
+        "button-solid-hover": #a3456a,
+        "code-text": #e8dee2,
+        "code-comment": #94878b,
+    ),
+    "yellow": (
+        "background": #15140e,
+        "surface": #1d1c15,
+        "surface-muted": #25231c,
+        "surface-header": #1d1c15,
+        "text-body": #e4e1d9,
+        "text-header": #f3f2ec,
+        "text-light": #8e8b7f,
+        "link": #edc14d,
+        "link-hover": #fee29f,
+        "accent": #f6c330,
+        "accent-strong": #edc14d,
+        "accent-line": #816507,
+        "accent-soft": #372d11,
+        "accent-soft-hover": #45391a,
+        "border": #35332c,
+        "border-strong": #4f4d46,
+        "border-quote": #747268,
+        "button-solid": #8f7002,
+        "button-solid-hover": #7e6201,
+        "code-text": #e4e1d9,
+        "code-comment": #8e8b7f,
+    ),
+    "purple": (
+        "background": #151318,
+        "surface": #1d1b21,
+        "surface-muted": #242228,
+        "surface-header": #1d1b21,
+        "text-body": #e2e0e8,
+        "text-header": #f2f1f6,
+        "text-light": #8e8a95,
+        "link": #ac92ec,
+        "link-hover": #e1d7ff,
+        "accent": #ac92ec,
+        "accent-strong": #8e74cb,
+        "accent-line": #6f5b9e,
+        "accent-soft": #302942,
+        "accent-soft-hover": #3d3552,
+        "border": #343138,
+        "border-strong": #4e4c53,
+        "border-quote": #737079,
+        "button-solid": #8166bc,
+        "button-solid-hover": #7257ac,
+        "code-text": #e2e0e8,
+        "code-comment": #8e8a95,
+    ),
+    "beige": (
+        "background": #16130e,
+        "surface": #1e1b15,
+        "surface-muted": #26221c,
+        "surface-header": #1e1b15,
+        "text-body": #e5e1d9,
+        "text-header": #f4f1ec,
+        "text-light": #908a7f,
+        "link": #8faf8d,
+        "link-hover": #cee6cd,
+        "accent": #8faf8d,
+        "accent-strong": #71906f,
+        "accent-line": #597057,
+        "accent-soft": #283127,
+        "accent-soft-hover": #333e33,
+        "border": #36322c,
+        "border-strong": #504d46,
+        "border-quote": #747067,
+        "button-solid": #5e7c5c,
+        "button-solid-hover": #506d4e,
+        "code-text": #e5e1d9,
+        "code-comment": #908a7f,
+    ),
+    "dusty-pink": (
+        "background": #121319,
+        "surface": #1a1b21,
+        "surface-muted": #212229,
+        "surface-header": #1a1b21,
+        "text-body": #dfe1e9,
+        "text-header": #f0f1f7,
+        "text-light": #888a95,
+        "link": #c6959e,
+        "link-hover": #f8d3d9,
+        "accent": #c6959e,
+        "accent-strong": #a67780,
+        "accent-line": #825e64,
+        "accent-soft": #372a2c,
+        "accent-soft-hover": #463538,
+        "border": #313239,
+        "border-strong": #4b4d54,
+        "border-quote": #6e7079,
+        "button-solid": #956770,
+        "button-solid-hover": #855961,
+        "code-text": #dfe1e9,
+        "code-comment": #888a95,
+    ),
+    "apricot": (
+        "background": #19120f,
+        "surface": #211a17,
+        "surface-muted": #28211e,
+        "surface-header": #211a17,
+        "text-body": #e9dfdb,
+        "text-header": #f6f0ee,
+        "text-light": #948882,
+        "link": #dd8c7e,
+        "link-hover": #fed2ca,
+        "accent": #dd8c7e,
+        "accent-strong": #bc6e61,
+        "accent-line": #92564d,
+        "accent-soft": #3e2723,
+        "accent-soft-hover": #4e322e,
+        "border": #38312e,
+        "border-strong": #534b48,
+        "border-quote": #796f6b,
+        "button-solid": #ab5f53,
+        "button-solid-hover": #9b5045,
+        "code-text": #e9dfdb,
+        "code-comment": #948882,
+    ),
+    "navy": (
+        "background": #0e1517,
+        "surface": #161d20,
+        "surface-muted": #1d2427,
+        "surface-header": #161d20,
+        "text-body": #d9e3e7,
+        "text-header": #edf3f5,
+        "text-light": #808d92,
+        "link": #6daae6,
+        "link-hover": #c5e1ff,
+        "accent": #6daae6,
+        "accent-strong": #4f8bc5,
+        "accent-line": #3f6c99,
+        "accent-soft": #1f2f40,
+        "accent-soft-hover": #283c50,
+        "border": #2c3437,
+        "border-strong": #464f52,
+        "border-quote": #697477,
+        "button-solid": #3d78b1,
+        "button-solid-hover": #2d69a1,
+        "code-text": #d9e3e7,
+        "code-comment": #808d92,
+    ),
+    "pink-green": (
+        "background": #11150d,
+        "surface": #191e15,
+        "surface-muted": #20251c,
+        "surface-header": #191e15,
+        "text-body": #dde4d8,
+        "text-header": #eff3ec,
+        "text-light": #878f80,
+        "link": #eb8180,
+        "link-hover": #fed1cf,
+        "accent": #eb8180,
+        "accent-strong": #c86363,
+        "accent-line": #9c4e4e,
+        "accent-soft": #422424,
+        "accent-soft-hover": #52302f,
+        "border": #30352b,
+        "border-strong": #4a4f45,
+        "border-quote": #6d7467,
+        "button-solid": #b95556,
+        "button-solid-hover": #a84648,
+        "code-text": #dde4d8,
+        "code-comment": #878f80,
+    ),
+);
+
+// 既定の配色(mint)のダークテーマ。ダークのときは、ライトの配色の変数をすべてこのマップで上書きする
+$dark-theme: map.merge($dark-shared, map.get($dark-scheme-colors, "mint"));
+
+// 切り替えた配色($schemes)のダークテーマ
+$dark-schemes: ();
+@each $name, $map in $schemes {
+    @if not map.has-key($dark-scheme-colors, $name) {
+        @error "配色 #{$name} の暗い色が $dark-scheme-colors にない";
+    }
+    $dark-schemes: map.merge($dark-schemes, ($name: map.merge($dark-theme, map.get($dark-scheme-colors, $name))));
+}
+
+// ダークテーマはライトの配色の変数をすべて上書きする。上書きしない変数があると、ライトの色が暗い背景に残る
+@each $name, $value in $light-theme {
+    @if not map.has-key($dark-theme, $name) {
+        @error "ダークテーマに #{$name} がない";
+    }
+}
 
 // $map のうち、$base と値が違うものだけを返す。切り替えた配色では、既定の配色と違う変数だけを出力する
 @function changed-entries($base, $map) {

@@ -143,110 +143,123 @@ const resetToThemeBackground = (page) => page.addStyleTag({ content: 'body { bac
 /** デザインCSSで配色を切り替える(theme-design-spec.md の「配色の切り替え」)。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */
 const applyScheme = (/** @type {any} */ page, /** @type {string} */ scheme) => page.addStyleTag({ content: schemeCss(scheme) });
 
-// 配色ごとに測る
-for (const scheme of SCHEMES) {
-  test.describe(`テキストのコントラスト(配色: ${scheme})`, () => {
+/** 変数の値を、本文の中で描いたときの色(rgb)にする */
+const resolveColors = (/** @type {any} */ page, /** @type {string[]} */ names) => page.evaluate((/** @type {string[]} */ names) => {
+  const probe = document.createElement('span');
+  /** @type {Element} */ (document.querySelector('.entry-content')).appendChild(probe);
+  const colors = Object.fromEntries(names.map((name) => {
+    probe.style.color = `var(--${name})`;
+    return [name, getComputedStyle(probe).color];
+  }));
+  probe.remove();
+  return colors;
+}, names);
+
+/** WCAGのコントラスト比(rgb()の値どうし) */
+const ratio = (/** @type {string} */ fg, /** @type {string} */ bg) => {
+  const luminance = (/** @type {string} */ value) => {
+    const [r, g, b] = (value.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number).map((v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const a = luminance(fg) + 0.05;
+  const b = luminance(bg) + 0.05;
+  return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
+};
+
+/** 前提: ページがそのモードの配色になっていること(ダークなら暗い背景に明るい文字) */
+const expectMode = async (/** @type {any} */ page, /** @type {'light' | 'dark'} */ mode) => {
+  const colors = await resolveColors(page, ['background', 'text-body']);
+  const dark = ratio(colors.background, 'rgb(0, 0, 0)') < ratio(colors['text-body'], 'rgb(0, 0, 0)');
+  expect(dark, `前提: ${mode} の配色になっていること(背景 ${colors.background}、本文 ${colors['text-body']})`).toBe(mode === 'dark');
+};
+
+// ライト・ダーク(theme-design-spec.md の「ダークテーマ」)ごとに、すべての配色を測る。
+// 1つのページで配色を順に切り替えて測る(後から足した指定が勝つ)。失敗はすべて集めて出す(expect.soft)
+for (const mode of /** @type {const} */ (['light', 'dark'])) {
+  test.describe(`コントラスト(${mode})`, () => {
+    test.beforeEach(async ({ page }) => {
+      // OSのダークモード(prefers-color-scheme)を再現する
+      await page.emulateMedia({ colorScheme: mode });
+    });
+
     for (const [name, { path, targets }] of Object.entries({
       本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
       コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
     })) {
-      test(`${name}がWCAG AAを満たす`, async ({ page }) => {
+      test(`${name}がどの配色でもWCAG AAを満たす`, async ({ page }) => {
         await page.navigateTo(path, { waitFor: 'networkidle' });
-      await applyScheme(page, scheme);
         await expect(page.locator('#footer').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+        await expectMode(page, mode);
         await resetToThemeBackground(page);
 
-        const { result } = await measure(page, targets);
-
-        for (const [target, measured] of Object.entries(result)) {
-          expect(measured, `${target} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
-          // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
-          expect(measured?.ratio,
-            `${target}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
-            .toBeGreaterThanOrEqual(AA_TEXT);
+        for (const scheme of SCHEMES) {
+          await applyScheme(page, scheme);
+          const { result } = await measure(page, targets);
+          for (const [target, measured] of Object.entries(result)) {
+            expect.soft(measured, `${scheme}: ${target} が見つからない。テストデータかセレクタを確認する`).not.toBeNull();
+            // 失敗時に「指定色は足りているが描画色が足りない」を読み取れるよう、両方を出す
+            expect.soft(measured?.ratio,
+              `${scheme}: ${target}: 指定 ${measured?.color} / opacity ${measured?.opacity} → 描画 ${measured?.rendered} on ${measured?.background} (${measured?.fontSize})`)
+              .toBeGreaterThanOrEqual(AA_TEXT);
+          }
         }
       });
     }
 
-    test('引用の左の線がカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
+    test('引用の左の線が、どの配色でもカードと引用の背景の両方に対して3:1以上ある', async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-      await applyScheme(page, scheme);
       await expect(page.locator('.entry-content blockquote').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+      await expectMode(page, mode);
 
       // 引用であることを示す主な手がかり(背景はカードとほとんど差がなく、Windowsのハイコントラストでは消える)なので、
       // 非テキストのコントラスト(WCAG 1.4.11)を満たす
-      const result = await page.evaluate(() => {
-        const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
-        const luminance = (/** @type {number[]} */ rgb) => {
-          const [r, g, b] = rgb.map((v) => {
-            const c = v / 255;
-            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-          });
-          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        };
-        const contrast = (/** @type {string} */ fg, /** @type {string} */ bg) => {
-          const a = luminance(channels(fg)) + 0.05;
-          const b = luminance(channels(bg)) + 0.05;
-          return Number((Math.max(a, b) / Math.min(a, b)).toFixed(2));
-        };
-        const quote = /** @type {Element} */ (document.querySelector('.entry-content blockquote'));
-        const line = getComputedStyle(quote).borderLeftColor;
-        const card = getComputedStyle(/** @type {Element} */(quote.closest('.entry'))).backgroundColor;
-        const inside = getComputedStyle(quote).backgroundColor;
-        return { line, card, inside, vsCard: contrast(line, card), vsInside: contrast(line, inside) };
-      });
-
-      expect(result.vsCard, `引用の線 ${result.line} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
-      expect(result.vsInside, `引用の線 ${result.line} と引用の背景 ${result.inside}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
-    });
-
-    test('本文中のリンクが背景と周りの文字の両方から見分けられる', async ({ page }) => {
-      // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
-      await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
-      await applyScheme(page, scheme);
-      await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
-      await resetToThemeBackground(page);
-
-      const { link } = await measure(page, {});
-
-      expect(link, '本文中のリンクが見つからない。テストデータを確認する').not.toBeNull();
-      expect(link?.vsBackground, `リンク ${link?.color} と背景`).toBeGreaterThanOrEqual(AA_TEXT);
-      // 下線があれば色の差に頼らなくてよい
-      if (link?.decoration !== 'underline') {
-        expect(link?.vsText, `下線のないリンク ${link?.color} と本文 ${link?.body}`).toBeGreaterThanOrEqual(DISTINCT_FROM_TEXT);
+      for (const scheme of SCHEMES) {
+        await applyScheme(page, scheme);
+        const colors = await page.evaluate(() => {
+          const quote = /** @type {Element} */ (document.querySelector('.entry-content blockquote'));
+          return {
+            line: getComputedStyle(quote).borderLeftColor,
+            card: getComputedStyle(/** @type {Element} */ (quote.closest('.entry'))).backgroundColor,
+            inside: getComputedStyle(quote).backgroundColor,
+          };
+        });
+        expect.soft(ratio(colors.line, colors.card), `${scheme}: 引用の線 ${colors.line} とカード ${colors.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+        expect.soft(ratio(colors.line, colors.inside), `${scheme}: 引用の線 ${colors.line} と引用の背景 ${colors.inside}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
       }
     });
 
-    test('状態を示す印の色(目次の現在位置・フォーカスの枠)がカードの背景に対して3:1以上ある', async ({ page }) => {
+    test('本文中のリンクが、どの配色でも背景と周りの文字の両方から見分けられる', async ({ page }) => {
+      // 段落中にリンクのあるFixture記事(fixture-text.md の「リンク」)
+      await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
+      await expect(page.locator('.entry-content > p > a').first()).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+      await expectMode(page, mode);
+      await resetToThemeBackground(page);
+
+      for (const scheme of SCHEMES) {
+        await applyScheme(page, scheme);
+        const { link } = await measure(page, {});
+        expect.soft(link, `${scheme}: 本文中のリンクが見つからない。テストデータを確認する`).not.toBeNull();
+        expect.soft(link?.vsBackground, `${scheme}: リンク ${link?.color} と背景`).toBeGreaterThanOrEqual(AA_TEXT);
+        // 下線があれば色の差に頼らなくてよい
+        if (link?.decoration !== 'underline') {
+          expect.soft(link?.vsText, `${scheme}: 下線のないリンク ${link?.color} と本文 ${link?.body}`).toBeGreaterThanOrEqual(DISTINCT_FROM_TEXT);
+        }
+      }
+    });
+
+    test('状態を示す印の色(目次の現在位置・フォーカスの枠)が、どの配色でもカードの背景に対して3:1以上ある', async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-      await applyScheme(page, scheme);
       await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      await expectMode(page, mode);
 
-      const result = await page.evaluate(() => {
-        const channels = (/** @type {string} */ rgb) => (rgb.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number);
-        const luminance = (/** @type {number[]} */ rgb) => {
-          const [r, g, b] = rgb.map((v) => {
-            const c = v / 255;
-            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-          });
-          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        };
-        // 変数の値を、本文の中で描いたときの色にする
-        const probe = document.createElement('span');
-        /** @type {Element} */ (document.querySelector('.entry-content')).appendChild(probe);
-        const resolve = (/** @type {string} */ name) => {
-          probe.style.color = `var(--${name})`;
-          return getComputedStyle(probe).color;
-        };
-        const mark = resolve('accent-strong');
-        const card = resolve('surface');
-        probe.remove();
-        const a = luminance(channels(mark)) + 0.05;
-        const b = luminance(channels(card)) + 0.05;
-        return { mark, card, ratio: Number((Math.max(a, b) / Math.min(a, b)).toFixed(2)) };
-      });
-
-      expect(result.ratio, `印 ${result.mark} とカード ${result.card}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+      for (const scheme of SCHEMES) {
+        await applyScheme(page, scheme);
+        const colors = await resolveColors(page, ['accent-strong', 'surface']);
+        expect.soft(ratio(colors['accent-strong'], colors.surface), `${scheme}: 印 ${colors['accent-strong']} とカード ${colors.surface}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+      }
     });
   });
 }

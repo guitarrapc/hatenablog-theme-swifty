@@ -42,6 +42,9 @@ const openCodeArticle = async (/** @type {any} */ page, path = TEST_URLS.CODE_HI
 
 // 帯とボタンを確かめる記事。Fixture記事には言語名なし(data-lang="")、はてなが対応していない言語名(bash、js)、
 // 折りたたみやアラートの中のコードブロックがある
+// ライトとダーク(theme-design-spec.md の「ダークテーマ」)。色を測るテストは両方で行う
+const MODES = /** @type {const} */ (['light', 'dark']);
+
 const ARTICLES = {
   コードハイライト記事: TEST_URLS.CODE_HIGHLIGHT,
   コードブロックの記事: FIXTURE_URLS.CODEBLOCKS,
@@ -49,58 +52,64 @@ const ARTICLES = {
 
 test.describe('コードブロック(CSS)', () => {
   for (const [name, articlePath] of Object.entries(ARTICLES)) {
-    test(`はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る(${name})`, async ({ page }) => {
-      await openCodeArticle(page, articlePath);
+    for (const mode of MODES) {
+      test(`はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る(${name}, ${mode})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: mode });
+        await openCodeArticle(page, articlePath);
 
-      const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
-        const header = getComputedStyle(pre, '::before');
-        const padding = getComputedStyle(pre).paddingLeft;
-        return {
-          lang: pre.getAttribute('data-lang'),
-          content: header.content,
-          position: header.position,
-          // 帯はコードブロックの内側の余白ぶん左へ広げ、その位置で止める。
-          // 帯は文字が小さいので、emで書くとコードブロックの余白と長さがずれて、スクロール時に左に隙間ができる
-          left: header.left,
-          marginLeft: header.marginLeft,
-          expectedOffset: `-${padding}`,
-          height: header.height,
-          color: header.color,
-          background: header.backgroundColor,
-        };
-      }));
+        const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
+          const header = getComputedStyle(pre, '::before');
+          const padding = getComputedStyle(pre).paddingLeft;
+          return {
+            lang: pre.getAttribute('data-lang'),
+            content: header.content,
+            position: header.position,
+            // 帯はコードブロックの内側の余白ぶん左へ広げ、その位置で止める。
+            // 帯は文字が小さいので、emで書くとコードブロックの余白と長さがずれて、スクロール時に左に隙間ができる
+            left: header.left,
+            marginLeft: header.marginLeft,
+            expectedOffset: `-${padding}`,
+            height: header.height,
+            color: header.color,
+            background: header.backgroundColor,
+          };
+        }));
 
-      expect(blocks.length, '前提: コードブロックがあること').toBeGreaterThan(0);
-      for (const b of blocks) {
-        expect(b.content, `${b.lang} の言語名`).toBe(`"${b.lang}"`);
-        expect(b.position).toBe('sticky');
-        expect(b.left, `${b.lang} の帯の止まる位置`).toBe(b.expectedOffset);
-        expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
-        expect(b.height).toBe(`${HEADER_HEIGHT}px`);
-        // 言語名は帯の背景に対してWCAG AA(4.5:1)
-        expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
-      }
-    });
+        expect(blocks.length, '前提: コードブロックがあること').toBeGreaterThan(0);
+        for (const b of blocks) {
+          expect(b.content, `${b.lang} の言語名`).toBe(`"${b.lang}"`);
+          expect(b.position).toBe('sticky');
+          expect(b.left, `${b.lang} の帯の止まる位置`).toBe(b.expectedOffset);
+          expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
+          expect(b.height).toBe(`${HEADER_HEIGHT}px`);
+          // 言語名は帯の背景に対してWCAG AA(4.5:1)
+          expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
+        }
+      });
+    }
   }
 
-  test('はてなのハイライトの種類ごとに色を分ける', async ({ page }) => {
-    await openCodeArticle(page);
+  for (const mode of MODES) {
+    test(`はてなのハイライトの種類ごとに色を分ける(${mode})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: mode });
+      await openCodeArticle(page);
 
-    const colors = await page.evaluate(() => Object.fromEntries(
-      ['synStatement', 'synPreProc', 'synType', 'synIdentifier', 'synConstant', 'synSpecial', 'synComment'].map((cls) => {
-        // diffは追加・削除の行の色に置き換えるので除く
-        const el = document.querySelector(`.entry-content pre.code:not(.lang-diff) .${cls}`);
-        return [cls, el ? getComputedStyle(el).color : null];
-      })));
+      const colors = await page.evaluate(() => Object.fromEntries(
+        ['synStatement', 'synPreProc', 'synType', 'synIdentifier', 'synConstant', 'synSpecial', 'synComment'].map((cls) => {
+          // diffは追加・削除の行の色に置き換えるので除く
+          const el = document.querySelector(`.entry-content pre.code:not(.lang-diff) .${cls}`);
+          return [cls, el ? getComputedStyle(el).color : null];
+        })));
 
-    for (const [cls, color] of Object.entries(colors)) {
-      expect(color, `前提: ${cls} がコードハイライト記事にあること`).not.toBeNull();
-    }
-    // 7種類がすべて違う色(キーワードと型、記号と本文の文字が同じ色にならない)
-    expect(new Set(Object.values(colors)).size).toBe(7);
-    const text = await page.evaluate(() => getComputedStyle(/** @type {Element} */(document.querySelector('.entry-content pre.code'))).color);
-    expect(Object.values(colors)).not.toContain(text);
-  });
+      for (const [cls, color] of Object.entries(colors)) {
+        expect(color, `前提: ${cls} がコードハイライト記事にあること`).not.toBeNull();
+      }
+      // 7種類がすべて違う色(キーワードと型、記号と本文の文字が同じ色にならない)
+      expect(new Set(Object.values(colors)).size).toBe(7);
+      const text = await page.evaluate(() => getComputedStyle(/** @type {Element} */(document.querySelector('.entry-content pre.code'))).color);
+      expect(Object.values(colors)).not.toContain(text);
+    });
+  }
 
   test('はてなのアスキーアート(pre.lang-aa)はコードブロックにしない', async ({ page }) => {
     await openCodeArticle(page);
@@ -123,65 +132,68 @@ test.describe('コードブロック(CSS)', () => {
     expect(aa.wrapped).toBe(false);
   });
 
-  test('diffは追加と削除の行を、行頭の+/-に加えて枠の内側いっぱいの色で示す', async ({ page }) => {
-    await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
+  for (const mode of MODES) {
+    test(`diffは追加と削除の行を、行頭の+/-に加えて枠の内側いっぱいの色で示す(${mode})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: mode });
+      await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
 
-    const measure = () => page.evaluate(() => {
-      const pre = /** @type {HTMLElement} */ (document.querySelector('.entry-content pre.code.lang-diff'));
-      const box = pre.getBoundingClientRect();
-      const style = getComputedStyle(pre);
-      const header = /** @type {Element} */ (pre.querySelector('.synType'));
-      return {
-        // 枠の内側(内側の余白を含む)の左右
-        left: box.left + parseFloat(style.borderLeftWidth),
-        right: box.left + parseFloat(style.borderLeftWidth) + pre.clientWidth,
-        scrollWidth: pre.scrollWidth,
-        clientWidth: pre.clientWidth,
-        text: style.color,
-        header: { color: getComputedStyle(header).color, weight: getComputedStyle(header).fontWeight },
-        rows: [...pre.querySelectorAll('.synIdentifier, .synSpecial')].map((row) => {
-          const rect = row.getBoundingClientRect();
-          return {
-            kind: row.classList.contains('synIdentifier') ? 'added' : 'removed',
-            mark: row.textContent?.charAt(0),
-            left: rect.left,
-            right: rect.right,
-            color: getComputedStyle(row).color,
-            background: getComputedStyle(row).backgroundColor,
-          };
-        }),
-      };
+      const measure = () => page.evaluate(() => {
+        const pre = /** @type {HTMLElement} */ (document.querySelector('.entry-content pre.code.lang-diff'));
+        const box = pre.getBoundingClientRect();
+        const style = getComputedStyle(pre);
+        const header = /** @type {Element} */ (pre.querySelector('.synType'));
+        return {
+          // 枠の内側(内側の余白を含む)の左右
+          left: box.left + parseFloat(style.borderLeftWidth),
+          right: box.left + parseFloat(style.borderLeftWidth) + pre.clientWidth,
+          scrollWidth: pre.scrollWidth,
+          clientWidth: pre.clientWidth,
+          text: style.color,
+          header: { color: getComputedStyle(header).color, weight: getComputedStyle(header).fontWeight },
+          rows: [...pre.querySelectorAll('.synIdentifier, .synSpecial')].map((row) => {
+            const rect = row.getBoundingClientRect();
+            return {
+              kind: row.classList.contains('synIdentifier') ? 'added' : 'removed',
+              mark: row.textContent?.charAt(0),
+              left: rect.left,
+              right: rect.right,
+              color: getComputedStyle(row).color,
+              background: getComputedStyle(row).backgroundColor,
+            };
+          }),
+        };
+      });
+
+      const unwrapped = await measure();
+      expect(unwrapped.rows.map((r) => r.kind).sort(), '前提: 追加と削除の行があること').toEqual(['added', 'removed']);
+      const [added, removed] = ['added', 'removed'].map((kind) => /** @type {any} */ (unwrapped.rows.find((r) => r.kind === kind)));
+      // 色だけに頼らず、行頭の+/-を残す
+      expect(added.mark).toBe('+');
+      expect(removed.mark).toBe('-');
+      expect(added.background).not.toBe(removed.background);
+      for (const r of unwrapped.rows) {
+        expect(contrast(r.color, r.background), `${r.kind} ${r.color} on ${r.background}`).toBeGreaterThanOrEqual(4.5);
+      }
+      // ファイル名の行は追加・削除の色と紛れないよう、本文の文字色の太字にする
+      expect(unwrapped.header.color).toBe(unwrapped.text);
+      expect(Number(unwrapped.header.weight)).toBeGreaterThanOrEqual(700);
+
+      // 行の塗りは枠の内側の左端から、少なくとも右端まで(長い行は横スクロールの先まで)
+      for (const r of unwrapped.rows) {
+        expect(Math.abs(r.left - unwrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+        expect(r.right, `${r.kind} の行の右端`).toBeGreaterThanOrEqual(unwrapped.right - 1);
+      }
+
+      // 折り返したときは、塗りも枠の内側にちょうど収まり、横にはみ出さない
+      await page.locator('.code-block:has(> pre.lang-diff) .code-block-wrap').click();
+      const wrapped = await measure();
+      expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
+      for (const r of wrapped.rows) {
+        expect(Math.abs(r.left - wrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+        expect(Math.abs(r.right - wrapped.right), `${r.kind} の行の右端`).toBeLessThanOrEqual(1);
+      }
     });
-
-    const unwrapped = await measure();
-    expect(unwrapped.rows.map((r) => r.kind).sort(), '前提: 追加と削除の行があること').toEqual(['added', 'removed']);
-    const [added, removed] = ['added', 'removed'].map((kind) => /** @type {any} */ (unwrapped.rows.find((r) => r.kind === kind)));
-    // 色だけに頼らず、行頭の+/-を残す
-    expect(added.mark).toBe('+');
-    expect(removed.mark).toBe('-');
-    expect(added.background).not.toBe(removed.background);
-    for (const r of unwrapped.rows) {
-      expect(contrast(r.color, r.background), `${r.kind} ${r.color} on ${r.background}`).toBeGreaterThanOrEqual(4.5);
-    }
-    // ファイル名の行は追加・削除の色と紛れないよう、本文の文字色の太字にする
-    expect(unwrapped.header.color).toBe(unwrapped.text);
-    expect(Number(unwrapped.header.weight)).toBeGreaterThanOrEqual(700);
-
-    // 行の塗りは枠の内側の左端から、少なくとも右端まで(長い行は横スクロールの先まで)
-    for (const r of unwrapped.rows) {
-      expect(Math.abs(r.left - unwrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
-      expect(r.right, `${r.kind} の行の右端`).toBeGreaterThanOrEqual(unwrapped.right - 1);
-    }
-
-    // 折り返したときは、塗りも枠の内側にちょうど収まり、横にはみ出さない
-    await page.locator('.code-block:has(> pre.lang-diff) .code-block-wrap').click();
-    const wrapped = await measure();
-    expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
-    for (const r of wrapped.rows) {
-      expect(Math.abs(r.left - wrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
-      expect(Math.abs(r.right - wrapped.right), `${r.kind} の行の右端`).toBeLessThanOrEqual(1);
-    }
-  });
+  }
 
   test('構文の誤り(synError)は色だけでなく波線でも示す', async ({ page }) => {
     await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);

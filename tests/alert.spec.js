@@ -695,19 +695,26 @@ test.describe('アラート記法', () => {
     await page.screenshot({ path: 'screenshots/alert.png', fullPage: false });
   });
 
-  // アラートの淡い背景はカードの色(--surface)から作るので、カードの色を変える配色もあり、配色ごとに測る
-  for (const scheme of SCHEMES) {
-    test(`種類ごとの色がWCAG AAを満たす(配色: ${scheme})`, async ({ page }) => {
+  // アラートの淡い背景はカードの色(--surface)から作るので、カードの色を変える配色もあり、配色ごとに測る。
+  // ダークではアラートの色も暗い背景用に変わる(theme-design-spec.md の「ダークテーマ」)。1つのページで配色を順に切り替えて測る
+  for (const mode of /** @type {const} */ (['light', 'dark'])) {
+    test(`種類ごとの色が、どの配色でもWCAG AAを満たす(${mode})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: mode });
       await setupFixture(page);
-      await page.addStyleTag({ content: schemeCss(scheme) });
 
-      for (const s of await getAlertStyles(page)) {
-        // タイトルと本文は、種類の色を混ぜた淡い背景の上で4.5:1以上
-        expect(contrast(s.titleColor, s.background), `${s.type} のタイトル ${s.titleColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
-        expect(contrast(s.bodyColor, s.background), `${s.type} の本文 ${s.bodyColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
-        // 背景はカードとほとんど差がないので、枠が箱の範囲を示す。カードに対して3:1以上
-        expect(contrast(s.borders[0].color, s.cardBackground), `${s.type} の枠 ${s.borders[0].color} on ${s.cardBackground}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+      for (const scheme of SCHEMES) {
+        await page.addStyleTag({ content: schemeCss(scheme) });
+        for (const s of await getAlertStyles(page)) {
+          // タイトルと本文は、種類の色を混ぜた淡い背景の上で4.5:1以上
+          expect.soft(contrast(s.titleColor, s.background), `${scheme}: ${s.type} のタイトル ${s.titleColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
+          expect.soft(contrast(s.bodyColor, s.background), `${scheme}: ${s.type} の本文 ${s.bodyColor} on ${s.background}`).toBeGreaterThanOrEqual(AA_TEXT);
+          // 背景はカードとほとんど差がないので、枠が箱の範囲を示す。カードに対して3:1以上
+          expect.soft(contrast(s.borders[0].color, s.cardBackground), `${scheme}: ${s.type} の枠 ${s.borders[0].color} on ${s.cardBackground}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+        }
       }
+      // 前提: ダークのときは、アラートの背景が暗いこと(ダークの配色で測れていること)
+      const [first] = await getAlertStyles(page);
+      expect(contrast(first.background, 'rgb(0, 0, 0)') < contrast(first.background, 'rgb(255, 255, 255)'), `前提: ${mode} の配色であること(${first.background})`).toBe(mode === 'dark');
     });
   }
 

@@ -322,7 +322,9 @@
         height: 32px;
         border: none;
         border-radius: 50%;
-        background: transparent fn.url-svg(var.$svg-search, var.$color-gray-600) no-repeat center;
+        // データURIのSVGは色をCSS変数から取れないので、ダークでは暗い背景で見える色を焼き込んだアイコン(--icon-search)に替える
+        background: transparent no-repeat center;
+        background-image: var(--icon-search, #{fn.url-svg(var.$svg-search, var.$color-gray-600)});
         background-size: 18px 18px;
         color: transparent;
         overflow: hidden;
