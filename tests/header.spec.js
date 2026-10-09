@@ -153,7 +153,7 @@ test.describe('ヘッダー', () => {
 
   // ヘッダーの下の余白は、続く要素の上の余白と相殺されるので、ページの作りによらず同じになる
   for (const [name, path, selector] of [
-    ['記事ページ(パンくずの入ったカード)', TEST_URLS.SAMPLE_ARTICLE, '.breadcrumb'],
+    ['記事ページ(記事のカード)', TEST_URLS.SAMPLE_ARTICLE, '#main-inner > .entry'],
     ['トップページ(記事の一覧のカード)', TEST_URLS.HOME, '#main-inner .entry, #main-inner .archive-entries'],
     ['カテゴリのページ(パンくず)', '/archive/category/test', '.breadcrumb'],
   ]) {

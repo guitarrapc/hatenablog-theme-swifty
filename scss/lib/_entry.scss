@@ -127,10 +127,20 @@
 }
 
 // カテゴリは丸いラベルにせず、記事の一覧と同じ「test / テスト」の形にする(_variable.scss の category-text-list)。
-// 丸いラベルはタイトルの下で目立ちすぎるため
+// 丸いラベルはタイトルの下で目立ちすぎるため。
+// 記事のヘッダーの1行目(タイトルの上)に置く。記事ページでは、表示しないパンくずの代わりになる(_core.scss)
 .entry-categories {
     @include var.category-text-list;
-    order: 2;
+    order: -1;
+    flex-basis: 100%;
+}
+
+// パンくずを表示するとき(_core.scss の --swifty-entry-breadcrumb: show)は、カテゴリを日付の横に置く
+@container style(--swifty-entry-breadcrumb: show) {
+    body.page-entry .entry-categories {
+        order: 2;
+        flex-basis: auto;
+    }
 }
 
 // 大きく、行の高さを詰めて塊として見せる(theme-design-spec.md の「見出しと引用」を参照)。
@@ -807,9 +817,11 @@ $card-shadow-reach: var.$card-shadow-reach;
     clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
 }
 
-// パンくずもつなげた記事は、上下とも影を切る
-body.page-entry:has(#top-box .breadcrumb) #main-inner > .entry:has(+ .pager-permalink) {
-    clip-path: inset(0 (-$card-shadow-reach));
+// パンくずも表示してつなげた記事は、上下とも影を切る
+@container style(--swifty-entry-breadcrumb: show) {
+    body.page-entry:has(#top-box .breadcrumb) #main-inner > .entry:has(+ .pager-permalink) {
+        clip-path: inset(0 (-$card-shadow-reach));
+    }
 }
 
 .pager-permalink {

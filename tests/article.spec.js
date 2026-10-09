@@ -93,9 +93,46 @@ test.describe('記事ページのテスト', () => {
     }
   });
 
-  test('記事ページでは、パンくずを記事のカードの上端に入れ、タイトルの上に置く', async ({ page }) => {
+  // はてなの設定でパンくずを表示しているときの出力(開発用ブログの設定に関わらず確かめるため、なければ差し込む)
+  const BREADCRUMB = '<div id="top-box"><div class="breadcrumb" data-test-id="breadcrumb"><div class="breadcrumb-inner"><a class="breadcrumb-link" href="/"><span>トップ</span></a> <span class="breadcrumb-gt">&gt;</span> <span class="breadcrumb-child"><a class="breadcrumb-child-link" href="/archive/category/test"><span>test</span></a></span> <span class="breadcrumb-gt">&gt;</span> <span class="breadcrumb-child"><span>記事のタイトル</span></span></div></div></div>';
+  const ensureBreadcrumb = (/** @type {any} */ page) => page.evaluate((/** @type {string} */ html) => {
+    if (!document.getElementById('top-box')) document.getElementById('content')?.insertAdjacentHTML('beforebegin', html);
+  }, BREADCRUMB);
+
+  test('記事ページでは、パンくずを表示せず、パンくずの位置(タイトルの上)にカテゴリを置き、タイトルの下は日付だけにする', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+    await ensureBreadcrumb(page);
+
+    const layout = await page.evaluate(() => {
+      const rect = (/** @type {string} */ selector) => /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().toJSON();
+      const entry = /** @type {Element} */ (document.querySelector('.entry'));
+      return {
+        topBox: getComputedStyle(/** @type {Element} */ (document.getElementById('top-box'))).display,
+        entry: rect('.entry'),
+        title: rect('.entry-title'),
+        date: rect('.entry-header .date'),
+        categories: rect('.entry-categories'),
+        // 記事のカードはパンくずとつながず、上の枠と角丸がある
+        top: [getComputedStyle(entry).borderTopWidth, getComputedStyle(entry).borderTopLeftRadius],
+      };
+    });
+
+    // パンくずは表示しない(構造化データははてなが別の script で出力する)
+    expect(layout.topBox).toBe('none');
+    expect(layout.top[0]).toBe('1px');
+    expect(layout.top[1]).not.toBe('0px');
+    // カテゴリはタイトルの上、日付はタイトルの下
+    expect(layout.categories.bottom).toBeLessThanOrEqual(layout.title.top + 1);
+    expect(layout.categories.left).toBeCloseTo(layout.title.left, 0);
+    expect(layout.date.top).toBeGreaterThanOrEqual(layout.title.bottom - 1);
+  });
+
+  test('--swifty-entry-breadcrumb: show では、パンくずを記事のカードの上端に入れてタイトルの上に置き、カテゴリは日付の横に戻す', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+    await ensureBreadcrumb(page);
+    await page.addStyleTag({ content: ':root { --swifty-entry-breadcrumb: show; }' });
 
     const layout = await page.evaluate(() => {
       const rect = (/** @type {string} */ selector) => /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().toJSON();
@@ -151,7 +188,8 @@ test.describe('記事の日付とパンくず', () => {
 
   test('日付とパンくずは、英数字を等幅にした同じ書体で、本文より小さく字間を空ける', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    const entry = await metaText(page, ['.entry-header .date', '.breadcrumb']);
+    // 記事ページではパンくずを表示しないので、パンくずはカテゴリのページで測る
+    const entry = await metaText(page, ['.entry-header .date']);
     await page.navigateTo('/archive/category/test', { waitFor: 'networkidle' });
     const archive = await metaText(page, ['.archive-date', '.breadcrumb']);
 

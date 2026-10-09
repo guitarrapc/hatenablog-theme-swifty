@@ -20,7 +20,6 @@ const TARGETS = {
   読者になるボタン: '.blog-controlls-subscribe-btn',
   // 表示モードのボタン(js/dark-mode.js。開発用ブログはheadで読み込む)。アイコンを文字色で描く
   表示モードのボタン: '.color-mode-toggle-button',
-  パンくずのリンク: '.breadcrumb a',
   カテゴリ: '.entry-categories a',
   本文: '.entry-content p',
   記事の投稿日時: '.entry-date a',
@@ -41,6 +40,13 @@ const TARGETS = {
   ページ末尾フッタのリンク: '#footer .services a',
   // はてなが文字色を !important で白にしているボタン。背景色で読めるようにしている
   はてなブログをはじめるボタン: '#footer .guest-footer .btn-register',
+};
+
+/** カテゴリのページ。パンくずはカードの外(ページの背景の上)にある */
+const CATEGORY_PAGE_TARGETS = {
+  パンくずのリンク: '.breadcrumb a',
+  記事の一覧の日付: '.archive-entry .archive-date',
+  記事の一覧のカテゴリ: '.archive-entry .categories a',
 };
 
 /** コードハイライト。はてなのハイライトの種類ごとに、コードブロックの背景の上で測る */
@@ -148,7 +154,8 @@ const applyScheme = (/** @type {any} */ page, /** @type {string} */ scheme) => p
 /** 変数の値を、本文の中で描いたときの色(rgb)にする */
 const resolveColors = (/** @type {any} */ page, /** @type {string[]} */ names) => page.evaluate((/** @type {string[]} */ names) => {
   const probe = document.createElement('span');
-  /** @type {Element} */ (document.querySelector('.entry-content')).appendChild(probe);
+  // 記事の一覧などの本文のないページでは body で測る(配色の変数は body に置くので、どちらでも同じ値になる)
+  /** @type {Element} */ (document.querySelector('.entry-content') ?? document.body).appendChild(probe);
   const colors = Object.fromEntries(names.map((name) => {
     probe.style.color = `var(--${name})`;
     return [name, getComputedStyle(probe).color];
@@ -190,6 +197,8 @@ for (const mode of /** @type {const} */ (['light', 'dark'])) {
     for (const [name, { path, targets }] of Object.entries({
       本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
       コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
+      // 記事ページではパンくずを表示しないので、パンくずはカテゴリのページ(ページの背景の上)で測る
+      カテゴリのページ: { path: '/archive/category/test', targets: CATEGORY_PAGE_TARGETS },
     })) {
       test(`${name}がどの配色でもWCAG AAを満たす`, async ({ page }) => {
         await page.navigateTo(path, { waitFor: 'networkidle' });
