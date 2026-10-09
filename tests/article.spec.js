@@ -28,7 +28,7 @@ test.describe('記事ページのテスト', () => {
       };
       return {
         // 記事ページでは記事のカードの上にパンくず、下に前後の記事をつなげて角を丸めないので、同じカードのブログパーツで測る
-        card: radius('#box2 .hatena-module'),
+        card: radius('#box2-inner'),
         boxes: {
           コードブロック: radius('.entry-content pre.code'),
           アラート: radius('.entry-content .markdown-alert'),
@@ -504,6 +504,70 @@ test.describe('前後の記事', () => {
     const m = await measurePager(page);
     expect(m.prev).toBeNull();
     expect(m.next?.right).toBeCloseTo(m.pagerLine[1], 0);
+  });
+});
+
+test.describe('ブログパーツ', () => {
+  const openBlogParts = async (/** @type {any} */ page) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('#box2 .hatena-module').first(), '前提: ブログパーツがあること').toBeAttached();
+    await page.addStyleTag({ content: '#box2 { content-visibility: visible !important; }' });
+  };
+
+  test('ブログパーツは1枚のカードにまとめ、中は記事下の段と同じ形(上の線と見出し)にする', async ({ page }) => {
+    await openBlogParts(page);
+    const m = await page.evaluate(() => {
+      const card = /** @type {Element} */ (document.querySelector('#box2-inner'));
+      const share = document.querySelector('.entry-footer .social-buttons');
+      const modules = [...document.querySelectorAll('#box2 .hatena-module')].filter((el) => getComputedStyle(el).display !== 'none');
+      const label = (/** @type {Element} */ el, /** @type {string | undefined} */ pseudo) => {
+        const s = getComputedStyle(el, pseudo);
+        return { size: s.fontSize, weight: s.fontWeight, spacing: s.letterSpacing, color: s.color };
+      };
+      return {
+        card: { radius: getComputedStyle(card).borderTopLeftRadius, background: getComputedStyle(card).backgroundColor, entryBackground: getComputedStyle(/** @type {Element} */ (document.querySelector('.entry'))).backgroundColor },
+        modules: modules.map((el) => {
+          const s = getComputedStyle(el);
+          return { name: el.querySelector('.hatena-module-title')?.textContent?.trim(), lines: [s.borderTopWidth, s.borderBottomWidth], background: s.backgroundColor, shadow: s.boxShadow, title: label(/** @type {Element} */ (el.querySelector('.hatena-module-title'))), titleDot: getComputedStyle(/** @type {Element} */ (el.querySelector('.hatena-module-title')), '::before').content };
+        }),
+        shareLabel: share ? label(share, '::before') : null,
+        itemLines: [...document.querySelectorAll('#box2 .hatena-urllist > li')].map((li) => getComputedStyle(li).borderTopWidth),
+      };
+    });
+
+    // カードはブログ全体で1枚。記事のカードと同じ形
+    expect(m.card.radius).not.toBe('0px');
+    expect(m.card.background).toBe(m.card.entryBackground);
+    expect(m.modules.length).toBeGreaterThan(3);
+    for (const mod of m.modules) {
+      // ブログパーツごとのカードにはせず、上にだけ線を引く
+      expect(mod.lines, mod.name).toEqual(['1px', '0px']);
+      expect(mod.background, mod.name).toBe('rgba(0, 0, 0, 0)');
+      expect(mod.shadow, mod.name).toBe('none');
+      // 見出しは記事下の段(この記事を共有)と同じ形。丸の印は付けない
+      expect(mod.title, mod.name).toEqual(m.shareLabel);
+      expect(mod.titleDot, mod.name).toBe('none');
+    }
+    // 項目の間は線ではなく余白で区切る
+    expect(m.itemLines.every((w) => w === '0px')).toBe(true);
+  });
+
+  test('中身のないブログパーツは出さず、スクリプトが後から項目を足すものは足した時点で出す', async ({ page }) => {
+    await openBlogParts(page);
+    const visible = await page.evaluate(() => {
+      // 項目のないブログパーツ(注目記事・参加グループなどで項目がないとき、はてなは空のリストを出力する)
+      const box = /** @type {Element} */ (document.querySelector('#box2-inner'));
+      box.insertAdjacentHTML('beforeend', '<div class="hatena-module test-empty-module"><div class="hatena-module-title">空のブログパーツ</div><div class="hatena-module-body"><ul class="hatena-urllist"> </ul></div></div>');
+      // リストのないブログパーツ(自分で書いたHTML)は、中身を判定せず出す
+      box.insertAdjacentHTML('beforeend', '<div class="hatena-module test-html-module"><div class="hatena-module-title">HTML</div><div class="hatena-module-body">文字だけのHTML</div></div>');
+      const shown = (/** @type {string} */ selector) => getComputedStyle(/** @type {Element} */ (document.querySelector(selector))).display !== 'none';
+      const before = { empty: shown('.test-empty-module'), html: shown('.test-html-module') };
+      // スクリプトが項目を足す
+      document.querySelector('.test-empty-module ul')?.insertAdjacentHTML('beforeend', '<li><a href="#">足した項目</a></li>');
+      return { ...before, afterAdding: shown('.test-empty-module') };
+    });
+
+    expect(visible).toEqual({ empty: false, html: true, afterAdding: true });
   });
 });
 

@@ -3,24 +3,23 @@
 
 /*
  * ブログパーツ (theme-design-spec.md の「ブログパーツ」を参照)
- * ワンカラムなので、サイドバー(#box2)は本文の下にカードを並べる。
- * カードの高さはブログパーツごとにまちまちなので、段組みにして上から詰める(グリッドだと行ごとに隙間が空く)。
- * 記事下(関連記事)のブログパーツは記事のカードの中にあるので、カードにはしない
+ * ワンカラムなので、サイドバー(#box2)は本文の下に1枚のカードにして置く。
+ * 中は記事下の段(この記事を共有・コメント欄)と同じく、ブログパーツごとに上の線と見出しを付けた段にする。
+ * ブログパーツの高さはまちまちなので、段組みにして上から詰める(グリッドだと行ごとに隙間が空く)。
+ * 記事下(関連記事)のブログパーツは記事のカードの中にあるので、記事下の段にする(_entry.scss の「記事下」)
  */
 #box2-inner {
-    columns: 300px 3;
-    column-gap: 16px;
+    @include var.card;
+    columns: 260px 3;
+    column-gap: 48px;
+    padding: 24px var(--card-padding-inline) 32px;
 }
 
 #box2 .hatena-module {
-    @include var.card;
     break-inside: avoid;
-    margin: 0 0 16px;
-    padding: 24px var(--card-padding-inline);
-
-    @media #{var.$mq-sm} {
-        padding: 24px 28px;
-    }
+    margin: 0;
+    padding: 16px 0 24px;
+    border-top: 1px solid var(--border);
 }
 
 .hatena-module {
@@ -29,23 +28,17 @@
     line-height: 1.7;
 }
 
-.hatena-module-title {
-    display: flex;
-    align-items: center;
-    gap: .5em;
-    margin: 0 0 1em;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-header);
+// 中身のないブログパーツ(注目記事・参加グループなどで項目がないとき)は出さない。
+// はてなは本文に空のリストだけを出力する。最近のコメントのように、スクリプトが後から項目を足すものは、足した時点で出る
+// :has() は入れ子にできないので、「本文がリストだけ」と「リストの項目がない」を別々の :has() で判定する
+.hatena-module:has(> .hatena-module-body > .hatena-urllist:only-child):not(:has(> .hatena-module-body > .hatena-urllist > li)) {
+    display: none;
+}
 
-    &::before {
-        content: "";
-        flex: none;
-        width: .5em;
-        height: .5em;
-        border-radius: 50%;
-        background-color: var(--accent);
-    }
+// 見出しは記事下の段の見出しの形にする
+.hatena-module-title {
+    @include var.footer-section-label;
+    margin: 0 0 8px;
 
     a {
         color: inherit;
@@ -64,13 +57,25 @@
     padding: 0;
     list-style: none;
 
+    // 項目の間は線ではなく余白で区切る。線はブログパーツ(段)の区切りだけにする
     > li {
-        padding: .6em 0;
-        border-top: 1px solid var(--border);
+        padding: .4em 0;
 
         &:first-child {
             padding-top: 0;
-            border-top: 0;
+        }
+
+        &:last-child {
+            padding-bottom: 0;
+        }
+    }
+
+    // サムネイル付きのリストは項目が大きいので、間を広げる
+    &.urllist-with-thumbnails > li {
+        padding-block: .6em;
+
+        &:first-child {
+            padding-top: 0;
         }
 
         &:last-child {
@@ -88,11 +93,11 @@
         }
     }
 
+    // 日付は記事の日付と同じ書体にする(_variable.scss の meta-text)
     .urllist-date-link,
     .urllist-date-link a {
-        font-size: .75rem;
+        @include var.meta-text;
         color: var(--text-light);
-        font-variant-numeric: tabular-nums;
     }
 
     // 小さい文字のリンクは、タップ領域の高さを24px確保する(WCAG 2.5.8)
@@ -188,20 +193,10 @@
     }
 }
 
-// 記事下のブログパーツ(関連記事など)は、この記事を共有・コメント欄と同じ段にする(_entry.scss の「記事下」)。
-// 上にだけ線を引き、見出しは段の見出しの形(丸の印を付けない)にする
+// 記事下のブログパーツ(関連記事など)は、この記事を共有・コメント欄と同じ段にする(_entry.scss の「記事下」)。上にだけ線を引く
 .customized-footer .hatena-module {
     padding-block: 16px;
     border-top: 1px solid var(--border);
-}
-
-.customized-footer .hatena-module-title {
-    @include var.footer-section-label;
-    margin: 0 0 8px;
-
-    &::before {
-        content: none;
-    }
 }
 
 // 記事下の関連記事は横に2列並べる
@@ -265,6 +260,14 @@
     .profile-description p {
         margin-top: 0;
     }
+
+    // 最終更新の日時。はてなの斜体をやめ、記事の日付と同じ書体にする
+    .profile-activities,
+    .profile-activities * {
+        @include var.meta-text;
+        color: var(--text-light);
+        font-style: normal;
+    }
 }
 
 /* Category module: カテゴリの丸いラベルを並べる */
@@ -296,7 +299,9 @@
     // 日時。はてな側のopacityが入れ子で二重に掛かって読めなくなるため打ち消し、薄さは色で表現する
     // (theme-design-spec.md の「配色」を参照)
     .recent-comment-time {
+        @include var.meta-text;
         color: var(--text-light);
+        font-style: normal;
         opacity: 1;
     }
 }
