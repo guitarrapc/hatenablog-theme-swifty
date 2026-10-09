@@ -895,8 +895,8 @@ body.page-entry:has(#top-box .breadcrumb) #main-inner > .entry:has(+ .pager-perm
     }
 }
 
-/* 記事の一覧のページャー(次のページ・前のページ) */
-.pager:not(.pager-permalink) {
+/* 記事の一覧のページャー(次のページ・前のページ)。記事の一覧のカードにつなげるもの(_archive.scss)は除く */
+.pager:not(.pager-permalink, .archive-entries + .pager) {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;

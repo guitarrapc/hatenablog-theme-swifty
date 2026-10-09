@@ -552,6 +552,76 @@ test.describe('ブログパーツ', () => {
     expect(m.itemLines.every((w) => w === '0px')).toBe(true);
   });
 
+  test('記事の一覧は、はてなの仮の画像を出さず、タイトルの下に日付とカテゴリを小さな文字で並べる', async ({ page }) => {
+    await openBlogParts(page);
+    const m = await page.evaluate(() => {
+      const items = [...document.querySelectorAll('.urllist-with-thumbnails .urllist-item-inner')].filter((el) => el.getBoundingClientRect().height > 0);
+      return items.map((item) => {
+        const image = /** @type {HTMLImageElement | null} */ (item.querySelector('.urllist-image'));
+        const title = /** @type {Element} */ (item.querySelector('.urllist-title-link'));
+        const date = item.querySelector('.urllist-date-link');
+        const category = item.querySelector('.urllist-category-link');
+        return {
+          placeholder: image ? image.src.includes('og-image-1500.png') : null,
+          imageShown: image ? image.getBoundingClientRect().width : 0,
+          titleWeight: getComputedStyle(title).fontWeight,
+          titleBottom: title.getBoundingClientRect().bottom,
+          dateTop: date ? date.getBoundingClientRect().top : null,
+          dateRow: date ? Math.round(date.getBoundingClientRect().top + date.getBoundingClientRect().height / 2) : null,
+          categoryRow: category ? Math.round(category.getBoundingClientRect().top + category.getBoundingClientRect().height / 2) : null,
+          categoryBackground: category ? getComputedStyle(category).backgroundColor : null,
+          categorySize: category ? getComputedStyle(category).fontSize : null,
+        };
+      });
+    });
+
+    expect(m.some((i) => i.placeholder === true), '前提: 仮の画像の記事があること').toBe(true);
+    expect(m.some((i) => i.placeholder === false), '前提: 画像のある記事があること').toBe(true);
+    for (const [i, item] of m.entries()) {
+      // 仮の画像は出さず、本当の画像は小さく出す
+      expect(item.imageShown, `${i}番目のサムネイル`).toBe(item.placeholder === false ? 56 : 0);
+      // タイトルは太字にしない
+      expect(item.titleWeight, `${i}番目のタイトル`).toBe('500');
+      // 日付はタイトルの下、カテゴリは日付と同じ行の小さな文字(丸いラベルにしない)
+      if (item.dateTop !== null) expect(item.dateTop, `${i}番目の日付`).toBeGreaterThanOrEqual(item.titleBottom - 1);
+      if (item.categoryRow !== null) {
+        expect(Math.abs(/** @type {number} */ (item.categoryRow) - /** @type {number} */ (item.dateRow)), `${i}番目のカテゴリ`).toBeLessThanOrEqual(2);
+        expect(item.categoryBackground, `${i}番目のカテゴリ`).toBe('rgba(0, 0, 0, 0)');
+        expect(item.categorySize, `${i}番目のカテゴリ`).toBe('12px');
+      }
+    }
+  });
+
+  test('最近のコメントは、1行目に記事のタイトル、2行目に書いた人と日時を並べる', async ({ page }) => {
+    await openBlogParts(page);
+    await expect(page.locator('#box2 .recent-comments > li').first(), '前提: 最近のコメントがあること').toBeAttached({ timeout: 10000 });
+    const rows = await page.locator('#box2 .recent-comments > li').first().evaluate((li) => {
+      const box = (/** @type {string} */ selector) => /** @type {Element} */ (li.querySelector(selector)).getBoundingClientRect();
+      return { title: box(':scope > a'), user: box('.user-id'), time: box(':scope > .recent-comment-time'), icon: box('.hatena-id-icon').width };
+    });
+    expect(rows.user.top).toBeGreaterThanOrEqual(rows.title.bottom - 1);
+    expect(Math.abs((rows.time.top + rows.time.height / 2) - (rows.user.top + rows.user.height / 2))).toBeLessThanOrEqual(2);
+    expect(rows.time.left).toBeGreaterThan(rows.user.right);
+    expect(rows.icon).toBe(16);
+  });
+
+  test('「もっと見る」「このブログについて」は、「コメントを書く」と同じ操作の形(アイコンなし)にする', async ({ page }) => {
+    await openBlogParts(page);
+    const shapes = await page.evaluate(() => ['#box2 .urllist-see-more a', '#box2 .profile-about a', '.leave-comment-title'].map((selector) => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const s = getComputedStyle(el);
+      return { selector, fontSize: s.fontSize, borderBottom: s.borderBottomWidth, minHeight: s.minHeight, icon: getComputedStyle(el, '::before').display };
+    }));
+    const [seeMore, about, write] = shapes;
+    expect(seeMore, '前提: もっと見るがあること').not.toBeNull();
+    expect(about, '前提: このブログについてがあること').not.toBeNull();
+    for (const shape of [seeMore, about]) {
+      expect({ fontSize: shape?.fontSize, borderBottom: shape?.borderBottom, minHeight: shape?.minHeight }).toEqual({ fontSize: write?.fontSize, borderBottom: write?.borderBottom, minHeight: write?.minHeight });
+      expect(shape?.icon).toBe('none');
+    }
+  });
+
   test('中身のないブログパーツは出さず、スクリプトが後から項目を足すものは足した時点で出す', async ({ page }) => {
     await openBlogParts(page);
     const visible = await page.evaluate(() => {
@@ -568,6 +638,175 @@ test.describe('ブログパーツ', () => {
     });
 
     expect(visible).toEqual({ empty: false, html: true, afterAdding: true });
+  });
+});
+
+test.describe('記事の一覧', () => {
+  /** 一覧の記事ごとの位置 */
+  const measureList = (/** @type {any} */ page) => page.evaluate(() => {
+    const list = /** @type {Element} */ (document.querySelector('.archive-entries'));
+    const listStyle = getComputedStyle(list);
+    const box = (/** @type {Element | null} */ el) => (el ? el.getBoundingClientRect().toJSON() : null);
+    return {
+      list: { radius: listStyle.borderTopLeftRadius, background: listStyle.backgroundColor, left: list.getBoundingClientRect().left + list.clientLeft + parseFloat(listStyle.paddingLeft), right: list.getBoundingClientRect().right - parseFloat(listStyle.borderRightWidth) - parseFloat(listStyle.paddingRight) },
+      entries: [...list.querySelectorAll(':scope > .archive-entry')].map((entry) => {
+        const s = getComputedStyle(entry);
+        const thumb = /** @type {HTMLElement | null} */ (entry.querySelector('.entry-thumb'));
+        return {
+          title: /** @type {Element} */ (entry.querySelector('.entry-title')).textContent?.trim(),
+          background: s.backgroundColor,
+          shadow: s.boxShadow,
+          borderTop: s.borderTopWidth,
+          date: box(entry.querySelector('.archive-date')),
+          categories: box(entry.querySelector('.categories')),
+          titleBox: box(entry.querySelector('.entry-title')),
+          description: box(entry.querySelector('.entry-description')),
+          social: box(entry.querySelector('.social-buttons')),
+          placeholder: thumb ? thumb.style.backgroundImage.includes('og-image-1500.png') : null,
+          thumb: box(entry.querySelector('.entry-thumb')),
+        };
+      }),
+    };
+  });
+
+  test('一覧は1枚のカードにし、記事の間を線で区切る', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    const m = await measureList(page);
+    const entryBackground = await page.evaluate(() => getComputedStyle(/** @type {Element} */ (document.querySelector('#box2-inner'))).backgroundColor);
+
+    expect(m.entries.length, '前提: 記事が2件以上あること').toBeGreaterThan(1);
+    expect(m.list.radius).not.toBe('0px');
+    expect(m.list.background).toBe(entryBackground);
+    for (const [i, entry] of m.entries.entries()) {
+      expect(entry.background, entry.title).toBe('rgba(0, 0, 0, 0)');
+      expect(entry.shadow, entry.title).toBe('none');
+      // 先頭の記事の上には線を引かず、2件目からは上に線を引く
+      expect(entry.borderTop, entry.title).toBe(i === 0 ? '0px' : '1px');
+    }
+  });
+
+  test('広い画面では、左の列に日付とカテゴリ、右の列にタイトル・概要・スターを置く', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    const m = await measureList(page);
+    // タイトルの1行は30px(20pxの文字と行の高さ1.5)
+    const longTitle = m.entries.find((e) => (e.titleBox?.height ?? 0) > 45);
+    expect(longTitle, '前提: タイトルが折り返す記事があること').toBeTruthy();
+
+    for (const e of m.entries) {
+      if (!e.date || !e.categories || !e.titleBox || !e.description) throw new Error(`${e.title} の要素が見つからない`);
+      // 日付とカテゴリは左の列で、カテゴリは日付のすぐ下(タイトルが折り返しても離れない)
+      expect(e.categories.left, e.title).toBeCloseTo(e.date.left, 0);
+      expect(e.categories.top - e.date.bottom, e.title).toBeLessThanOrEqual(8);
+      expect(e.categories.top, e.title).toBeGreaterThanOrEqual(e.date.bottom - 1);
+      // タイトル・概要・スターは右の列の同じ左端
+      expect(e.titleBox.left, e.title).toBeGreaterThan(e.date.right);
+      expect(e.description.left, e.title).toBeCloseTo(e.titleBox.left, 0);
+      expect(e.description.top, e.title).toBeGreaterThanOrEqual(e.titleBox.bottom);
+      if (e.social) {
+        expect(e.social.left, e.title).toBeCloseTo(e.titleBox.left, 0);
+        expect(e.social.top, e.title).toBeGreaterThanOrEqual(e.description.bottom);
+      }
+    }
+  });
+
+  test('スマホでは、日付・カテゴリ・タイトルの順に縦に並べる', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.MOBILE);
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    const m = await measureList(page);
+    for (const e of m.entries) {
+      if (!e.date || !e.categories || !e.titleBox) throw new Error(`${e.title} の要素が見つからない`);
+      expect(e.categories.left, e.title).toBeCloseTo(e.date.left, 0);
+      expect(e.titleBox.left, e.title).toBeCloseTo(e.date.left, 0);
+      expect(e.categories.top, e.title).toBeGreaterThanOrEqual(e.date.bottom - 1);
+      expect(e.titleBox.top, e.title).toBeGreaterThanOrEqual(e.categories.bottom - 1);
+    }
+  });
+
+  for (const [name, viewport, size] of /** @type {const} */ ([
+    ['広い画面', VIEWPORTS.DESKTOP, { width: 160, height: 106 }],
+    ['スマホ', VIEWPORTS.MOBILE, { width: 72, height: 72 }],
+  ])) {
+    test(`はてなの仮の画像は出さず、本当の画像だけを右に出す(${name})`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+      const m = await measureList(page);
+      const placeholders = m.entries.filter((e) => e.placeholder === true);
+      const images = m.entries.filter((e) => e.placeholder === false);
+      expect(placeholders.length, '前提: 仮の画像の記事があること').toBeGreaterThan(0);
+      expect(images.length, '前提: 画像のある記事があること').toBeGreaterThan(0);
+      for (const e of placeholders) {
+        // 仮の画像は出さず、サムネイルの列もなくして概要を広げる
+        expect(e.thumb?.width ?? 0, e.title).toBe(0);
+        expect(e.description?.right ?? 0, e.title).toBeCloseTo(m.list.right, 0);
+      }
+      for (const e of images) {
+        expect({ width: e.thumb?.width, height: e.thumb?.height }, e.title).toEqual(size);
+        expect(e.thumb?.right ?? 0, e.title).toBeCloseTo(m.list.right, 0);
+      }
+    });
+  }
+
+  test('カテゴリが多くても、折り返した行は左端から始め、区切りは行末に付ける', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.MOBILE);
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    const rows = await page.evaluate(() => {
+      const categories = /** @type {Element} */ (document.querySelector('.archive-entry .categories'));
+      for (const name of ['長いカテゴリー名だよ', 'C#', '.NET', 'Kubernetes', 'はてなブログ']) {
+        categories.insertAdjacentHTML('beforeend', ` <a class="archive-category-link" href="#">${name}</a>`);
+      }
+      const left = categories.getBoundingClientRect().left;
+      const links = [...categories.querySelectorAll('a')];
+      // 行ごとに、先頭のカテゴリの左端と、前の行の最後のカテゴリの区切り
+      const lines = new Map();
+      for (const a of links) {
+        const top = Math.round(a.getBoundingClientRect().top);
+        if (!lines.has(top)) lines.set(top, []);
+        lines.get(top).push(a);
+      }
+      return { left, lines: [...lines.values()].map((line) => ({ firstLeft: line[0].getBoundingClientRect().left, lastAfter: getComputedStyle(line[line.length - 1], '::after').content })), lastAfter: getComputedStyle(/** @type {Element} */ (links.at(-1)), '::after').content };
+    });
+
+    expect(rows.lines.length, '前提: カテゴリが折り返すこと').toBeGreaterThan(1);
+    for (const line of rows.lines) expect(line.firstLeft).toBeCloseTo(rows.left, 0);
+    // 折り返した行の最後のカテゴリにも区切りが付き、最後のカテゴリには付かない
+    for (const line of rows.lines.slice(0, -1)) expect(line.lastAfter).toBe('"/"');
+    expect(rows.lastAfter).toBe('none');
+  });
+
+  test('ページャーは一覧のカードの下につなげて最後の段にする', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    await expect(page.locator('#main-inner > .archive-entries + .pager'), '前提: 次のページがあること').toBeAttached();
+    const m = await page.evaluate(() => {
+      const list = /** @type {Element} */ (document.querySelector('#main-inner > .archive-entries'));
+      const pager = /** @type {Element} */ (list.nextElementSibling);
+      const ls = getComputedStyle(list);
+      const ps = getComputedStyle(pager);
+      const next = pager.querySelector('.pager-next a');
+      const pagerBox = pager.getBoundingClientRect();
+      return {
+        listBottom: [ls.borderBottomWidth, ls.borderBottomLeftRadius],
+        pagerTop: [ps.borderTopWidth, ps.borderTopLeftRadius],
+        seam: pagerBox.top - list.getBoundingClientRect().bottom,
+        background: [ls.backgroundColor, ps.backgroundColor],
+        line: getComputedStyle(pager, '::before').borderTopWidth,
+        nextRight: next?.getBoundingClientRect().right,
+        contentRight: pagerBox.right - parseFloat(ps.borderRightWidth) - parseFloat(ps.paddingRight),
+        nextBorder: next ? getComputedStyle(next).borderBottomWidth : null,
+        nextIcon: next ? getComputedStyle(next, '::before').maskImage.startsWith('url(') : null,
+      };
+    });
+    expect(m.listBottom).toEqual(['0px', '0px']);
+    expect(m.pagerTop).toEqual(['0px', '0px']);
+    expect(m.seam).toBeCloseTo(-1, 0);
+    expect(m.background[1]).toBe(m.background[0]);
+    expect(m.line).toBe('1px');
+    // 次のページは右端に、記事下の段の操作と同じ形(下線と矢印)で置く
+    expect(m.nextRight).toBeCloseTo(m.contentRight, 0);
+    expect(m.nextBorder).toBe('1px');
+    expect(m.nextIcon).toBe(true);
   });
 });
 

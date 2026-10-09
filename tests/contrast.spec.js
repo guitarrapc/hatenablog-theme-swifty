@@ -31,6 +31,7 @@ const TARGETS = {
   ページ内目次の入れ子のリンク: '.entry-content .table-of-contents ul a',
   // はてな側のCSSがopacity: 0.7を当てており、spanとtimeに入れ子で掛かって0.49になる。
   // 指定色ではなく実際に描かれる色で見ないと見逃す
+  記事の一覧のカテゴリ: '#box2 .urllist-category-link',
   最近のコメントの日時: '.hatena-module-recent-comments time.recent-comment-time',
   コードブロックのボタン: '.code-block-button',
   記事を共有するリンク: '.entry-footer .entry-share-button-bluesky',

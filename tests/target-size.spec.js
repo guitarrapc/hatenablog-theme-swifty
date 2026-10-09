@@ -21,6 +21,7 @@ const TARGETS = {
   目次の開閉: '.toc-panel-summary',
   ページャー: '.pager a',
   カテゴリのブログパーツ: '.hatena-module-category .hatena-urllist a',
+  記事の一覧のカテゴリ: '#box2 .urllist-category-link',
   ブログパーツの日付: '.hatena-urllist .urllist-date-link a',
   月別アーカイブの年: '.archive-module-year-title',
   プロフィールのID: '.hatena-module-profile .id a',

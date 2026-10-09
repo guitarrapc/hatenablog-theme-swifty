@@ -109,16 +109,23 @@
         min-height: 24px;
     }
 
+    // カテゴリは丸いラベルにせず、日付の横に小さな文字で並べる。項目ごとに色付きのラベルが並ぶと、色が散ってうるさいため
     .urllist-categories {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
-        margin-top: .3em;
+        margin: 0;
     }
 
     .urllist-category-link {
-        @include var.category-chip;
-        font-size: .6875rem;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        color: var(--text-light);
+        font-size: .75rem;
+
+        + .urllist-category-link::before {
+            content: "・";
+        }
     }
 
     .urllist-entry-body {
@@ -128,60 +135,63 @@
 }
 
 /*
- * サムネイル付きのリスト(最新記事・関連記事・注目記事)。サムネイルを左に、タイトルと日付を右に並べる。
- * はてなはサムネイルを float: left にしている
+ * サムネイル付きのリスト(最新記事・関連記事・注目記事)。サムネイルを左に、タイトルを右に置き、その下に日付・カテゴリ・はてなブックマーク数を1行に並べる。
+ * はてなはサムネイルを float: left にしている。
+ * 画像のない記事には、はてなが仮の画像(「Hatena Blog」の灰色の画像)を出すので、そのときはサムネイルを出さず、文字だけにする
  */
+$urllist-image-size: 56px;
+
 .urllist-with-thumbnails .urllist-item-inner {
     display: grid;
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: $urllist-image-size auto minmax(0, 1fr) auto;
     grid-template-areas:
-        "image title"
-        "image date"
-        "image categories"
-        "image body";
+        "image title title title"
+        "image date categories bookmarks"
+        "image body body body";
     column-gap: 12px;
-    align-items: start;
+    align-items: center;
 
-    // サムネイルのない記事は1列にする
-    &:not(:has(> .urllist-image-link)) {
-        grid-template-columns: minmax(0, 1fr);
+    // サムネイルがない(または仮の画像の)記事は、文字だけにする
+    &:not(:has(> .urllist-image-link > img:not([src*="#{var.$hatena-placeholder-image}"]))) {
+        grid-template-columns: auto minmax(0, 1fr) auto;
         grid-template-areas:
-            "title"
-            "date"
-            "categories"
-            "body";
+            "title title title"
+            "date categories bookmarks"
+            "body body body";
+
+        > .urllist-image-link {
+            display: none;
+        }
     }
 
     .urllist-image-link {
         grid-area: image;
+        align-self: start;
     }
 
     .urllist-image {
         float: none;
-        width: 72px;
-        height: 72px;
+        width: $urllist-image-size;
+        height: $urllist-image-size;
         margin: 0;
         border-radius: var(--radius-small);
         object-fit: cover;
     }
 
+    // タイトルは標準に近い太さにする。一覧のタイトルがすべて太字だと重く見えるため
     .urllist-title-link {
         grid-area: title;
-        font-weight: 700;
+        font-weight: 500;
         line-height: 1.5;
         color: var(--text-header);
     }
 
     .urllist-date-link {
         grid-area: date;
-        margin-top: .2em;
     }
 
-    // はてなブックマーク数は日付の行の右端に置く
     .bookmark-widget-counter {
-        grid-area: date;
-        justify-self: end;
-        align-self: center;
+        grid-area: bookmarks;
     }
 
     .urllist-categories {
@@ -214,20 +224,23 @@
     }
 }
 
+// ブログパーツの中の操作(もっと見る、プロフィールの「このブログについて」)は、記事下の段の操作(コメントを書く)と同じ形にする。
+// アイコンは付けない
+@mixin module-action {
+    @include var.footer-action;
+
+    &::before {
+        display: none;
+    }
+}
+
 /* もっと見る */
 .urllist-see-more {
-    margin-top: 1em;
+    margin-top: .5em;
     text-align: right;
 
     a {
-        font-size: .8125rem;
-        font-weight: 700;
-        color: var(--link);
-        text-decoration: none;
-
-        &:hover {
-            text-decoration: underline;
-        }
+        @include module-action;
     }
 }
 
@@ -259,6 +272,10 @@
 
     .profile-description p {
         margin-top: 0;
+    }
+
+    .profile-about a {
+        @include module-action;
     }
 
     // 最終更新の日時。はてなの斜体をやめ、記事の日付と同じ書体にする
@@ -294,8 +311,50 @@
     }
 }
 
+/* 月別アーカイブ: 年の開閉の三角は、文字より目立たない小さな印にする */
+.hatena-module-archive .archive-module-button {
+    color: var(--text-light);
+    font-size: .5rem;
+}
+
 /* Recent comments module */
 .hatena-module-recent-comments {
+    // 1行目に記事のタイトル、2行目に書いた人(小さなアイコンと名前)と日時を並べる。
+    // はてなは「アイコン 名前 記事のタイトル (日時)」を1行に出力し、折り返すと区切りが分かりにくい
+    .recent-comments > li {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+            "title title"
+            "user time";
+        column-gap: 8px;
+        align-items: center;
+
+        > a {
+            grid-area: title;
+            color: var(--text-header);
+        }
+
+        > .recent-comment-time {
+            grid-area: time;
+        }
+    }
+
+    .user-id {
+        grid-area: user;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--text-light);
+        font-size: .75rem;
+
+        .hatena-id-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    }
+
     // 日時。はてな側のopacityが入れ子で二重に掛かって読めなくなるため打ち消し、薄さは色で表現する
     // (theme-design-spec.md の「配色」を参照)
     .recent-comment-time {
