@@ -18,6 +18,7 @@
     "check:customize": "node check-customize.js",
     "screenshots": "node capture-screenshots.js",
     "logo": "node export-logo.js",
+    "theme-store": "node capture-theme-store-catch.js",
     "lighthouse": "vite build && node lighthouse.js",
     "lighthouse:dev": "node lighthouse.js --mode=dev"
   },

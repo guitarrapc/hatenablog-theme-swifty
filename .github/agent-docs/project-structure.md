@@ -21,7 +21,8 @@
 | .editorconfig | エディタ設定ファイル(インデント等の統一) |
 | .gitignore | Gitの無視リスト |
 | .npmrc | npmの設定(バージョン固定、公開から14日未満のパッケージを入れない) |
-| capture-screenshots.js | 紹介記事(`articles/introduce-entry.md`、`articles/customize-entry.md`)のスクリーンショットを `articles/screenshots/` に撮り、配色ごとの色の表を出力するスクリプト(`npm run screenshots`) |
+| capture-theme-store-catch.js | `theme-store-catch.html` を、はてなブログのテーマストアに載せる620×460の画像(`theme-store-catch.png`)にするスクリプト(`npm run theme-store`) |
+| capture-screenshots.js | 紹介記事(`articles/introduce-entry.md`、`articles/customize-entry.md`)とテーマストアの画像(`theme-store-catch.html`)のスクリーンショットを `articles/screenshots/` に撮り、配色ごとの色の表を出力するスクリプト(`npm run screenshots`) |
 | blog.config.js | 開発用ブログのドメインと開発サーバーのポート。開発サーバー、E2Eテスト、Lighthouseが共通で参照する |
 | check-customize.js | `customize-*.html` が `js/` の同じ名前のスクリプトと同じ処理であることを確かめるスクリプト(`npm run check:customize`) |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |
@@ -33,6 +34,8 @@
 | package.json | npmのパッケージファイル |
 | playwright.config.js | Playwrightの設定ファイル |
 | README.md | このリポジトリの説明 |
+| theme-store-catch.html | テーマストアの画像の元のページ。画面の画像は `articles/screenshots/` のもの、色見本は各配色のライトの `--accent` |
+| theme-store-catch.png | テーマストアの画像(620×460。はてなの指定する大きさ) |
 | server.js | ローカル開発サーバーの動作ファイル |
 | vite.config.js | Viteの設定ファイル |
 

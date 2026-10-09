@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * 紹介記事(articles/introduce-entry.md、articles/customize-entry.md)に載せるスクリーンショットを撮る。
+ * 紹介記事(articles/introduce-entry.md、articles/customize-entry.md)と、テーマストアの画像(theme-store-catch.html)に載せるスクリーンショットを撮る。
  *
  * 開発サーバー(npm start)を起動した状態で `npm run screenshots` を実行する。
  * 開発用ブログ(blog.config.js)の記事を開き、画像を articles/screenshots/ に保存する。
@@ -30,6 +30,9 @@ const REGION_VIEWPORT_HEIGHT = 1600;
 
 // 撮る範囲の周りの余白
 const REGION_PADDING = 24;
+
+// テーマストアの画像(theme-store-catch.html)で、ダークのスマートフォンの前に置くライトの配色
+const STORE_SCHEMES = ['pink'];
 
 /**
  * 配色の表に載せる色。customize-entry.md の「色のCSS変数」と同じ名前で書く
@@ -140,6 +143,13 @@ const SHOTS = [
     scheme,
     dark,
   }))),
+  // テーマストアの画像(theme-store-catch.html)のスマートフォン(ダークは smartphone-article-top-dark を使う)
+  ...STORE_SCHEMES.map((scheme) => ({
+    name: `store-smartphone-${scheme}`,
+    path: TEST_URLS.SAMPLE_ARTICLE,
+    device: /** @type {const} */ ('smartphone'),
+    scheme,
+  })),
 ];
 
 /**
@@ -256,7 +266,7 @@ let failed = 0;
 for (const shot of shots) {
   try {
     const values = await capture(browser, shot);
-    if (shot.scheme && values) {
+    if (shot.name.startsWith('scheme-') && values) {
       colors.set(shot.scheme, { ...colors.get(shot.scheme), [shot.dark ? 'dark' : 'light']: values });
     }
   } catch (error) {

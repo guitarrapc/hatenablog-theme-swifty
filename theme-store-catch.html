@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swifty - はてなブログテーマ</title>
+  <!--
+    はてなブログのテーマストアに載せる画像(620×460)の元のページ。capture-theme-store-catch.js で theme-store-catch.png にする。
+    画面の画像は capture-screenshots.js(npm run screenshots)で撮った articles/screenshots/ のものを使う。
+    配色を足したり色を変えたりしたら、色見本(.swatches)の色も合わせる(各配色のライトの --accent)
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600&family=Zen+Maru+Gothic:wght@700&display=block"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #e9e9e9;
+      font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+    }
+
+    /* テーマストアの画像の大きさ */
+    .container {
+      position: relative;
+      width: 620px;
+      height: 460px;
+      overflow: hidden;
+      /* 淡いピーチの地に、ミントとピンクの光をにじませる */
+      background:
+        radial-gradient(circle at 92% 6%, rgba(244, 186, 204, 0.5), transparent 40%),
+        radial-gradient(circle at 4% 96%, rgba(146, 220, 207, 0.5), transparent 46%),
+        radial-gradient(circle at 70% 115%, rgba(253, 222, 200, 0.7), transparent 50%),
+        linear-gradient(160deg, #fdf9f7, #f4f9f8);
+    }
+
+    /* PCの画面(ブラウザの窓)。本文の横の目次が見えるように、ほかの画面を重ねない */
+    .window {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      width: 404px;
+      height: 266px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(40, 60, 56, 0.06), 0 16px 36px rgba(40, 60, 56, 0.16);
+    }
+
+    .window::before {
+      content: "";
+      display: block;
+      height: 14px;
+      background:
+        radial-gradient(circle at 11px 7px, #f4a8b8 3px, transparent 3.5px),
+        radial-gradient(circle at 22px 7px, #f6d38a 3px, transparent 3.5px),
+        radial-gradient(circle at 33px 7px, #9fdcc8 3px, transparent 3.5px),
+        #fff;
+      border-bottom: 1px solid #eef1f0;
+    }
+
+    .screen {
+      background-size: cover;
+      background-position: top center;
+    }
+
+    .window .screen {
+      height: calc(100% - 14px);
+    }
+
+    /* スマートフォン。ライトの配色違いとダークを並べる */
+    .phone {
+      position: absolute;
+      width: 96px;
+      height: 196px;
+      padding: 5px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(40, 60, 56, 0.08), 0 16px 32px rgba(40, 60, 56, 0.2);
+    }
+
+    .phone .screen {
+      height: 100%;
+      border-radius: 15px;
+    }
+
+    .phone.dark {
+      top: 40px;
+      left: 506px;
+    }
+
+    .phone.light {
+      top: 92px;
+      left: 446px;
+    }
+
+    /* 配色の色見本(各配色のアクセントの色) */
+    .swatches {
+      position: absolute;
+      top: 304px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 9px;
+      list-style: none;
+    }
+
+    .swatches li {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(40, 60, 56, 0.25);
+    }
+
+    /* 名前とキャッチ */
+    .title-area {
+      position: absolute;
+      inset: 324px 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding-bottom: 10px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* ロゴの「S」で Swifty と書く。上の尾が右へ伸びるぶん画像の幅がSより広いので、負の余白で「wifty」に寄せる */
+    .logo img {
+      height: 42px;
+      margin-right: -8px;
+    }
+
+    .theme-title {
+      font-family: "Quicksand", sans-serif;
+      font-size: 42px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: #172321;
+    }
+
+    .theme-subtitle {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #3b4a47;
+    }
+
+    /* 使い勝手を短く伝えるラベル */
+    .features {
+      display: flex;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .features li {
+      padding: 3px 11px 4px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .features .scheme {
+      background: #fbe3ea;
+      color: #8c2f55;
+    }
+
+    .features .dark {
+      background: #24312f;
+      color: #e8f3f0;
+    }
+
+    .features .toc {
+      background: #dff4ef;
+      color: #0b6a60;
+    }
+
+    .features .responsive {
+      background: #fde9da;
+      color: #8f4518;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="window">
+      <div class="screen" style="background-image: url('articles/screenshots/scheme-mint.png');"></div>
+    </div>
+    <div class="phone dark">
+      <div class="screen" style="background-image: url('articles/screenshots/smartphone-article-top-dark.png');"></div>
+    </div>
+    <div class="phone light">
+      <div class="screen" style="background-image: url('articles/screenshots/store-smartphone-pink.png');"></div>
+    </div>
+    <ul class="swatches" aria-label="配色">
+      <li style="background: #3cc4b0;"></li>
+      <li style="background: #4a8ff0;"></li>
+      <li style="background: #f07fa8;"></li>
+      <li style="background: #f2c230;"></li>
+      <li style="background: #a586ec;"></li>
+      <li style="background: #a6b5a5;"></li>
+      <li style="background: #ccb3b7;"></li>
+      <li style="background: #cf7f72;"></li>
+      <li style="background: #135389;"></li>
+      <li style="background: #cb5457;"></li>
+    </ul>
+    <div class="title-area">
+      <div class="logo">
+        <img src="assets/logo_mark.png" alt="">
+        <h1 class="theme-title">wifty</h1>
+      </div>
+      <p class="theme-subtitle">配色を選べるワンカラムテーマ</p>
+      <ul class="features">
+        <li class="scheme">配色を切り替え</li>
+        <li class="dark">ダークモード</li>
+        <li class="toc">目次がいつも表示</li>
+        <li class="responsive">レスポンシブ</li>
+      </ul>
+    </div>
+  </div>
+</body>
+
+</html>
