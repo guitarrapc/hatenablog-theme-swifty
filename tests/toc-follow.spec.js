@@ -42,6 +42,15 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
     };
   });
 
+  /**
+   * 本文の見出しのうち、記事の中での位置(0〜1)にあるものの id。
+   * Fixture記事の見出しの名前は書き換えられることがあるので、名前ではなく位置で選ぶ
+   */
+  const headingAt = (/** @type {any} */ page, /** @type {number} */ position) => page.evaluate((/** @type {number} */ position) => {
+    const ids = [...document.querySelectorAll('.entry-content > :is(h1, h2, h3, h4, h5, h6)')].map((h) => h.id);
+    return ids[Math.min(ids.length - 1, Math.floor(ids.length * position))];
+  }, position);
+
   /** その節の見出しが画面の上に来るまでページをスクロールし、ブラウザが印をその節に移すのを待つ */
   const readSection = async (/** @type {any} */ page, /** @type {string} */ id) => {
     await page.evaluate((/** @type {string} */ id) => document.getElementById(id)?.scrollIntoView({ block: 'start' }), id);
@@ -65,8 +74,9 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
   test('いま読んでいる見出しのリンクが見える位置まで、目次の中だけをスクロールする', async ({ page }) => {
     expect((await followState(page)).tocOverflows, '前提: 目次が画面より長く、中でスクロールすること').toBe(true);
 
-    // 目次の下のほうの節と、本文の終わりで目次も上へ流れる最後の節
-    for (const id of ['コードブロック', 'テスト', '最後の節']) {
+    // 目次の下のほう(見えている範囲の外)の見出しと、本文の終わりで目次も上へ流れる最後の見出し
+    for (const position of [0.6, 0.8, 1]) {
+      const id = await headingAt(page, position);
       const scrollY = await readSection(page, id);
       await expect.poll(async () => (await followState(page)).visible, { message: `「${id}」のリンクが見える` }).toBe(true);
       // ページはスクロールしない
@@ -76,7 +86,7 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
   });
 
   test('目次の中をスクロールしても、見出しの行は目次の上に残り、閉じられる', async ({ page }) => {
-    await readSection(page, 'テスト');
+    await readSection(page, await headingAt(page, 0.8));
     await expect.poll(async () => (await followState(page)).tocScrollTop).toBeGreaterThan(0);
 
     const state = await followState(page);
@@ -89,7 +99,7 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
 
   test('本文中の目次は目次の中でスクロールしないので追わず、見出しの行も画面に張り付かない', async ({ page }) => {
     await page.setViewportSize(INLINE);
-    const scrollY = await readSection(page, 'テスト');
+    const scrollY = await readSection(page, await headingAt(page, 0.8));
     await page.waitForTimeout(TIMEOUTS.SHORT);
 
     const state = await followState(page);

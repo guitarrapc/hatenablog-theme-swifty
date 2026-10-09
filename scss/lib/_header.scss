@@ -28,8 +28,9 @@ body {
     }
 }
 
+// 下の余白は、続く要素(タイトル下HTML・パンくず・本文)の上の余白(16px)と相殺されるので、どのページでも --header-gap になる
 #blog-title {
-    margin: 0;
+    margin: 0 0 var(--header-gap);
     background-color: var(--surface-header);
     border-bottom: 1px solid var(--border);
 }

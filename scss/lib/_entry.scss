@@ -103,19 +103,29 @@
     margin-inline: auto;
 }
 
-/* 記事のヘッダー: カテゴリ → タイトル → 日付の順に並べる */
+/*
+ * 記事のヘッダー: タイトルの下に、日付とカテゴリを1行に並べる(幅が足りなければ折り返す)。
+ * はてなのHTMLは日付 → タイトル → カテゴリの順なので order で並べ替える。
+ * 記事ページでは、タイトルの上にパンくずが入る(_core.scss)
+ */
 .entry-header {
     position: relative;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 12px;
     margin-bottom: 40px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
 }
 
+// タイトルは1行を占め、日付とカテゴリをその下の行に送る
+.entry-header .entry-title {
+    flex-basis: 100%;
+}
+
 .entry-categories {
-    order: -1;
+    order: 2;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;

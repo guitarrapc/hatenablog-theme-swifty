@@ -27,7 +27,8 @@ test.describe('記事ページのテスト', () => {
         return el ? /** @type {any} */ (getComputedStyle(el))[corner] : null;
       };
       return {
-        card: radius('.entry'),
+        // 記事ページではカードの上端にパンくずが入り、記事の上の角は丸めないので、下の角で測る
+        card: radius('.entry', 'borderBottomRightRadius'),
         boxes: {
           コードブロック: radius('.entry-content pre.code'),
           アラート: radius('.entry-content .markdown-alert'),
@@ -90,6 +91,43 @@ test.describe('記事ページのテスト', () => {
     for (const j of result.japanese) {
       expect(j.width, `「${j.text}」の列の幅`).toBeGreaterThanOrEqual(j.fontSize * 5 - 1);
     }
+  });
+
+  test('記事ページでは、パンくずを記事のカードの上端に入れ、タイトルの上に置く', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+
+    const layout = await page.evaluate(() => {
+      const rect = (/** @type {string} */ selector) => /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().toJSON();
+      const visible = (/** @type {string} */ selector) => [...document.querySelectorAll(selector)].filter((el) => el.checkVisibility()).map((el) => el.textContent?.trim());
+      const breadcrumb = /** @type {Element} */ (document.querySelector('.breadcrumb'));
+      const entry = /** @type {Element} */ (document.querySelector('.entry'));
+      return {
+        breadcrumb: rect('.breadcrumb'),
+        entry: rect('.entry'),
+        title: rect('.entry-title'),
+        date: rect('.entry-header .date'),
+        categories: rect('.entry-categories'),
+        // パンくずと記事が1枚のカードに見えること: 同じ背景で、間の枠と角丸がない
+        background: [getComputedStyle(breadcrumb).backgroundColor, getComputedStyle(entry).backgroundColor],
+        seam: [getComputedStyle(breadcrumb).borderBottomWidth, getComputedStyle(entry).borderTopWidth, getComputedStyle(entry).borderTopLeftRadius],
+        items: [...visible('.breadcrumb a'), ...visible('.breadcrumb-child > span')],
+      };
+    });
+
+    // パンくずは記事のカードと同じ幅で、すぐ上につながる(継ぎ目のにじみを隠すため1px重ねる)
+    expect(layout.breadcrumb.left).toBeCloseTo(layout.entry.left, 0);
+    expect(layout.breadcrumb.width).toBeCloseTo(layout.entry.width, 0);
+    expect(Math.abs(layout.breadcrumb.bottom - layout.entry.top)).toBeLessThanOrEqual(1);
+    expect(layout.background[0]).toBe(layout.background[1]);
+    expect(layout.seam).toEqual(['0px', '0px', '0px']);
+    // タイトルの上にパンくず、タイトルの下に日付とカテゴリを1行に並べる
+    expect(layout.title.top).toBeGreaterThan(layout.breadcrumb.top);
+    expect(layout.date.top).toBeGreaterThan(layout.title.bottom - 1);
+    expect(Math.abs((layout.date.top + layout.date.bottom) / 2 - (layout.categories.top + layout.categories.bottom) / 2)).toBeLessThanOrEqual(2);
+    expect(layout.categories.left).toBeGreaterThan(layout.date.right);
+    // パンくずの最後(記事のタイトル)は、すぐ下にタイトルがあるので出さない
+    expect(layout.items).toEqual(['トップ', 'test']);
   });
 
   test('アバウトページが正しくレンダリングされる', async ({ page }) => {

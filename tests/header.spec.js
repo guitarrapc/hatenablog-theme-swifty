@@ -85,4 +85,24 @@ test.describe('ヘッダー', () => {
     expect(m.button.top).toBeGreaterThanOrEqual(m.blogHeader.top);
     expect(m.button.bottom).toBeLessThanOrEqual(m.blogHeader.bottom);
   });
+
+  // ヘッダーの下の余白は、続く要素の上の余白と相殺されるので、ページの作りによらず同じになる
+  for (const [name, path, selector] of [
+    ['記事ページ(パンくずの入ったカード)', TEST_URLS.SAMPLE_ARTICLE, '.breadcrumb'],
+    ['トップページ(記事のカード)', TEST_URLS.HOME, '#main-inner .entry, #main-inner .archive-entry'],
+    ['カテゴリのページ(パンくず)', '/archive/category/test', '.breadcrumb'],
+  ]) {
+    test(`ヘッダーとその下の間を、広い画面で48px、スマホで32px空ける(${name})`, async ({ page }) => {
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator(selector).first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+      const result = await page.evaluate((/** @type {string} */ selector) => ({
+        gap: /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().top
+          - /** @type {Element} */ (document.getElementById('blog-title')).getBoundingClientRect().bottom,
+        width: innerWidth,
+      }), selector);
+
+      expect(Math.round(result.gap)).toBe(result.width >= 768 ? 48 : 32);
+    });
+  }
 });

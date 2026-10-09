@@ -9,6 +9,8 @@
     // 目次の見出し。デザインCSSで `:root { --toc-label: "Contents"; }` のように変えられる
     --toc-label: "目次";
 
+    // ヘッダーと、その下のカード(記事ページではパンくずの入ったカード)の間。広い画面ほど空ける
+    --header-gap: 32px;
     // 画面端とカードの間の余白と、カードの内側の余白。スマホではカードを画面幅いっぱいにする
     --gutter: 0px;
     --card-padding-block: 28px;
@@ -16,6 +18,7 @@
 
     // 広い画面でも内側の余白は増やさず、そのぶんを本文に回す
     @media #{var.$mq-sm} {
+        --header-gap: 48px;
         --gutter: 24px;
         --card-padding-block: 40px;
         --card-padding-inline: 40px;
@@ -206,6 +209,65 @@ h6 {
     // はてなの「.page-entry .breadcrumb」の2emを詰める
     .page-entry & {
         margin-bottom: 12px;
+    }
+}
+
+// 区切りは、はてなが出力する「>」を見えなくして「/」を出す。
+// 「/」は飾りなので読み上げない(content の代替テキストを空にする)。読み上げでは、はてなの「>」がそのまま区切りになる
+.breadcrumb-gt {
+    font-size: 0;
+
+    &::before {
+        content: "/";
+        content: "/" / "";
+        margin-inline: .15em;
+        font-size: .8125rem;
+        color: var(--text-light);
+    }
+}
+
+/*
+ * 記事ページでは、パンくずを記事のカードの上端に入れ、タイトルのすぐ上に置く(theme-design-spec.md の「記事」を参照)。
+ * パンくず(#top-box)と記事(#content の中)はHTMLでは離れているので、パンくずをカードの上端の形にし、
+ * 記事のカードの上の枠と角丸をなくして、1枚のカードに見せる。継ぎ目に影が出ないよう、パンくずは下側、記事は上側の影を切る。
+ * :has() に対応していないブラウザや、パンくずのない記事ページでは、これまでどおりカードの外に置く
+ */
+$card-shadow-reach: 48px; // カードの影(_variable.scss の card)が外へ広がる長さより長く
+
+body.page-entry:has(#top-box .breadcrumb) {
+    .breadcrumb {
+        @include var.card;
+        // 記事のカードの下に1px潜り込ませる。継ぎ目が小数のピクセルに来ると、両方の端がにじんでページの背景が線になって見えるため
+        margin: 0 0 -1px;
+        padding: var(--card-padding-block) var(--card-padding-inline) 1px;
+        border-bottom: 0;
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+        clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
+        font-size: .75rem;
+        letter-spacing: .06em;
+
+        a {
+            color: var(--link);
+        }
+
+        // 記事のタイトルはすぐ下にあるので、パンくずの最後(記事のタイトル)とその前の区切りは出さない
+        .breadcrumb-child:last-child,
+        .breadcrumb-gt:has(+ .breadcrumb-child:last-child) {
+            display: none;
+        }
+    }
+
+    #content {
+        margin-top: 0;
+    }
+
+    .entry {
+        border-top: 0;
+        border-start-start-radius: 0;
+        border-start-end-radius: 0;
+        padding-top: 14px;
+        clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
     }
 }
 
