@@ -15,12 +15,14 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
  * はてなが本文中に出力する ul.table-of-contents を、JavaScriptを使わずに
  * 広い画面では本文の横に常に表示し、狭い画面では書かれた位置にそのまま表示する
  */
+// 本文中では箱にせず、本文の背景のまま上下の線で区切って、本文の流れの一部として置く
 .entry-content .table-of-contents {
     margin-inline: 0;
-    padding: 1.25em 1.5em;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background-color: var(--surface-muted);
+    padding: .75em 0 1em;
+    border: 0;
+    border-block: 1px solid var(--border);
+    border-radius: 0;
+    background: none;
     list-style: none;
     font-size: .875rem;
     line-height: 1.6;
@@ -91,14 +93,15 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
  */
 .entry-content .toc-panel {
     margin-inline: 0;
-    padding: 1.25em 1.5em;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background-color: var(--surface-muted);
+    padding: 0;
+    border: 0;
+    border-block: 1px solid var(--border);
+    border-radius: 0;
+    background: none;
 
     > .table-of-contents {
         margin: 0;
-        padding: 0;
+        padding: 0 0 1em;
         border: 0;
         border-radius: 0;
         background: none;
@@ -108,23 +111,21 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
         }
     }
 
-    // 本文の折りたたみ(_entry.scss の details)の summary の余白と区切り線は使わず、ここで決める
+    // 本文の折りたたみ(_entry.scss の details)の summary の余白と区切り線は使わず、ここで決める。
+    // 開いていても閉じていても同じ余白にし、開け閉めで見出しの行(アイコン・目次・山形)の位置を変えない
     > .toc-panel-summary {
         margin: 0;
-        padding-block: 0;
+        padding-block: .75em;
         border-bottom: 0;
     }
+}
 
-    // 閉じているときは見出しの行だけにする
-    &:not([open]) {
-        padding-block: .75em;
-    }
-
-    // 開いているときは見出しの行とリストの間に線を引く
-    &[open] > .toc-panel-summary {
-        margin-bottom: .75em;
-        padding-bottom: .5em;
-        border-bottom: 1px solid var(--border);
+// 本文の先頭が目次のときは、記事のヘッダーの区切り線の位置に目次の上の線を置く(線が2本並ばないようにする)。
+// 本文の横に目次を出すときは、目次がヘッダーの下にないので、ヘッダーの区切り線を残す
+@media not screen and #{var.$mq-lg} {
+    .entry-header:has(+ .entry-content > #{$toc-item}:first-child) {
+        margin-bottom: 0;
+        border-bottom: 0;
     }
 }
 
@@ -258,12 +259,21 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
             rotate: -90deg;
         }
 
+        // 本文の横では上下の線がないので、リストの下も空けない
+        > .toc-panel > .table-of-contents {
+            padding-bottom: 0;
+        }
+
+        // 開いているときは、見出しの行とリストの間に線を引く。
         // 目次の中をスクロールしても(js/toc-toggle.js が現在地まで送るときも)、見出しの行を上に残し、閉じるボタンを見失わないようにする。
         // 本文中の目次は目次の中でスクロールしないので、ここ(本文の横)だけにする。本文中で sticky にすると画面の上に張り付いてしまう
         > .toc-panel[open] > .toc-panel-summary {
             position: sticky;
             top: 0;
             z-index: 1;
+            margin-bottom: .75em;
+            padding-block: 0 .5em;
+            border-bottom: 1px solid var(--border);
             background-color: var(--surface);
             // 見出しの行は目次の内側の余白の下で止まるので、その隙間も塗って、上へ流れる項目を隠す
             box-shadow: 0 (-$toc-side-padding) 0 var(--surface);

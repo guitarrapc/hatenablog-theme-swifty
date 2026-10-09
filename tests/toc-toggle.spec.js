@@ -43,6 +43,12 @@ const measure = (/** @type {any} */ page) => page.evaluate(() => {
     // 閉じたdetailsの中身はレイアウトが省かれ、getBoundingClientRect()は開いていたときの高さを返すので、見えるかどうかで確かめる
     listVisible: list.checkVisibility(),
     summaryHeight: summary.getBoundingClientRect().height,
+    // 見出しの行(アイコン・目次・山形)の位置。ページの先頭からの位置にして、スクロールに左右されないようにする
+    summaryBox: (() => {
+      const box = summary.getBoundingClientRect();
+      return { top: box.top + scrollY, left: box.left, right: box.right, height: box.height };
+    })(),
+    panelBackground: getComputedStyle(panel).backgroundColor,
     labelWritingMode: getComputedStyle(/** @type {Element} */ (summary.querySelector('.toc-panel-label'))).writingMode,
     stored: (() => {
       try {
@@ -155,6 +161,10 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     expect(closed.summaryHeight).toBeGreaterThanOrEqual(24); // タップ領域(WCAG 2.5.8)
     // 本文の幅は変わらない
     expect(closed.text).toBe(opened.text);
+    // 開け閉めで見出しの行(アイコン・目次・山形)は動かない
+    expect(closed.summaryBox).toEqual(opened.summaryBox);
+    // 本文の背景のまま置き、箱にしない
+    expect(opened.panelBackground).toBe('rgba(0, 0, 0, 0)');
   });
 
   test('キーボードでも開け閉めできる', async ({ page }) => {

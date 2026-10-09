@@ -267,6 +267,72 @@ test.describe('狭い画面では目次を本文中に表示する', () => {
     expect(Math.abs(layout.toc.width - layout.content.width)).toBeLessThanOrEqual(1);
   });
 
+  test('目次は箱にせず、本文の背景のまま上下の線で区切り、本文の左端に揃える', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.BELOW_SIDE_TOC);
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    const toc = await page.evaluate(() => {
+      const el = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
+      const style = getComputedStyle(el);
+      const link = /** @type {Element} */ (el.querySelector('a'));
+      const paragraph = /** @type {Element} */ (document.querySelector('.entry-content > p'));
+      return {
+        background: style.backgroundColor,
+        backgroundImage: style.backgroundImage,
+        radius: style.borderTopLeftRadius,
+        borderTop: style.borderTopWidth,
+        borderBottom: style.borderBottomWidth,
+        borderLeft: style.borderLeftWidth,
+        borderRight: style.borderRightWidth,
+        linkLeft: link.getBoundingClientRect().left,
+        paragraphLeft: paragraph.getBoundingClientRect().left,
+      };
+    });
+
+    expect(toc.background).toBe('rgba(0, 0, 0, 0)');
+    expect(toc.backgroundImage).toBe('none');
+    expect(toc.radius).toBe('0px');
+    expect([toc.borderTop, toc.borderBottom]).toEqual(['1px', '1px']);
+    expect([toc.borderLeft, toc.borderRight]).toEqual(['0px', '0px']);
+    expect(toc.linkLeft).toBeCloseTo(toc.paragraphLeft, 0);
+  });
+
+  test('本文の先頭が目次のときは、記事のヘッダーの区切り線の位置に目次の上の線を置く', async ({ page }) => {
+    const measureLines = () => page.evaluate(() => {
+      const header = /** @type {Element} */ (document.querySelector('.entry-header'));
+      const toc = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
+      return {
+        first: toc === toc.parentElement?.firstElementChild,
+        headerLine: getComputedStyle(header).borderBottomWidth,
+        headerBottom: header.getBoundingClientRect().bottom,
+        tocTop: toc.getBoundingClientRect().top,
+      };
+    });
+
+    await page.setViewportSize(VIEWPORTS.BELOW_SIDE_TOC);
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    const first = await measureLines();
+    expect(first.first, '前提: 目次が本文の先頭にあること').toBe(true);
+    // 線が2本並ばないよう、ヘッダーの区切り線は消し、すぐ下に目次の上の線を置く
+    expect(first.headerLine).toBe('0px');
+    expect(first.tocTop).toBeCloseTo(first.headerBottom, 0);
+
+    // 本文の途中の目次では、ヘッダーの区切り線を残す
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H3, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    const middle = await measureLines();
+    expect(middle.first, '前提: 目次が本文の途中にあること').toBe(false);
+    expect(middle.headerLine).toBe('1px');
+
+    // 本文の横に目次を出す幅では、目次はヘッダーの下にないので、ヘッダーの区切り線を残す
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    expect((await measureLines()).headerLine).toBe('1px');
+  });
+
   test('本文の途中に書いた目次は、書かれた位置に表示される', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.BELOW_SIDE_TOC);
     await page.navigateTo(FIXTURE_URLS.HEADINGS_H3, { waitFor: 'networkidle' });

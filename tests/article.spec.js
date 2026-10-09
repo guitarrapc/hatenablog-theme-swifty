@@ -16,7 +16,7 @@ test.describe('記事ページのテスト', () => {
   });
 
   test('本文中の箱の角丸は記事のカードと揃え、画像は小さくする', async ({ page }) => {
-    // カードに角丸があり、目次が本文中に箱として出る幅で測る
+    // カードに角丸がある幅で測る(目次は本文中でも箱にしないので含めない)
     await page.setViewportSize(VIEWPORTS.BELOW_SIDE_TOC);
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
@@ -34,8 +34,8 @@ test.describe('記事ページのテスト', () => {
           アラート: radius('.entry-content .markdown-alert'),
           // 引用は左に線があるので右の角だけ丸める
           引用: radius('.entry-content > blockquote:not(.markdown-alert)'),
-          折りたたみ: radius('.entry-content details'),
-          目次: radius('.entry-content > :is(.table-of-contents, .toc-panel)'),
+          // 目次(js/toc-toggle.js が包む details.toc-panel)は箱にしないので除く
+          折りたたみ: radius('.entry-content details:not(.toc-panel)'),
         },
         quoteLeft: radius('.entry-content > blockquote:not(.markdown-alert)', 'borderTopLeftRadius'),
         image: radius('.entry-content img.hatena-fotolife'),
