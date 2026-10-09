@@ -2,7 +2,8 @@
 
 /*
  * 印刷用スタイル (theme-design-spec.md の「印刷」を参照)
- * style.scssの最後に読み込み、各コンポーネントの指定を!importantなしで上書きする
+ * style.scssの最後に読み込み、各コンポーネントの指定を!importantなしで上書きする。
+ * 後から読み込んでも、画面用の指定より詳細度が低いと負けるので、そのときは #main-inner を付けて詳細度を上げる
  */
 @media print {
 
@@ -17,8 +18,9 @@
     .blog-controlls,
     .entry-header-menu,
     .hatena-star-container,
-    .social-buttons,
-    .leave-comment-title {
+    #main-inner .social-buttons,
+    .leave-comment-title,
+    .read-more-comments {
         display: none;
     }
 
@@ -30,7 +32,7 @@
     /* ナビゲーション */
     #box2,
     #entry-footer-secondary-modules,
-    .pager {
+    #main-inner .pager {
         display: none;
     }
 

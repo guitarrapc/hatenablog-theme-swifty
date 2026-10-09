@@ -143,4 +143,45 @@ test.describe('印刷スタイルのテスト', () => {
       expect(display, `印刷時に${name}が隠れていない`).toBe('none');
     });
   });
+
+  test('記事を印刷すると、記事のカードの余白をなくし、前後の記事につなげるための余白も残さない', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.pager-permalink')).toBeAttached({ timeout: TIMEOUTS.VERY_LONG });
+
+    await page.emulateMedia({ media: 'print' });
+    const entry = await page.evaluate(() => ({
+      padding: getComputedStyle(/** @type {Element} */ (document.querySelector('#main-inner > .entry'))).padding,
+      pager: getComputedStyle(/** @type {Element} */ (document.querySelector('.pager-permalink'))).display,
+    }));
+    expect(entry).toEqual({ padding: '0px', pager: 'none' });
+  });
+
+  test('記事の一覧を印刷すると、ページャーとスター・はてなブックマーク数を出さず、一覧のカードの下端を残す', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
+    await expect(page.locator('.archive-entries')).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+
+    // 画面用の指定(一覧のカードにつなげるページャー、一覧のスター)は詳細度が高いので、印刷側が負けていないかを確かめる
+    const measureList = () => page.evaluate(() => {
+      const pager = document.querySelector('#main-inner > .pager');
+      return {
+        pager: pager ? getComputedStyle(pager).display : null,
+        social: [...document.querySelectorAll('.archive-entry .social-buttons')].map((el) => getComputedStyle(el).display),
+        listBottom: getComputedStyle(/** @type {Element} */ (document.querySelector('.archive-entries'))).borderBottomWidth,
+      };
+    });
+
+    // 前提: 画面ではページャーを一覧のカードの下につなげ(カードの下の枠をなくし)、スターなどを出している
+    const screen = await measureList();
+    expect(screen.pager, 'ページャーがない(トップページの記事の数を確認する)').not.toBeNull();
+    expect(screen.pager).not.toBe('none');
+    expect(screen.listBottom).toBe('0px');
+    expect(screen.social.length).toBeGreaterThan(0);
+    expect(screen.social.filter((display) => display === 'none')).toHaveLength(0);
+
+    await page.emulateMedia({ media: 'print' });
+    const print = await measureList();
+    expect(print.pager).toBe('none');
+    expect(print.social.filter((display) => display !== 'none')).toHaveLength(0);
+    expect(print.listBottom).toBe('1px');
+  });
 });

@@ -4,7 +4,6 @@
 (function () {
   'use strict';
 
-  // Alert types and their titles
   const ALERT_TITLES = {
     note: 'Note',
     tip: 'Tip',
@@ -134,7 +133,7 @@
       if (paragraph !== blockquote.firstElementChild) {
         target = blockquote.cloneNode(false);
         target.removeAttribute('id');
-        // Insert first: moveBefore keeps node state only when moving within the document
+        // Insert first: moveBefore throws unless the new parent is in the same document
         blockquote.after(target);
         let node = paragraph;
         while (node) {

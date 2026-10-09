@@ -23,8 +23,8 @@
 * 関連記事: `<div class="hatena-module hatena-module-related-entries">`
 * プロフィール: `<div class="hatena-module hatena-module-profile">`
 * 注目記事: `<div class="hatena-module hatena-module-entries-access-ranking">`
-* 最近のコメント: `<div class="hatena-module hatena-module-entries-recent-comments">`
-* 最近の参加グループ: `<div class="hatena-module hatena-module-entries-circles">`
+* 最近のコメント: `<div class="hatena-module hatena-module-recent-comments">`
+* 最近の参加グループ: `<div class="hatena-module hatena-module-circles">`
 * 最近の執筆者リスト: `<div class="hatena-module hatena-module-authors-list">`
 
 ## 記事ページ
@@ -110,7 +110,7 @@
 </div>
 ```
 
-コメントがない場合は、コメント用のボタンのみ表示され、`<ul class="comment">`は描画されません。
+コメントがない場合も `<ul class="comment">` は出力され、中には「もっと読む」(`<li class="read-more-comments">`)だけが入ります。
 
 各コメント(`<li class="entry-comment js-entry-comment">`)の構成:
 * ユーザー名: `<p class="comment-user-name">`
@@ -124,13 +124,13 @@
 
 ```html
 <div class="pager pager-permalink permalink">
-  <span class="prev-entry">前の記事へのリンク</span>
-  <span class="next-entry">次の記事へのリンク</span>
+  <span class="pager-prev"><a rel="prev"><span class="pager-arrow">« </span>前の記事のタイトル</a></span>
+  <span class="pager-next"><a rel="next">次の記事のタイトル<span class="pager-arrow"> »</span></a></span>
 </div>
 ```
 
-* 前の記事がなければ`<span class="prev-entry">`は描画されません
-* 次の記事がなければ`<span class="next-entry">`は描画されません
+* 前の記事がなければ`<span class="pager-prev">`は描画されません
+* 次の記事がなければ`<span class="pager-next">`は描画されません
 
 ## アーカイブページ
 
@@ -152,15 +152,15 @@
 ```html
 <section class="archive-entry">
   <div class="archive-entry-header">
-    <h1 class="entry-title">記事タイトル</h1>
     <div class="date archive-date">作成日付</div>
+    <h1 class="entry-title">記事タイトル</h1>
   </div>
   <div class="categories">
     <a class="archive-category-link">カテゴリー</a>
     <!-- 0-複数ありえる -->
   </div>
   <a class="entry-thumb-link">サムネイル</a>
-  <div class="entry-body">
+  <div class="archive-entry-body">
     <p class="entry-description">記事冒頭部分</p>
     <div class="archive-entry-tags-wrapper">タグラッパー</div>
     <span class="social-buttons">ソーシャルボタン</span>

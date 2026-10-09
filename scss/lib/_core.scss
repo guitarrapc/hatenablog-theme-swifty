@@ -1,9 +1,7 @@
 @use "./_variable" as var;
 
 :root {
-    // 配色 (_variable.scss の $light-theme)
     @include var.css-variables(var.$light-theme);
-    // レイアウト (_variable.scss の $layout)
     @include var.css-variables(var.$layout);
 
     // 目次の見出し。デザインCSSで `:root { --toc-label: "Contents"; }` のように変えられる
@@ -15,14 +13,14 @@
     --pager-prev-label: "前の記事";
     --pager-next-label: "次の記事";
 
-    // ヘッダーと、その下のカード(記事ページではパンくずの入ったカード)の間。広い画面ほど空ける
+    // ヘッダーと、その下のカード(記事・記事の一覧)の間。広い画面ほど空ける
     --header-gap: 32px;
     // 画面端とカードの間の余白と、カードの内側の余白。スマホではカードを画面幅いっぱいにする
     --gutter: 0px;
     --card-padding-block: 28px;
     --card-padding-inline: 16px;
 
-    // 広い画面でも内側の余白は増やさず、そのぶんを本文に回す
+    // 768px以上。これより広い画面でも内側の余白は40pxのまま増やさず、そのぶんを本文に回す
     @media #{var.$mq-sm} {
         --header-gap: 48px;
         --gutter: 24px;
@@ -145,9 +143,10 @@ a {
     }
 }
 
-// キーボード操作の位置を示す枠。アクセントの非テキストのコントラスト(3:1)を満たす色にする
+// キーボード操作の位置を示す枠。要素の外側に描くので、カードだけでなくページの背景やコードブロックの上にも来る。
+// どの配色でもそのすべてに3:1以上あるリンク色にする(theme-design-spec.md の「フォーカス表示」を参照)
 :focus-visible {
-    outline: 2px solid var(--accent-strong);
+    outline: 2px solid var(--link);
     outline-offset: 2px;
 }
 
@@ -188,7 +187,7 @@ h6 {
     margin-top: 16px;
 }
 
-/* パンくず（カテゴリー、記事ページで表示されます） */
+// パンくず(カテゴリのページ。記事ページでは隠す)
 #top-box {
     margin-top: 16px;
 }
@@ -213,11 +212,6 @@ h6 {
             text-decoration: underline;
         }
     }
-
-    // はてなの「.page-entry .breadcrumb」の2emを詰める
-    .page-entry & {
-        margin-bottom: 12px;
-    }
 }
 
 // 区切りは、はてなが出力する「>」を見えなくして「/」を出す。
@@ -236,7 +230,7 @@ h6 {
 
 /*
  * 記事ページのパンくず(theme-design-spec.md の「記事」の「パンくずとカテゴリ」を参照)。
- * 記事ページのパンくず(トップ / 最初のカテゴリ)はカテゴリと重なるので表示せず、パンくずの位置(タイトルの上)にカテゴリを置く(_entry.scss)。
+ * 記事ページのパンくず(トップ / 最初のカテゴリ / 記事のタイトル)はカテゴリとタイトルに重なるので表示せず、パンくずの位置(タイトルの上)にカテゴリを置く(_entry.scss)。
  * はてなはパンくずの構造化データ(BreadcrumbList)を別の script で出力するので、表示を隠しても検索エンジン向けの情報は残る
  */
 body.page-entry #top-box {
@@ -250,6 +244,7 @@ body.page-entry #top-box {
  * 記事のカードの上の枠と角丸をなくして、1枚のカードに見せる。継ぎ目に影が出ないよう、パンくずは下側、記事は上側の影を切る。
  * スタイルクエリに対応していないブラウザでは、切り替えは効かず、パンくずを表示しない
  */
+// 名前空間付きの変数には符号を付けて書けない(-var.$… は名前空間と読まれる)ので、ここに置く
 $card-shadow-reach: var.$card-shadow-reach;
 
 @container style(--swifty-entry-breadcrumb: show) {
@@ -257,34 +252,37 @@ $card-shadow-reach: var.$card-shadow-reach;
         display: block;
     }
 
-    body.page-entry:has(#top-box .breadcrumb) {
-        .breadcrumb {
-            @include var.card;
-            // 記事のカードの下に1px潜り込ませる。継ぎ目が小数のピクセルに来ると、両方の端がにじんでページの背景が線になって見えるため
-            margin: 0 0 -1px;
-            padding: var(--card-padding-block) var(--card-padding-inline) 1px;
-            border-bottom: 0;
-            border-end-start-radius: 0;
-            border-end-end-radius: 0;
-            clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
+    // カードの形でつなげるのは画面だけ(記事のカードとページャーのつなぎと同じ)
+    @media screen {
+        body.page-entry:has(#top-box .breadcrumb) {
+            .breadcrumb {
+                @include var.card;
+                // 記事のカードの下に1px潜り込ませる。継ぎ目が小数のピクセルに来ると、両方の端がにじんでページの背景が線になって見えるため
+                margin: 0 0 -1px;
+                padding: var(--card-padding-block) var(--card-padding-inline) 1px;
+                border-bottom: 0;
+                border-end-start-radius: 0;
+                border-end-end-radius: 0;
+                clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
 
-            // 記事のタイトルはすぐ下にあるので、パンくずの最後(記事のタイトル)とその前の区切りは出さない
-            .breadcrumb-child:last-child,
-            .breadcrumb-gt:has(+ .breadcrumb-child:last-child) {
-                display: none;
+                // 記事のタイトルはすぐ下にあるので、パンくずの最後(記事のタイトル)とその前の区切りは出さない
+                .breadcrumb-child:last-child,
+                .breadcrumb-gt:has(+ .breadcrumb-child:last-child) {
+                    display: none;
+                }
             }
-        }
 
-        #content {
-            margin-top: 0;
-        }
+            #content {
+                margin-top: 0;
+            }
 
-        .entry {
-            border-top: 0;
-            border-start-start-radius: 0;
-            border-start-end-radius: 0;
-            padding-top: 14px;
-            clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
+            .entry {
+                border-top: 0;
+                border-start-start-radius: 0;
+                border-start-end-radius: 0;
+                padding-top: 14px;
+                clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
+            }
         }
     }
 }
@@ -305,8 +303,7 @@ $card-shadow-reach: var.$card-shadow-reach;
     width: 100%;
 }
 
-/* footer */
-// ヘッダーと対になる白の帯にする
+// ページ末尾。ヘッダーと対になる、画面幅いっぱいの帯にする
 #footer {
     padding: 32px var(--header-gutter) 40px;
     background-color: var(--surface);

@@ -32,6 +32,8 @@ const TARGETS = {
   // 指定色ではなく実際に描かれる色で見ないと見逃す
   記事の一覧のカテゴリ: '#box2 .urllist-category-link',
   最近のコメントの日時: '.hatena-module-recent-comments time.recent-comment-time',
+  // はてな側のCSSが .profile-activities に opacity: 0.7 を当てている
+  プロフィールの最終更新: '.hatena-module-profile .profile-activities time',
   コードブロックのボタン: '.code-block-button',
   記事を共有するリンク: '.entry-footer .entry-share-button-bluesky',
   // はてなの灰色のボタンのままだとテーマのリンク色が4.03:1になる。テーマのボタンにしている
@@ -261,15 +263,27 @@ for (const mode of /** @type {const} */ (['light', 'dark'])) {
       }
     });
 
-    test('状態を示す印の色(目次の現在位置・フォーカスの枠)が、どの配色でもカードの背景に対して3:1以上ある', async ({ page }) => {
+    test('状態を示す印の色(目次の現在位置)はカードの背景に対して、フォーカスの枠(リンク色)はカード・ページ・コードブロックの背景に対して、どの配色でも3:1以上ある', async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
       await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
       await expectMode(page, mode);
 
+      // 前提: フォーカスの枠はリンク色で描く
+      const link = page.locator('.entry-content a[href]').first();
+      await link.focus();
+      const outline = await link.evaluate((el) => ({ focusVisible: el.matches(':focus-visible'), style: getComputedStyle(el).outlineStyle, color: getComputedStyle(el).outlineColor, link: getComputedStyle(el).color }));
+      // :focus-visible が当たらないと outline-color は文字色(currentColor)のままなので、枠が出ていることを先に確かめる
+      expect(outline.focusVisible && outline.style !== 'none', 'フォーカスの枠が出ていない').toBe(true);
+      expect(outline.color, 'フォーカスの枠がリンク色ではない').toBe(outline.link);
+
       for (const scheme of SCHEMES) {
         await applyScheme(page, scheme);
-        const colors = await resolveColors(page, ['accent-strong', 'surface']);
+        const colors = await resolveColors(page, ['accent-strong', 'link', 'surface', 'background', 'surface-muted']);
         expect.soft(ratio(colors['accent-strong'], colors.surface), `${scheme}: 印 ${colors['accent-strong']} とカード ${colors.surface}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+        // 枠は要素の外側に描くので、カードの外(カテゴリのページのパンくずなど)やコードブロックの上にも来る
+        for (const background of ['surface', 'background', 'surface-muted']) {
+          expect.soft(ratio(colors.link, colors[background]), `${scheme}: フォーカスの枠 ${colors.link} と ${background} ${colors[background]}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+        }
       }
     });
   });

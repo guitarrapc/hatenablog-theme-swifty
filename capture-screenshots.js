@@ -12,10 +12,11 @@
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { BLOG_URL } from './blog.config.js';
 import { TEST_URLS, SCHEMES, VIEWPORTS, schemeCss } from './tests/constants.js';
 
-const OUT_DIR = path.resolve('articles/screenshots');
+const OUT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'articles', 'screenshots');
 
 // 端末の画面の大きさ。紹介記事の脚注と揃える
 const DEVICES = {

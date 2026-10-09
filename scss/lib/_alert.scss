@@ -23,7 +23,6 @@
         color: var(--alert-color);
         font-weight: 700;
 
-        // アイコンはmaskで切り抜き、currentColorで塗る
         &::before {
             content: "";
             flex-shrink: 0;

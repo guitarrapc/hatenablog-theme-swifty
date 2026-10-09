@@ -51,7 +51,7 @@
     }
 }
 
-/* 記事の一覧などのリスト */
+/* ブログパーツのリスト(.hatena-urllist) */
 .hatena-urllist {
     margin: 0;
     padding: 0;
@@ -123,8 +123,10 @@
         color: var(--text-light);
         font-size: .75rem;
 
+        // 区切りの「・」は読み上げない
         + .urllist-category-link::before {
             content: "・";
+            content: "・" / "";
         }
     }
 
@@ -151,7 +153,6 @@ $urllist-image-size: 56px;
     column-gap: 12px;
     align-items: center;
 
-    // サムネイルがない(または仮の画像の)記事は、文字だけにする
     &:not(:has(> .urllist-image-link > img:not([src*="#{var.$hatena-placeholder-image}"]))) {
         grid-template-columns: auto minmax(0, 1fr) auto;
         grid-template-areas:
@@ -260,8 +261,6 @@ $urllist-image-size: 56px;
         column-gap: 8px;
         margin-bottom: .5em;
         font-weight: 700;
-        color: var(--text-header);
-        text-decoration: none;
 
         a {
             display: inline-flex;
@@ -284,6 +283,11 @@ $urllist-image-size: 56px;
         @include var.meta-text;
         color: var(--text-light);
         font-style: normal;
+    }
+
+    // はてなの opacity: .7 で、補助テキストの色が4.5:1に届かなくなる(ダークで3.2:1)ので戻し、薄さは色で表す
+    .profile-activities {
+        opacity: 1;
     }
 }
 
@@ -311,8 +315,20 @@ $urllist-image-size: 56px;
     }
 }
 
-/* 月別アーカイブ: 年の開閉の三角は、文字より目立たない小さな印にする */
-.hatena-module-archive .archive-module-button {
+/*
+ * 月別アーカイブ: 年の開閉の三角は、文字より目立たない小さな印にする。
+ * 押せる範囲は24px四方にする(WCAG 2.5.8)。内側の余白で広げ、同じだけ外側の余白を負にして、三角の位置と行の高さは変えない
+ * (年は、三角との間の空白のぶん数px右に寄る)。
+ * 右は年との間の空白の幅までにして、年のリンクに重ねない。
+ * はてなの opacity: .6 は戻して、色の薄さは --text-light で表す(3:1以上)。
+ * はてなの指定(.hatena-urllist .archive-module-year .archive-module-button)と詳細度を揃える
+ */
+.hatena-module-archive .archive-module-year .archive-module-button {
+    display: inline-block;
+    width: 11px;
+    margin: -7px -3px -7px -10px;
+    padding: 7px 3px 7px 10px;
+    opacity: 1;
     color: var(--text-light);
     font-size: .5rem;
 }
@@ -379,7 +395,7 @@ $urllist-image-size: 56px;
 
         // 入力欄のキーボードフォーカスはフォーム全体を囲んで示す(theme-design-spec.md の「フォーカス表示」を参照)
         &:has(.search-module-input:focus-visible) {
-            outline: 2px solid var(--accent-strong);
+            outline: 2px solid var(--link);
             outline-offset: 2px;
         }
     }

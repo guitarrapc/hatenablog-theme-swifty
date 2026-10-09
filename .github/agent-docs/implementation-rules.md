@@ -2,7 +2,7 @@
 
 ## SCSSのルール
 
-* モジュールは `@use` で読み込み、名前空間を付けて参照します(例: `@use "./_variable" as var;` → `var.$mq-sm`)。`@import` やグローバルな組み込み関数(`darken()` など)はSass 3.0で廃止予定のため使いません。色の加工が必要なら `sass:color` の `color.adjust()` などを使います。
+* モジュールは `@use` で読み込み、名前空間を付けて参照します(例: `@use "./_variable" as var;` → `var.$mq-sm`)。`@import` やグローバルな組み込み関数(`darken()` など)はSass 3.0で廃止予定のため使いません。素のCSSファイルの取り込み(`style.scss` の `@import "normalize.css";`)はSassの廃止の対象ではないので、この例外です。色の加工が必要なら `sass:color` の `color.adjust()` などを使います。
 * ビルドで警告が出ないことを確認してください(`npm run build`)。
 
 ## 配色

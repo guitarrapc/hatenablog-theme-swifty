@@ -105,6 +105,11 @@ $toc-summary-icon: 1.4em;
     border-radius: 0;
     background: none;
 
+    // 本文の折りたたみの開いたときの下の余白(_entry.scss)を付けない
+    &[open] {
+        padding-bottom: 0;
+    }
+
     > .table-of-contents {
         margin: 0;
         padding: 0 0 1em;
@@ -199,7 +204,7 @@ $toc-summary-icon: 1.4em;
 
 /*
  * 広い画面では本文の横に目次の列を足す。
- * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、全行にまたがらせて position: sticky で止める。
+ * 本文をグリッドにして直下の要素をすべて1列目に、目次だけを2列目に置き、1000行($toc-row-span)にまたがらせて position: sticky で止める。
  * 目次を閉じると目次の列を細い帯の幅に縮め、そのぶん本文を広げる。
  * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
  */

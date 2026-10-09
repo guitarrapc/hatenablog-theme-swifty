@@ -13,11 +13,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
-// インデントとコメント行を除いて比較する
+// インデント・空行・コメント行を除いて比較する
 const normalize = (code) => code
   .split(/\r?\n/)
   .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith("//") && !line.startsWith("/**") && !line.startsWith("*"));
+  .filter((line) => line && !line.startsWith("//") && !line.startsWith("/**") && !line.startsWith("* ") && line !== "*" && !line.startsWith("*/"));
 
 const files = fs.readdirSync(ROOT).filter((name) => /^customize-.+\.html$/.test(name));
 if (files.length === 0) {

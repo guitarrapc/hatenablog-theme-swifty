@@ -73,8 +73,6 @@ $code-padding-inline: 1.125rem;
             line-height: $code-header-height;
             letter-spacing: .04em;
             white-space: nowrap;
-            // 言語名をコピーやテキストの選択に含めない(疑似要素なので含まれないが、明示しておく)
-            user-select: none;
         }
     }
 
@@ -196,7 +194,6 @@ $code-padding-inline: 1.125rem;
     line-height: 1;
     cursor: pointer;
 
-    // アイコンはmaskで切り抜き、currentColorで塗る
     &::before {
         content: "";
         flex-shrink: 0;
@@ -253,7 +250,7 @@ $code-padding-inline: 1.125rem;
     overflow-wrap: anywhere;
 }
 
-// スクリーンリーダーに「コピーしました」などを伝える領域。画面には出さない
+// コピーの結果(Copied! / Copy failed)をスクリーンリーダーに伝える領域。画面には出さない
 .code-block-status {
     position: absolute;
     width: 1px;

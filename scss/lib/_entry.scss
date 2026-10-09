@@ -30,7 +30,6 @@
     padding-top: calc(var(--heading-space) + var(--band-padding));
     padding-bottom: var(--band-padding);
     border-bottom: 0;
-    border-radius: 0 6px 6px 0;
     background: linear-gradient(90deg, var(--accent-soft), transparent 80%) left bottom / 100% calc(100% - var(--heading-space)) no-repeat;
     font-size: 1.45rem;
 
@@ -43,7 +42,6 @@
 @mixin heading-dashed {
     padding: var(--heading-space) 0 .35em;
     border-bottom: 2px dashed var(--accent-line);
-    border-radius: 0;
     background: none;
     font-size: 1.3rem;
 
@@ -62,7 +60,6 @@
     padding-top: var(--heading-space);
     padding-bottom: 0;
     border-bottom: 0;
-    border-radius: 0;
     background: none;
     font-size: 1.175rem;
 
@@ -75,7 +72,6 @@
 @mixin heading-minor($size) {
     padding: var(--heading-space) 0 0;
     border-bottom: 0;
-    border-radius: 0;
     background: none;
     font-size: $size;
 
@@ -91,7 +87,7 @@
 /*
  * 記事 (theme-design-spec.md の「記事」を参照)
  * 記事は1枚のカードにし、本文は --content-max の幅で中央に置く。
- * 目次があり画面が広いときは、本文の横に目次の列を足す(_table_of_contents.scss)
+ * 1200px以上では、目次の有無に関わらず本文の右に目次の列を取る(_table_of_contents.scss)
  */
 .entry {
     @include var.card;
@@ -106,9 +102,9 @@
 }
 
 /*
- * 記事のヘッダー: タイトルの下に、日付とカテゴリを1行に並べる(幅が足りなければ折り返す)。
+ * 記事のヘッダー: 1行目にカテゴリ、2行目にタイトル、その下に日付を置く。
  * はてなのHTMLは日付 → タイトル → カテゴリの順なので order で並べ替える。
- * 記事ページでは、タイトルの上にパンくずが入る(_core.scss)
+ * パンくずを表示する設定(--swifty-entry-breadcrumb: show)では、カテゴリを日付の横に置く
  */
 .entry-header {
     position: relative;
@@ -121,13 +117,13 @@
     border-bottom: 1px solid var(--border);
 }
 
-// タイトルは1行を占め、日付とカテゴリをその下の行に送る
+// タイトルは1行を占め、日付をその下の行に送る
 .entry-header .entry-title {
     flex-basis: 100%;
 }
 
 // カテゴリは丸いラベルにせず、記事の一覧と同じ「test / テスト」の形にする(_variable.scss の category-text-list)。
-// 丸いラベルはタイトルの下で目立ちすぎるため。
+// 丸いラベルは目立ちすぎるため。
 // 記事のヘッダーの1行目(タイトルの上)に置く。記事ページでは、表示しないパンくずの代わりになる(_core.scss)
 .entry-categories {
     @include var.category-text-list;
@@ -175,7 +171,10 @@
     }
 }
 
-/* 「編集する」ボタン(ブログ主のログイン時だけ表示される) */
+/*
+ * 「編集する」ボタン。ブログ主がログインしているとき、はてなのスクリプトが、記事にマウスを乗せた時点で記事のヘッダーに足す。
+ * 1行目の右端に重ねて置く
+ */
 .entry-header-menu {
     position: absolute;
     top: 0;
@@ -189,11 +188,35 @@
     }
 }
 
+// 1行目(カテゴリ。カテゴリのない記事ではタイトル)がボタンの下に隠れないよう、ボタンの幅(4文字・左右の余白・枠)と間隔のぶん右を空ける。
+// ボタンが足された時点で空けるので、長いカテゴリやタイトルは、そのときに折り返しが変わることがある
+$edit-button-space: calc(4 * .75rem + 24px + 2px + 12px);
+
+.entry-header:has(> .entry-header-menu) {
+    > .entry-categories,
+    &:not(:has(> .entry-categories)) > .entry-title {
+        padding-right: $edit-button-space;
+    }
+}
+
+// パンくずを表示するときは1行目がタイトルになり、カテゴリは日付の横に移るので、カテゴリではなくタイトルの右を空ける
+@container style(--swifty-entry-breadcrumb: show) {
+    body.page-entry .entry-header:has(> .entry-header-menu) {
+        > .entry-categories {
+            padding-right: 0;
+        }
+
+        > .entry-title {
+            padding-right: $edit-button-space;
+        }
+    }
+}
+
 /*
  * 記事の本文
  * 余白は下方向(margin-bottom)と見出しの上(padding-top)だけで作る。
  * 目次を本文の横に置くときは本文をグリッドにするため、マージンの相殺に頼ると目次の有無で間隔が変わる
- * (theme-design-spec.md の「目次」を参照)
+ * (theme-design-spec.md の「本文の余白」を参照)
  */
 .entry-content {
     --flow-space: 1.6rem;
@@ -207,8 +230,9 @@
         margin-bottom: var(--flow-space);
     }
 
+    // 空の要素は余白を持たせない。区切り線(hr)は中身がなくても :empty に当たるので除く
     > :last-child,
-    > :empty {
+    > :empty:not(hr) {
         margin-bottom: 0;
     }
 
@@ -226,7 +250,7 @@
     }
 
     /* 見出し (theme-design-spec.md の「見出しと引用」を参照) */
-    // 上の余白は --heading-space の padding-top で作る(margin-top は相殺されるため使わない。「本文の余白」を参照)。
+    // 上の余白は --heading-space の padding-top で作る(margin-top は目次の有無(グリッドかどうか)で相殺のされ方が変わるため使わない。「本文の余白」を参照)。
     // 字間は本文(.02em)から切り離して詰め、行の高さも詰めて、見出しを塊として見せる
     > h1,
     > h2,
@@ -461,8 +485,10 @@ $heading-top-levels: (
         }
     }
 
+    // 目次を本文の横に置くグリッドでは、ブラウザ既定の margin-inline: auto で幅が0になるので、左右の余白を0にする
     hr {
         height: 1px;
+        margin-inline: 0;
         border: 0;
         background-color: var(--border);
     }
@@ -509,6 +535,10 @@ $heading-top-levels: (
     dd {
         padding-left: 0;
         margin-bottom: 2em;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 }
 
@@ -520,7 +550,6 @@ $heading-top-levels: (
  */
 $footer-section-gap: 32px;
 
-// コメントのアイコンの大きさと、アイコンと名前・本文の間隔
 $comment-icon-size: 32px;
 $comment-icon-gap: 12px;
 
@@ -528,21 +557,17 @@ $comment-icon-gap: 12px;
     margin-top: 48px;
     font-size: .875rem;
 
-    .social-buttons {
-        margin: 1em 0;
+    // はてなの設定で共有のボタンを1つも出さないときは、空の .social-buttons が余白を持ち、最初の段の間隔が広がるので出さない
+    .social-buttons:not(:has(> .social-button-item)) {
+        display: none;
     }
 
-    // 記事下のブログパーツ(関連記事)は、カードの中なのでカードにしない(_modules.scss)。
     // 共有の段がなければ、ブログパーツが最初の段になる
-    .customized-footer {
-        margin-top: 0;
-    }
-
     &:not(:has(.social-buttons > .social-button-item)) .customized-footer {
         margin-top: $footer-section-gap;
     }
 
-    // コメント欄は、前に段がなければ最初の段になる
+    // コメント欄の前に段があれば、上の余白は前の段に任せる(なければ、コメント欄が最初の段になる)
     &:has(.social-buttons > .social-button-item, .customized-footer .hatena-module) .comment-box {
         margin-top: 0;
     }
@@ -626,7 +651,6 @@ $share-link-selectors: ();
                 overflow: visible !important;
                 background: none !important;
                 text-indent: 0 !important;
-                vertical-align: middle !important;
                 // 隠した文字もフレックスの項目になり、前後に間隔が付くので、間隔はアイコンの右に付ける
                 gap: 0;
                 font-size: 0;
@@ -686,7 +710,6 @@ $share-link-selectors: ();
         margin: 0;
         padding: 0;
         list-style: none;
-        font-size: .875rem;
 
         // コメントがなければ一覧を出さず、見出しと「コメントを書く」を1行に並べる。
         // コメントを投稿すると、はてながここにコメントを足すので、そのときは出る
@@ -807,14 +830,17 @@ $share-link-selectors: ();
  */
 $card-shadow-reach: var.$card-shadow-reach;
 
-#main-inner > .entry:has(+ .pager-permalink) {
-    margin-bottom: 0;
-    // 前後の記事の線の上の余白。記事下の段の間(16px)に、前後の記事を記事の下に潜り込ませる1pxを足す
-    padding-bottom: 17px;
-    border-bottom: 0;
-    border-end-start-radius: 0;
-    border-end-end-radius: 0;
-    clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
+// 印刷では前後の記事を出さないので、つなげるのは画面だけ
+@media screen {
+    #main-inner > .entry:has(+ .pager-permalink) {
+        margin-bottom: 0;
+        // 前後の記事の線の上の余白。記事下の段の間(16px)に、前後の記事を記事の下に潜り込ませる1pxを足す
+        padding-bottom: 17px;
+        border-bottom: 0;
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+        clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
+    }
 }
 
 // パンくずも表示してつなげた記事は、上下とも影を切る
@@ -902,7 +928,7 @@ $card-shadow-reach: var.$card-shadow-reach;
     }
 }
 
-/* 記事の一覧のページャー(次のページ・前のページ)。記事の一覧のカードにつなげるもの(_archive.scss)は除く */
+/* 記事を全文で並べるページ(トップページの記事の表示など)のページャー。記事の一覧のカードにつなげるもの(_archive.scss)は除く */
 .pager:not(.pager-permalink, .archive-entries + .pager) {
     display: flex;
     flex-wrap: wrap;

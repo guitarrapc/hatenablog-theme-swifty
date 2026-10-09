@@ -221,57 +221,60 @@ $archive-thumb-size-xs: 72px;
  */
 $card-shadow-reach: var.$card-shadow-reach;
 
-#main-inner > .archive-entries:has(+ .pager) {
-    margin-bottom: 0;
-    border-bottom: 0;
-    border-end-start-radius: 0;
-    border-end-end-radius: 0;
-    clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
-}
-
-#main-inner > .archive-entries + .pager {
-    @include var.card;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 16px;
-    // 一覧の下に1px潜り込ませる(パンくず・前後の記事と同じ)
-    margin: -1px 0 16px;
-    padding: 0 var(--card-padding-inline) 24px;
-    border-top: 0;
-    border-start-start-radius: 0;
-    border-start-end-radius: 0;
-    clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
-
-    // 段の上の線(記事下の段と同じ)
-    &::before {
-        content: "";
-        grid-column: 1 / -1;
-        border-top: 1px solid var(--border);
+// 印刷ではページャーを出さないので、つなげるのは画面だけ
+@media screen {
+    #main-inner > .archive-entries:has(+ .pager) {
+        margin-bottom: 0;
+        border-bottom: 0;
+        border-end-start-radius: 0;
+        border-end-end-radius: 0;
+        clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
     }
 
-    > .pager-prev {
-        grid-column: 1;
-    }
+    #main-inner > .archive-entries + .pager {
+        @include var.card;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 16px;
+        // 一覧の下に1px潜り込ませる(パンくず・前後の記事と同じ)
+        margin: -1px 0 16px;
+        padding: 0 var(--card-padding-inline) 24px;
+        border-top: 0;
+        border-start-start-radius: 0;
+        border-start-end-radius: 0;
+        clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
 
-    > .pager-next {
-        grid-column: -2;
-        text-align: right;
-    }
-
-    a {
-        @include var.footer-action;
-    }
-
-    .pager-prev a::before {
-        mask-image: fn.url-svg(var.$svg-arrow-left, #000);
-    }
-
-    // 次のページの矢印は名前の右に置く
-    .pager-next a {
-        flex-direction: row-reverse;
-
+        // 段の上の線(記事下の段と同じ)
         &::before {
-            mask-image: fn.url-svg(var.$svg-arrow-right, #000);
+            content: "";
+            grid-column: 1 / -1;
+            border-top: 1px solid var(--border);
+        }
+
+        > .pager-prev {
+            grid-column: 1;
+        }
+
+        > .pager-next {
+            grid-column: -2;
+            text-align: right;
+        }
+
+        a {
+            @include var.footer-action;
+        }
+
+        .pager-prev a::before {
+            mask-image: fn.url-svg(var.$svg-arrow-left, #000);
+        }
+
+        // 次のページの矢印は名前の右に置く
+        .pager-next a {
+            flex-direction: row-reverse;
+
+            &::before {
+                mask-image: fn.url-svg(var.$svg-arrow-right, #000);
+            }
         }
     }
 }

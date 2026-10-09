@@ -99,6 +99,27 @@ test.describe('記事ページのテスト', () => {
     if (!document.getElementById('top-box')) document.getElementById('content')?.insertAdjacentHTML('beforebegin', html);
   }, BREADCRUMB);
 
+  test('区切り線は、目次を本文の横に置いても本文の幅で引き、上と同じだけ下にも余白を空ける', async ({ page }) => {
+    // 目次を本文の横に置く幅(本文がグリッドになる)。ブラウザ既定の margin-inline: auto のままだと線の幅が0になる
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(FIXTURE_URLS.TEXT, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();
+    await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
+
+    const hr = await page.evaluate(() => {
+      const hr = /** @type {Element} */ (document.querySelector('.entry-content > hr'));
+      const rect = hr.getBoundingClientRect();
+      const before = /** @type {Element} */ (hr.previousElementSibling).getBoundingClientRect();
+      const after = /** @type {Element} */ (hr.nextElementSibling).getBoundingClientRect();
+      return { width: rect.width, columnWidth: before.width, above: rect.top - before.bottom, below: after.top - rect.bottom };
+    });
+
+    expect(hr.width).toBeCloseTo(hr.columnWidth, 0);
+    // 区切り線は中身がなくても :empty に当たるが、空の要素と違って下の余白を残す
+    expect(hr.below).toBeGreaterThan(0);
+    expect(hr.below).toBeCloseTo(hr.above, 0);
+  });
+
   test('記事ページでは、パンくずを表示せず、パンくずの位置(タイトルの上)にカテゴリを置き、タイトルの下は日付だけにする', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible();

@@ -1,12 +1,9 @@
 @use "sass:map";
 @use "./_functions" as fn;
 
-// Variables
-
 // Media Queries
 $mq-xs: "(max-width: 767px)"; // スマホ(小型タブレット)
 $mq-sm: "(min-width: 768px)"; // タブレット。はてなの「読者になる」の帯もこの幅で切り替わる
-$mq-md: "(min-width: 992px)"; // PC (大き目タブレット)
 $mq-lg: "(min-width: 1200px)"; // 広いPC。目次を本文の横に出す
 
 // レイアウト (theme-design-spec.md の「レイアウト」を参照)
@@ -18,8 +15,8 @@ $layout: (
     "toc-rail-width": 40px, // 本文の横の目次を閉じたときの帯の幅(js/toc-toggle.js)
     "toc-rail-gap": 24px, // 本文と閉じた目次の帯の間隔
     "toc-sticky-top": 24px, // 本文の横の目次をスクロールで止める位置
-    "radius": 16px, // カードと、本文中の箱(コードブロック・アラート・引用・折りたたみ・目次)の角丸
-    "radius-small": 8px, // 画像とサムネイルの角丸。大きくすると画像の隅が欠けるので小さくする
+    "radius": 16px, // カードと、本文中の箱(コードブロック・アラート・引用・折りたたみ)の角丸
+    "radius-small": 8px, // 画像とサムネイル、ダークモードのメニューなど小さな部品の角丸。大きくすると画像の隅が欠けるので小さくする
 );
 
 // はてなのヘッダーメニュー(#globalheader-container)の高さ。テーマからは変えられない
@@ -83,12 +80,12 @@ $svg-share-tumblr: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
 // Gray系 (わずかに緑みを帯びたグレー)
 $color-white: #fff;
 $color-gray-100: #f4f8f7;
-$color-gray-150: #f2f6f5; // ページの背景。緑みを抑えて、白いカードとの差を控えめにする
+$color-gray-150: #f2f6f5;
 $color-gray-200: #e1ebe8;
 $color-gray-300: #c9d8d4;
 $color-gray-500: #7e8e8a;
 $color-gray-600: #5b6b67;
-$color-gray-650: #5f6e68;
+$color-gray-550: #5f6e68;
 $color-gray-800: #2b3836;
 $color-gray-850: #24312f;
 $color-gray-900: #172321;
@@ -160,8 +157,8 @@ $color-haze-900: #161b1d;
 
 // Peach系 (ピーチベージュの地と、赤茶の文字。配色 apricot の地と文字)
 $color-peach-100: #fcf3ef;
-$color-peach-150: #efddd5;
-$color-peach-200: #f0e2dc;
+$color-peach-150: #f0e2dc;
+$color-peach-200: #efddd5;
 $color-peach-300: #dfc6bc;
 $color-peach-500: #9e7c73;
 $color-peach-600: #76524a;
@@ -170,7 +167,7 @@ $color-peach-900: #331510;
 
 // Frost系 (わずかに青みを帯びた、ほぼ白の地とグレーの文字。配色 navy の地と文字)
 $color-frost-100: #f3f6f9;
-$color-frost-150: #fbfeff;
+$color-frost-50: #fbfeff;
 $color-frost-200: #e3e8ee;
 $color-frost-300: #cbd3dc;
 $color-frost-500: #7f8792;
@@ -180,7 +177,7 @@ $color-frost-900: #1c1f24;
 
 // Blush系 (わずかに赤みを帯びた、ほぼ白の地と線。配色 pink-green の地)
 $color-blush-100: #fbf2f0;
-$color-blush-150: #fdf7f5;
+$color-blush-50: #fdf7f5;
 $color-blush-200: #f2e4e0;
 $color-blush-300: #e0ccc6;
 
@@ -317,7 +314,7 @@ $light-theme: (
     // ブログのヘッダーの帯。はてなのヘッダーメニュー(別ドメインのiframeで白固定)と続けて1つのヘッダーに見せるので、
     // カードの色を変える配色でも白のままにする($schemes で変えない)
     "surface-header": $color-white,
-    "surface-muted": $color-gray-100, // コードブロック・表の見出し・本文中の目次
+    "surface-muted": $color-gray-100, // コードブロック・表の見出し・引用の背景
 
     "text-body": $color-gray-800,
     "text-header": $color-gray-900,
@@ -326,10 +323,10 @@ $light-theme: (
     "link": $color-mint-700,
     "link-hover": $color-mint-800,
 
-    "accent": $color-mint-400, // 飾り(見出しの下線、リストの記号)。文字には使わない
+    "accent": $color-mint-400, // 飾り(見出しの縦棒)。文字には使わない
     "accent-strong": $color-mint-500, // 状態を示す印(目次の現在位置)。非テキストの3:1を満たす
-    "accent-line": $color-mint-300, // 淡い線(見出し(h3)の破線の下線)。飾りだけ
-    "accent-soft": $color-mint-50, // 淡い塗り(インラインコード、カテゴリ、見出し(h1)の帯)
+    "accent-line": $color-mint-300, // 淡い線(中見出しの破線の下線)。飾りだけ
+    "accent-soft": $color-mint-50, // 淡い塗り(インラインコード、カテゴリのラベル、大見出しの帯)
     "accent-soft-hover": $color-mint-100,
 
     "border": $color-gray-200,
@@ -345,7 +342,7 @@ $light-theme: (
     "code-function": $color-blue-600, // synIdentifier: 関数名・クラス名・組み込み・CSSのセレクタ
     "code-constant": $color-amber-700, // synConstant: 文字列・数値
     "code-special": $color-pink-600, // synSpecial: エスケープ・文字列の埋め込みの括弧
-    "code-comment": $color-gray-650, // synComment
+    "code-comment": $color-gray-550, // synComment
     "code-diff-added": $color-green-700, // diffの追加の行(synIdentifier)
     "code-diff-added-bg": $color-green-50,
     "code-diff-removed": $color-red-700, // diffの削除の行(synSpecial)
@@ -528,7 +525,7 @@ $schemes: (
     // アプリコットピンク(#cf7f72)は白地で3.03:1、コードブロックやページの背景の上では3:1に届かないので飾りだけに使い、
     // リンクと状態の印は同じ色相を濃くする
     "apricot": map.merge($light-theme, (
-        "background": $color-peach-150,
+        "background": $color-peach-200,
         "surface-muted": $color-peach-100,
 
         "text-body": $color-peach-800,
@@ -544,7 +541,7 @@ $schemes: (
         "accent-soft": $color-apricot-50,
         "accent-soft-hover": $color-apricot-100,
 
-        "border": $color-peach-200,
+        "border": $color-peach-150,
         "border-strong": $color-peach-300,
         "border-quote": $color-peach-500,
         "shadow": $color-alpha-shadow-peach,
@@ -556,7 +553,7 @@ $schemes: (
     // ネイビー(#135389)は白地で8.00:1あるので、ほかの配色と違い、飾り・リンク・状態の印に同じ色を使う。
     // 地がカードの白とほとんど同じなので、カードは枠と影で分け、影をほかの配色より少し濃くする
     "navy": map.merge($light-theme, (
-        "background": $color-frost-150,
+        "background": $color-frost-50,
         "surface-muted": $color-frost-100,
 
         "text-body": $color-frost-800,
@@ -584,7 +581,7 @@ $schemes: (
     // 濃いピンク(#cb5457)は白地で4.25:1あるので飾りと状態の印に使い、文字(リンク)には少し濃くした色を使う。
     // 地がカードの白とほとんど同じなので、カードは枠と影で分け、影をほかの配色より少し濃くする
     "pink-green": map.merge($light-theme, (
-        "background": $color-blush-150,
+        "background": $color-blush-50,
         "surface-muted": $color-blush-100,
 
         "text-body": $color-olive-700,
@@ -906,8 +903,7 @@ $dark-schemes: ();
     @return $result;
 }
 
-// マップをCSS変数として出力する。:root(_core.scss)で配色($light-theme)とレイアウト($layout)に使う
-// ダークテーマを足すときは、$light-theme と同じキーを持つマップを用意して切り替えのセレクタで呼ぶ
+// マップをCSS変数として出力する(:root の既定の配色とレイアウト、body の切り替えた配色とダーク。_core.scss)
 @mixin css-variables($map) {
     @each $name, $value in $map {
         --#{$name}: #{$value};
@@ -1061,7 +1057,7 @@ $card-shadow-reach: 48px;
     }
 }
 
-// 枠線だけのボタン(コメントを書く、ページャー、編集する)
+// 枠線だけのボタン(編集する、商品紹介の購入ボタン、記事を並べるページのページャー)
 @mixin outline-button {
     box-sizing: border-box;
     display: inline-flex;

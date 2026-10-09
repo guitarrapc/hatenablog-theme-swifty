@@ -86,6 +86,27 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
     expect((await followState(page)).tocScrollTop).toBeGreaterThan(0);
   });
 
+  test('読み手が目次の中を自分でスクロールしたときは、いま読んでいる見出しへ引き戻さない', async ({ page }) => {
+    await readSection(page, await headingAt(page, 0.8));
+    await expect.poll(async () => (await followState(page)).visible).toBe(true);
+
+    // 目次の上でホイールを回して先頭まで戻す。いま読んでいる見出しのリンクは見えている範囲の外に出る
+    const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await page.locator('.entry-content > .toc-panel').boundingBox());
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    // 一度に大きく回したり、間を空けずに続けて回したりするとスクロールしないので、少しずつ間を空けて回す
+    for (let i = 0; i < 3; i++) {
+      await page.mouse.wheel(0, -600);
+      await page.waitForTimeout(300);
+    }
+    await expect.poll(async () => (await followState(page)).tocScrollTop).toBe(0);
+
+    // スクロールが止まった後(目次の scrollend)も、目次はそのまま
+    await page.waitForTimeout(1000);
+    const state = await followState(page);
+    expect(state.tocScrollTop).toBe(0);
+    expect(state.visible).toBe(false);
+  });
+
   test('目次の中をスクロールしても、見出しの行は目次の上に残り、閉じられる', async ({ page }) => {
     await readSection(page, await headingAt(page, 0.8));
     await expect.poll(async () => (await followState(page)).tocScrollTop).toBeGreaterThan(0);

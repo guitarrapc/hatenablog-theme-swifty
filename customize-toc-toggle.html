@@ -32,9 +32,6 @@
       }
     }
 
-    // Lists already handled while the page was loading
-    const processed = new WeakSet();
-
     // Wrap the list Hatena outputs in <details>, so the browser handles opening and closing
     // and tells assistive technology whether it is open. The label text comes from the theme's CSS (--toc-label)
     function enhance(list) {
@@ -51,8 +48,11 @@
       list.before(panel);
       panel.append(summary, list);
 
+      // Setting open above also fires toggle, so save only when the reader changed the remembered state
       panel.addEventListener('toggle', function () {
-        saveCollapsed(!panel.open);
+        if (panel.open === isCollapsed()) {
+          saveCollapsed(!panel.open);
+        }
       });
 
       followCurrent(panel, summary);
@@ -123,19 +123,16 @@
       window.addEventListener('scrollend', schedule);
       window.addEventListener('resize', schedule);
       panel.addEventListener('toggle', schedule);
+      // Only forget the link here: checking on the list's own scrollend would pull the list back
+      // while the reader scrolls it by hand. The next page scroll brings the current link back
       panel.addEventListener('scrollend', function () {
         following = null;
-        schedule();
       });
     }
 
     function convert() {
       // Only the table of contents placed directly in the article body, the same as the theme's layout
       document.querySelectorAll('.entry-content > ul.table-of-contents').forEach(function (list) {
-        if (processed.has(list)) {
-          return;
-        }
-        processed.add(list);
         enhance(list);
       });
     }

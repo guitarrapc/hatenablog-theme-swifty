@@ -24,6 +24,7 @@ const TARGETS = {
   記事の一覧のカテゴリ: '#box2 .urllist-category-link',
   ブログパーツの日付: '.hatena-urllist .urllist-date-link a',
   月別アーカイブの年: '.archive-module-year-title',
+  月別アーカイブの年の開閉: '.hatena-module-archive .archive-module-button',
   プロフィールのID: '.hatena-module-profile .id a',
 };
 
@@ -46,5 +47,12 @@ test.describe('タップ領域', () => {
       expect(heights.length, `${name} が見つからない。テストデータかセレクタを確認する`).toBeGreaterThan(0);
       expect(Math.min(...heights), `${name} の高さ: ${heights.join(', ')}`).toBeGreaterThanOrEqual(MIN_TARGET);
     }
+
+    // 月別アーカイブの年の開閉は、三角(▼▶)が小さいので幅も24px確保する
+    const toggleWidths = await page.evaluate(() => [...document.querySelectorAll('.hatena-module-archive .archive-module-button')]
+      .map((el) => el.getBoundingClientRect().width)
+      .filter((width) => width > 0));
+    expect(toggleWidths.length, '月別アーカイブの年の開閉が見つからない').toBeGreaterThan(0);
+    expect(Math.min(...toggleWidths), `月別アーカイブの年の開閉の幅: ${toggleWidths.join(', ')}`).toBeGreaterThanOrEqual(MIN_TARGET);
   });
 });

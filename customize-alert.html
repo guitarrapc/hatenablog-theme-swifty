@@ -1,10 +1,12 @@
 <!-- アラート記法のJavaScriptコード -->
 <script>
   // このスクリプトは記事内の引用に書いたGitHubのアラート記法(> [!NOTE] など)をアラート表示に変換します
+  /**
+   * Script to render GitHub-style alerts (`> [!NOTE]` etc.) in Hatena Blog articles
+   */
   (function () {
     'use strict';
 
-    // Alert types and their titles
     const ALERT_TITLES = {
       note: 'Note',
       tip: 'Tip',
@@ -134,7 +136,7 @@
         if (paragraph !== blockquote.firstElementChild) {
           target = blockquote.cloneNode(false);
           target.removeAttribute('id');
-          // Insert first: moveBefore keeps node state only when moving within the document
+          // Insert first: moveBefore throws unless the new parent is in the same document
           blockquote.after(target);
           let node = paragraph;
           while (node) {
