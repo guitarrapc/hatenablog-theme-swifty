@@ -18,40 +18,32 @@
   Author: guitarrapc_tech
   Responsive: yes
   Description:
-    * このテーマについて
-    記事を読み通しやすい、ワンカラムのテーマです。本文の幅、見出し、目次、コードブロックを、読みやすさを優先して整えています。
-    配色テーマはデザインCSSに1行書くと切り替えられます。どの配色もダークモードに対応し、アクセシビリティ(WCAG AA)のコントラストを満たします。
-    既定のmintのほかに、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-greenがあります。
+    自分の好きな配色を選べるワンカラムのテーマです。シンプルなのに読みやすい、ダークモードも対応！
 
-    本テーマ導入時は、[https://swifty.hatenablog.jp/entry/2026/10/09/195900:title=こちらの記事]で導入方法と、JavaScriptのカスタマイズの入れ方を紹介しています。
+    [https://swifty.hatenablog.jp/entry/2026/10/09/195900:title=こちらの記事]で導入方法を紹介しています。
 
-    * 特徴
-    - 目次は、PCの広い画面では本文の横に常に表示し、スクロールしても画面に残ります。Chrome・Edgeでは、いま読んでいる見出しを示します。タブレットやスマートフォンでは本文中に表示します。
-    - ダークモードはOSの設定に合わせて切り替わりますが、常にライト、常にダークにも固定できます。
+    ** 特徴
+    - 大きな画面で目次がいつも表示されます
+    - ダークモード対応
     - はてなのヘッダーメニューとブログのヘッダーを1つにまとめ、「読者になる」をヘッダーの右端に置きます。
-    - 記事ページでは、パンくずリストの代わりにカテゴリをタイトルの上に表示します。パンくずリストの表示はテーマで隠しますが、検索エンジン向けの情報は残ります。
-    - 記事下の「書いた人・投稿してからの時間・読者になる」の行は表示しません。複数人で書くブログでは、書いた人の名前が記事に出なくなります。表示するときは、デザインCSSに .entry-footer-section { display: block; } と書きます。
     - コードブロックは、ハイライトを種類ごとに色分けし、上の帯に言語名を表示します。
 
-    * JavaScriptのカスタマイズで使える機能
+    ** JavaScriptのカスタマイズで使える機能
     - ヘッダーにボタンを追加して、ライト・ダーク・自動を選べるようにします。
     - 目次を開け閉めできるようにします。長い目次は、いま読んでいる見出しまで目次の中をスクロールするようになります。
     - コードブロックの上の帯に、コピーと折り返しの切り替えのボタンが付きます。
     - GitHubと同じアラート記法(> [!NOTE] など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示します。
 
-    * カスタマイズ
-    テーマの見た目は、デザインCSSでCSS変数を上書きすると変更できます。書き方と配色ごとの色は、[https://swifty.hatenablog.jp/entry/2026/10/09/200331:title=カスタマイズガイド]で紹介しています。
-    - 配色: :root { --swifty-scheme: blue; } (mint(既定)、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-green)
-    - ダークモード: :root { --swifty-color-mode: light; } (未指定: OSに合わせる、light: 常にライト、dark: 常にダーク)
-    - 色を個別に変える: body { --link: #0b7268; --accent: #3cc4b0; } など
-    - 見出しの文言(目次・共有・コメント欄・前後の記事): :root { --toc-label: "Contents"; --share-label: "Share"; --comment-label: "Comments"; --pager-prev-label: "Previous"; --pager-next-label: "Next"; }
-    - 本文の最大幅: :root { --content-max: 720px; }
-    - 記事ページでもパンくずリストを表示する: :root { --swifty-entry-breadcrumb: show; }
+    ** カスタマイズ
+    配色テーマはデザインCSSに1行書くと切り替えられます。書き方と配色ごとの色は、[https://swifty.hatenablog.jp/entry/2026/10/09/200331:title=カスタマイズガイド]で紹介しています。
 
-    * ソースコード
+    - 既定のmintのほかに、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-greenがあります。
+    - ダークモードはデフォルトでOSに合わせて変わりますが、常にライト、常にダークにも固定できます。
+
+    ** ソースコード
     [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています(MITライセンス)。
 
-    * 変更履歴:
+    ** 変更履歴:
     - 2026/10/10: [https://github.com/guitarrapc/hatenablog-theme-swifty/releases/tag/v1.0.0:title=v1.0.0] 初回リリース。
   Released under the MIT License.
 */
