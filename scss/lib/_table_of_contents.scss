@@ -10,6 +10,12 @@ $toc-side-padding: 4px;
 // 本文の直下にある目次の入れ物。JavaScript(js/toc-toggle.js)がなければ ul.table-of-contents、あれば details.toc-panel
 $toc-item: ":is(.table-of-contents, .toc-panel)";
 
+// 本文の横の目次の、見出しの行の上下の余白(見出しの行の文字の大きさに対して)と、行の高さ(.toc-panel-summary の min-height)
+$toc-side-summary-padding: .5em;
+$toc-summary-height: 28px;
+// 見出しの行のアイコンの大きさ
+$toc-summary-icon: 1.4em;
+
 /*
  * 目次 (theme-design-spec.md の「目次」を参照)
  * はてなが本文中に出力する ul.table-of-contents を、JavaScriptを使わずに
@@ -134,7 +140,7 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
     display: flex;
     align-items: center;
     gap: .5em;
-    min-height: 28px;
+    min-height: $toc-summary-height;
     list-style: none;
     color: var(--text-light);
     font-size: .75rem;
@@ -150,8 +156,8 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
     &::after {
         content: "";
         flex: none;
-        width: 1.4em;
-        height: 1.4em;
+        width: $toc-summary-icon;
+        height: $toc-summary-icon;
         background-color: currentColor;
         mask: no-repeat center / contain;
 
@@ -244,7 +250,9 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
             overscroll-behavior: contain;
             margin: 0;
             padding: $toc-side-padding;
+            // 箱にせず、上の線だけで目次の始まりを示す。開いていても閉じていても同じ位置に引く
             border: 0;
+            border-top: 1px solid var(--border);
             border-radius: 0;
             background: none;
         }
@@ -259,47 +267,45 @@ $toc-item: ":is(.table-of-contents, .toc-panel)";
             rotate: -90deg;
         }
 
-        // 本文の横では上下の線がないので、リストの下も空けない
+        // 本文の横では下の線がないので、リストの下も空けない
         > .toc-panel > .table-of-contents {
             padding-bottom: 0;
         }
 
-        // 開いているときは、見出しの行とリストの間に線を引く。
         // 目次の中をスクロールしても(js/toc-toggle.js が現在地まで送るときも)、見出しの行を上に残し、閉じるボタンを見失わないようにする。
         // 本文中の目次は目次の中でスクロールしないので、ここ(本文の横)だけにする。本文中で sticky にすると画面の上に張り付いてしまう
         > .toc-panel[open] > .toc-panel-summary {
             position: sticky;
             top: 0;
             z-index: 1;
-            margin-bottom: .75em;
-            padding-block: 0 .5em;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: .25em;
+            padding-block: $toc-side-summary-padding;
             background-color: var(--surface);
             // 見出しの行は目次の内側の余白の下で止まるので、その隙間も塗って、上へ流れる項目を隠す
             box-shadow: 0 (-$toc-side-padding) 0 var(--surface);
         }
 
-        // 閉じているときは、一覧のアイコンと縦書きの「目次」を並べた細い帯にする
-        > .toc-panel:not([open]) > .toc-panel-summary {
-            flex-direction: column;
-            gap: .6em;
-            min-height: 0;
-            padding: .9em 0;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background-color: var(--surface);
-
-            &::after {
-                display: none;
-            }
-
+        // 閉じているときは、上の線の下に一覧のアイコンと縦書きの「目次」を並べた細い帯にする。箱にはしない。
+        // アイコンは、開いているときの山形と同じ高さに置き、閉じた位置のままもう一度押せば開けるようにする
+        > .toc-panel:not([open]) {
             &:hover {
-                border-color: var(--accent-strong);
+                border-top-color: var(--accent-strong);
             }
 
-            .toc-panel-label {
-                writing-mode: vertical-rl;
-                letter-spacing: .2em;
+            > .toc-panel-summary {
+                flex-direction: column;
+                gap: .6em;
+                min-height: 0;
+                padding-block: calc(#{$toc-side-summary-padding} + (#{$toc-summary-height} - #{$toc-summary-icon}) / 2) .9em;
+
+                &::after {
+                    display: none;
+                }
+
+                .toc-panel-label {
+                    writing-mode: vertical-rl;
+                    letter-spacing: .2em;
+                }
             }
         }
     }

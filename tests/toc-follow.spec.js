@@ -37,7 +37,8 @@ test.describe('長い目次で、いま読んでいる見出しを追う', () =>
       scrollY: Math.round(scrollY),
       tocScrollTop: panel.scrollTop,
       tocOverflows: panel.scrollHeight > panel.clientHeight,
-      summaryOffset: summary.getBoundingClientRect().top - panel.getBoundingClientRect().top,
+      // 目次の上の線(clientTop)の内側から測る
+      summaryOffset: summary.getBoundingClientRect().top - panel.getBoundingClientRect().top - panel.clientTop,
       summaryPosition: getComputedStyle(summary).position,
     };
   });

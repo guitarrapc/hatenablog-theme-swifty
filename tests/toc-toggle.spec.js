@@ -123,6 +123,48 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     expect(reopened.text).toBeCloseTo(opened.text, 0);
   });
 
+  test('本文の横の目次は、箱にせず上の線だけを残して閉じ、閉じた位置のままもう一度押せば開く', async ({ page }) => {
+    await page.setViewportSize(SIDE);
+    await openArticle(page);
+
+    const lines = () => page.evaluate(() => {
+      const panel = /** @type {Element} */ (document.querySelector('.entry-content > .toc-panel'));
+      const summary = /** @type {Element} */ (panel.querySelector(':scope > .toc-panel-summary'));
+      const panelStyle = getComputedStyle(panel);
+      const summaryStyle = getComputedStyle(summary);
+      const panelBox = panel.getBoundingClientRect();
+      return {
+        top: panelBox.top,
+        right: panelBox.right,
+        borderTop: panelStyle.borderTopWidth,
+        borderLeft: panelStyle.borderLeftWidth,
+        summaryBorders: [summaryStyle.borderTopWidth, summaryStyle.borderRightWidth, summaryStyle.borderBottomWidth, summaryStyle.borderLeftWidth],
+        summaryBackground: summaryStyle.backgroundColor,
+        summary: summary.getBoundingClientRect().toJSON(),
+      };
+    });
+
+    const opened = await lines();
+    // 開いているときの山形(見出しの行の右端)を押して閉じる
+    const toggle = { x: opened.summary.right - 8, y: opened.summary.top + opened.summary.height / 2 };
+    await page.mouse.click(toggle.x, toggle.y);
+    await expect(page.locator('.entry-content > .toc-panel')).not.toHaveAttribute('open');
+    const closed = await lines();
+
+    // 上の線は開いていても閉じていても同じ位置にあり、目次の右端も動かない
+    expect([opened.borderTop, closed.borderTop]).toEqual(['1px', '1px']);
+    expect(closed.top).toBe(opened.top);
+    expect(closed.right).toBeCloseTo(opened.right, 0);
+    // 閉じた帯は箱にしない
+    expect(closed.borderLeft).toBe('0px');
+    expect(closed.summaryBorders).toEqual(['0px', '0px', '0px', '0px']);
+    expect(closed.summaryBackground).toBe('rgba(0, 0, 0, 0)');
+
+    // 閉じた位置のまま押せば開く
+    await page.mouse.click(toggle.x, toggle.y);
+    await expect(page.locator('.entry-content > .toc-panel')).toHaveAttribute('open');
+  });
+
   test('本文の横の目次を開け閉めしても、タイトルの折り返しは変わらない', async ({ page }) => {
     await page.setViewportSize(SIDE);
     await openArticle(page);
