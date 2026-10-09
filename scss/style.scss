@@ -39,6 +39,7 @@
     - ダークモード: :root { --swifty-color-mode: light; } (書かなければOSに合わせる。light: 常にライト、dark: 常にダーク)
     - 色を個別に変える: body { --link: #0b7268; --accent: #3cc4b0; } など
     - 目次の見出し: :root { --toc-label: "Contents"; }
+    - 記事下の共有の見出し: :root { --share-label: "Share"; }
     - 本文の最大幅: :root { --content-max: 720px; }
 
     * ソースコード

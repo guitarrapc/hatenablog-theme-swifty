@@ -17,6 +17,7 @@ const TARGETS = {
   記事のカテゴリ: '.entry-categories a',
   コメントを書く: '.leave-comment-title',
   コードブロックのボタン: '.code-block-button',
+  記事を共有するリンク: '.entry-footer .entry-share-button-bluesky',
   目次の開閉: '.toc-panel-summary',
   ページャー: '.pager a',
   カテゴリのブログパーツ: '.hatena-module-category .hatena-urllist a',

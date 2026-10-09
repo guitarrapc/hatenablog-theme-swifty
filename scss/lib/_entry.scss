@@ -1,4 +1,6 @@
+@use "sass:list";
 @use "./_variable" as var;
+@use "./_functions" as fn;
 
 /*
  * 本文の見出しの役割ごとの形 (theme-design-spec.md の「見出しと引用」を参照)。
@@ -517,6 +519,140 @@ $heading-top-levels: (
     // 記事下のブログパーツ(関連記事)は、カードの中なのでカードにしない(_modules.scss)
     .customized-footer {
         margin-top: 32px;
+    }
+}
+
+/*
+ * この記事を共有 (theme-design-spec.md の「記事」の「この記事を共有」を参照)
+ * はてなのソーシャルボタン(.social-buttons)を、見出し(--share-label)の付いた1つの段にする。
+ * リンクで出力されるボタンは、テーマのアイコン(文字色で描くロゴ)と名前に揃える。
+ * はてなブックマーク・Facebook・LINE は、各サービスのスクリプトが差し込む iframe で、中身は変えられない。
+ * はてなの設定でボタンを1つも出さないときは段を作らない。印刷ではソーシャルボタンを出さないので(_print.scss)、画面だけにする
+ */
+// 揃えるボタン: はてなが出力するリンクのセレクタ、名前、ロゴ
+$share-links: (
+    "x": (".entry-share-button-twitter", "X", var.$svg-share-x),
+    "mastodon": (".entry-share-button-mastodon", "Mastodon", var.$svg-share-mastodon),
+    "bluesky": (".entry-share-button-bluesky", "Bluesky", var.$svg-share-bluesky),
+    "misskey": (".entry-share-button-misskey", "Misskey", var.$svg-share-misskey),
+    "tumblr": ("[data-hatenablog-tumblr-share-button]", "Tumblr", var.$svg-share-tumblr),
+);
+$share-link-selectors: ();
+
+@each $name, $link in $share-links {
+    $share-link-selectors: list.append($share-link-selectors, list.nth($link, 1), $separator: comma);
+}
+
+@media screen {
+    .entry-footer .social-buttons:has(> .social-button-item) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 20px;
+        margin: 32px 0;
+        padding-block: 16px;
+        border-block: 1px solid var(--border);
+
+        // 見出し。ボタンを右へ寄せる。スマホでは見出しを1行にし、ボタンはその下の行に左から並べる
+        &::before {
+            content: var(--share-label);
+            margin-right: auto;
+            color: var(--text-light);
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+
+            @media #{var.$mq-xs} {
+                flex-basis: 100%;
+            }
+        }
+
+        > .social-button-item {
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        a:is(#{$share-link-selectors}) {
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: auto;
+            height: auto;
+            min-height: 32px;
+            padding: 0 2px;
+            border-bottom: 1px solid var(--border-strong);
+            border-radius: 0;
+            background: none;
+            color: var(--text-body);
+            font-size: .8125rem;
+            line-height: 1.5;
+            text-decoration: none;
+
+            &::before {
+                content: "";
+                flex: none;
+                width: 15px;
+                height: 15px;
+                background-color: currentColor;
+                mask: no-repeat center / contain;
+
+                // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
+                @media (forced-colors: active) {
+                    forced-color-adjust: none;
+                    background-color: CanvasText;
+                }
+            }
+
+            &:hover {
+                border-bottom-color: var(--accent-strong);
+                color: var(--link);
+            }
+
+            // サービスのロゴと名前を出す。名前はリンクの読み上げ名にもなる(はてなの title は補足の説明になる)
+            @each $name, $link in $share-links {
+                &:is(#{list.nth($link, 1)}) {
+                    &::before {
+                        mask-image: fn.url-svg(list.nth($link, 3), #000);
+                    }
+
+                    &::after {
+                        content: "#{list.nth($link, 2)}";
+                    }
+                }
+            }
+
+            // Tumblr のボタンは Tumblr のボタン画像の指定(幅・高さ・背景・文字を隠す字下げ)が style 属性に書かれているので、
+            // !important でなければ上書きできない。中の文字(Share on Tumblr)は読み上げ名として残し、見た目は名前(Tumblr)に揃える
+            &[data-hatenablog-tumblr-share-button] {
+                display: inline-flex !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: none !important;
+                text-indent: 0 !important;
+                vertical-align: middle !important;
+                // 隠した文字もフレックスの項目になり、前後に間隔が付くので、間隔はアイコンの右に付ける
+                gap: 0;
+                font-size: 0;
+
+                &::before,
+                &::after {
+                    font-size: .8125rem;
+                }
+
+                &::before {
+                    margin-right: 6px;
+                }
+
+                // 名前は読み上げ名に重ねない
+                &::after {
+                    content: "Tumblr";
+                    content: "Tumblr" / "";
+                }
+            }
+        }
     }
 }
 

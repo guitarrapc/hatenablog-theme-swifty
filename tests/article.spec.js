@@ -204,6 +204,65 @@ test.describe('記事の日付とパンくず', () => {
   });
 });
 
+test.describe('この記事を共有', () => {
+  test('記事下のソーシャルボタンを、見出しの付いた1つの段にする', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    const section = page.locator('.entry-footer .social-buttons');
+    await expect(section, '前提: 開発用ブログで記事下のソーシャルボタンを出していること').toBeVisible();
+
+    const style = await section.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { label: getComputedStyle(el, '::before').content, borders: [s.borderTopWidth, s.borderBottomWidth] };
+    });
+    expect(style.label).toBe('"この記事を共有"');
+    expect(style.borders).toEqual(['1px', '1px']);
+  });
+
+  // [セレクタ, 見た目の名前, 読み上げ名]。Tumblr は中の文字(Share on Tumblr)を読み上げ名として残す
+  for (const [selector, name, accessibleName] of /** @type {const} */ ([
+    ['.entry-share-button-twitter', 'X', 'X'],
+    ['.entry-share-button-mastodon', 'Mastodon', 'Mastodon'],
+    ['.entry-share-button-bluesky', 'Bluesky', 'Bluesky'],
+    ['.entry-share-button-misskey', 'Misskey', 'Misskey'],
+    ['[data-hatenablog-tumblr-share-button]', 'Tumblr', 'Share on Tumblr'],
+  ])) {
+    test(`${name}のリンクは、はてなや各サービスのボタン画像ではなく、文字色のロゴと名前にする`, async ({ page }) => {
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      const link = page.locator(`.entry-footer a${selector}`);
+      await expect(link, `前提: 開発用ブログで${name}のボタンを出していること`).toBeVisible();
+
+      const style = await link.evaluate((el) => {
+        const s = getComputedStyle(el);
+        const icon = getComputedStyle(el, '::before');
+        const label = getComputedStyle(el, '::after');
+        return {
+          background: s.backgroundImage,
+          backgroundColor: s.backgroundColor,
+          iconMask: icon.maskImage,
+          iconColor: icon.backgroundColor,
+          color: s.color,
+          label: label.content,
+          labelSize: label.fontSize,
+          height: el.getBoundingClientRect().height,
+          href: /** @type {HTMLAnchorElement} */ (el).href,
+        };
+      });
+      // ボタン画像は消し、ロゴは文字色で描く
+      expect(style.background).toBe('none');
+      expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      expect(style.iconMask).toContain('data:image/svg+xml');
+      expect(style.iconColor).toBe(style.color);
+      // どのボタンも同じ大きさの名前を出す
+      expect(style.label).toContain(`"${name}"`);
+      expect(style.labelSize).toBe('13px');
+      expect(style.height).toBe(32);
+      // 読み上げ名は名前(Tumblr は中の文字)。共有先のURLははてなのまま
+      await expect(link).toHaveAccessibleName(accessibleName);
+      expect(style.href).toMatch(/^https?:\/\//);
+    });
+  }
+});
+
 test.describe('アーカイブページのテスト', () => {
   test('アーカイブページが正しくレンダリングされる', async ({ page }) => {
     await page.navigateTo(TEST_URLS.ARCHIVE, { waitFor: 'networkidle' });
