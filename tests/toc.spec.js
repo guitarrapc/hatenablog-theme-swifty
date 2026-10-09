@@ -215,33 +215,42 @@ test.describe('目次を本文の横に常に表示する', () => {
     expect(side).toEqual(flow);
   });
 
+  /** タイトルと本文の左端、本文の幅 */
+  const measureColumn = (/** @type {any} */ page) => page.evaluate(() => {
+    const content = /** @type {Element} */ (document.querySelector('.entry-content'));
+    const paragraph = /** @type {Element} */ (document.querySelector('.entry-content > p'));
+    return {
+      hasToc: !!content.querySelector(':scope > .table-of-contents'),
+      display: getComputedStyle(content).display,
+      titleLeft: /** @type {Element} */ (document.querySelector('.entry-title')).getBoundingClientRect().left,
+      textLeft: paragraph.getBoundingClientRect().left,
+      textWidth: paragraph.getBoundingClientRect().width,
+      contentMax: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-max')),
+    };
+  });
+
   for (const [name, path] of Object.entries({
     目次のない記事: TEST_URLS.ARTICLE_WITHOUT_TOC,
     目次がなく見出しの多い記事: FIXTURE_URLS.HEADINGS_H1_MIXED,
   })) {
-    test(`目次がなければ本文を中央に置き、目次の列を作らない(${name})`, async ({ page }) => {
+    test(`目次がなくても目次の列を取っておき、タイトルと本文の左端を目次のある記事と揃える(${name})`, async ({ page }) => {
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      const withToc = await measureColumn(page);
+
       await page.navigateTo(path, { waitFor: 'networkidle' });
       await expect(page.locator(SELECTORS.ENTRY_CONTENT)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      const layout = await measureColumn(page);
 
-      const layout = await page.evaluate(() => {
-        const entry = /** @type {Element} */ (document.querySelector('.entry'));
-        const content = /** @type {Element} */ (document.querySelector('.entry-content'));
-        const e = entry.getBoundingClientRect();
-        const c = content.getBoundingClientRect();
-        return {
-          hasToc: !!content.querySelector(':scope > .table-of-contents'),
-          display: getComputedStyle(content).display,
-          contentWidth: c.width,
-          contentMax: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--content-max')),
-          leftSpace: c.left - e.left,
-          rightSpace: e.right - c.right,
-        };
-      });
-
+      expect(withToc.hasToc, '前提: 比べる記事に目次があること').toBe(true);
       expect(layout.hasToc, '前提: 目次のない記事であること').toBe(false);
+      // 本文はグリッドにしない(本文の直下に <p> で包まれていない文字がある記事で、行が分かれないように)
       expect(layout.display).not.toBe('grid');
-      expect(layout.contentWidth).toBeLessThanOrEqual(layout.contentMax);
-      expect(Math.abs(layout.leftSpace - layout.rightSpace)).toBeLessThanOrEqual(1);
+      // タイトルと本文の左端は、目次のある記事と同じ。本文の幅は上限のまま(目次の列のぶん右を空ける)
+      expect(layout.titleLeft).toBeCloseTo(withToc.titleLeft, 0);
+      expect(layout.textLeft).toBeCloseTo(withToc.textLeft, 0);
+      expect(layout.textWidth).toBeCloseTo(layout.contentMax, 0);
+      expect(layout.textWidth).toBeCloseTo(withToc.textWidth, 0);
     });
   }
 });

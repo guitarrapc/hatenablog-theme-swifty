@@ -204,7 +204,9 @@ $toc-summary-icon: 1.4em;
  * 紙は横向きでも幅が足りることがあるが、止める・中でスクロールする目次は紙では途中が切れるので、画面だけにする
  */
 @media screen and #{var.$mq-lg} {
-    .entry:has(> .entry-inner > .entry-content > #{$toc-item}) {
+    // 目次の列は、目次のない記事でも取っておく(右を空ける)。記事によってタイトルと本文の左端が変わらないようにするため。
+    // 目次のある記事でも、目次が読み込まれる前と後で本文が動かない(本文の幅も左端も同じ)
+    .entry {
         // 目次の列と間隔。目次を閉じると細い帯の幅になる
         --toc-column: var(--toc-width);
         --toc-column-gap: var(--toc-gap);
@@ -223,6 +225,11 @@ $toc-summary-icon: 1.4em;
         }
     }
 
+    // 目次のない記事は、本文も目次の列のぶん右を空ける(目次のある記事は、本文のグリッドで目次の列を取る)
+    .entry:not(:has(> .entry-inner > .entry-content > #{$toc-item})) > .entry-inner > .entry-content {
+        padding-right: calc(var(--toc-width) + var(--toc-gap));
+    }
+
     .entry:has(> .entry-inner > .entry-content > .toc-panel:not([open])) {
         --toc-column: var(--toc-rail-width);
         --toc-column-gap: var(--toc-rail-gap);
@@ -230,7 +237,7 @@ $toc-summary-icon: 1.4em;
 
     // 記事のカードの下につなげた前後の記事(_entry.scss)も、記事下と同じく本文の列に揃える。
     // 前後の記事は .entry の外なので、目次の列の変数を受け継がない。同じ値をここで決める
-    .entry:has(> .entry-inner > .entry-content > #{$toc-item}) + .pager-permalink {
+    .entry + .pager-permalink {
         --pager-inline: max(var(--card-padding-inline), calc((100% - 2px - var(--content-max) - var(--toc-width) - var(--toc-gap)) / 2));
         padding-right: calc(var(--pager-inline) + var(--toc-width) + var(--toc-gap));
     }
