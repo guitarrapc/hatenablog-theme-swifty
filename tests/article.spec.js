@@ -319,6 +319,57 @@ test.describe('この記事を共有', () => {
   }
 });
 
+test.describe('コメント欄', () => {
+  /** コメント欄の見出し・「コメントを書く」・共有するリンクの形 */
+  const measureComments = (/** @type {any} */ page) => page.evaluate(() => {
+    const box = /** @type {Element} */ (document.querySelector('.entry-footer .comment-box'));
+    const write = /** @type {Element} */ (box.querySelector('.leave-comment-title'));
+    const share = document.querySelector('.entry-footer .entry-share-button-bluesky');
+    const comments = [...box.querySelectorAll('.entry-comment')];
+    const shape = (/** @type {Element | null} */ el) => {
+      if (!el) return null;
+      const s = getComputedStyle(el);
+      return { fontSize: s.fontSize, borderBottom: s.borderBottomWidth, radius: s.borderTopLeftRadius, background: s.backgroundColor, iconMask: getComputedStyle(el, '::before').maskImage.startsWith('url(') };
+    };
+    const boxRect = box.getBoundingClientRect();
+    const writeRect = write.getBoundingClientRect();
+    return {
+      label: getComputedStyle(box, '::before').content,
+      // 見出しの行の上端(上の線と余白の下)
+      rowTop: boxRect.top + box.clientTop + parseFloat(getComputedStyle(box).paddingTop),
+      write: shape(write),
+      share: shape(share),
+      writeTop: writeRect.top,
+      writeRight: writeRect.right,
+      boxRight: boxRect.right,
+      lastCommentBottom: comments.length ? comments[comments.length - 1].getBoundingClientRect().bottom : null,
+    };
+  });
+
+  test('「コメントを書く」は、共有するリンクと同じ形(アイコンと名前、下線)で右に置く', async ({ page }) => {
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
+    const m = await measureComments(page);
+
+    expect(m.label).toBe('"コメント"');
+    expect(m.share, '前提: Blueskyの共有するリンクがあること').not.toBeNull();
+    expect(m.write).toEqual(m.share);
+    expect(m.write.radius).toBe('0px');
+    expect(m.writeRight).toBeCloseTo(m.boxRight, 0);
+    // コメントがなければ、見出しと同じ行に並ぶ
+    expect(m.lastCommentBottom, '前提: コメントがないこと').toBeNull();
+    expect(m.writeTop).toBeCloseTo(m.rowTop, 0);
+  });
+
+  test('コメントがあれば見出しの下に並べ、「コメントを書く」はその後に置く', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    const m = await measureComments(page);
+    expect(m.lastCommentBottom, '前提: コメントがあること').not.toBeNull();
+    expect(m.writeTop).toBeGreaterThanOrEqual(/** @type {number} */ (m.lastCommentBottom));
+    expect(m.writeRight).toBeCloseTo(m.boxRight, 0);
+  });
+});
+
 test.describe('アーカイブページのテスト', () => {
   test('アーカイブページが正しくレンダリングされる', async ({ page }) => {
     await page.navigateTo(TEST_URLS.ARCHIVE, { waitFor: 'networkidle' });

@@ -17,7 +17,13 @@
     .blog-controlls,
     .entry-header-menu,
     .hatena-star-container,
-    .social-buttons {
+    .social-buttons,
+    .leave-comment-title {
+        display: none;
+    }
+
+    // コメントがなければ、コメント欄の見出しだけが残るので出さない
+    .comment-box:not(:has(.entry-comment)) {
         display: none;
     }
 

@@ -522,6 +522,51 @@ $heading-top-levels: (
     }
 }
 
+// 記事下の段(この記事を共有・コメント欄)の見出し
+@mixin footer-section-label {
+    color: var(--text-light);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+}
+
+// 記事下の段の操作(共有するリンク・コメントを書く)。アイコンと名前を並べ、下線を引いたリンクの形にする。
+// アイコンは ::before に mask-image で指定する
+@mixin footer-action {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 2px;
+    border-bottom: 1px solid var(--border-strong);
+    color: var(--text-body);
+    font-size: .8125rem;
+    line-height: 1.5;
+    text-decoration: none;
+    cursor: pointer;
+
+    &::before {
+        content: "";
+        flex: none;
+        width: 15px;
+        height: 15px;
+        background-color: currentColor;
+        mask: no-repeat center / contain;
+
+        // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            background-color: CanvasText;
+        }
+    }
+
+    &:hover {
+        border-bottom-color: var(--accent-strong);
+        color: var(--link);
+    }
+}
+
 /*
  * この記事を共有 (theme-design-spec.md の「記事」の「この記事を共有」を参照)
  * はてなのソーシャルボタン(.social-buttons)を、見出し(--share-label)の付いた1つの段にする。
@@ -555,12 +600,9 @@ $share-link-selectors: ();
 
         // 見出し。ボタンを右へ寄せる。スマホでは見出しを1行にし、ボタンはその下の行に左から並べる
         &::before {
+            @include footer-section-label;
             content: var(--share-label);
             margin-right: auto;
-            color: var(--text-light);
-            font-size: .75rem;
-            font-weight: 700;
-            letter-spacing: .1em;
 
             @media #{var.$mq-xs} {
                 flex-basis: 100%;
@@ -574,41 +616,12 @@ $share-link-selectors: ();
         }
 
         a:is(#{$share-link-selectors}) {
-            box-sizing: border-box;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            @include footer-action;
+            // はてなのボタンの形(40px四方の色付きの四角)を外す
             width: auto;
             height: auto;
-            min-height: 32px;
-            padding: 0 2px;
-            border-bottom: 1px solid var(--border-strong);
             border-radius: 0;
             background: none;
-            color: var(--text-body);
-            font-size: .8125rem;
-            line-height: 1.5;
-            text-decoration: none;
-
-            &::before {
-                content: "";
-                flex: none;
-                width: 15px;
-                height: 15px;
-                background-color: currentColor;
-                mask: no-repeat center / contain;
-
-                // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
-                @media (forced-colors: active) {
-                    forced-color-adjust: none;
-                    background-color: CanvasText;
-                }
-            }
-
-            &:hover {
-                border-bottom-color: var(--accent-strong);
-                color: var(--link);
-            }
 
             // サービスのロゴと名前を出す。名前はリンクの読み上げ名にもなる(はてなの title は補足の説明になる)
             @each $name, $link in $share-links {
@@ -677,17 +690,42 @@ $share-link-selectors: ();
     display: none;
 }
 
-/* コメント */
+/*
+ * コメント欄 (theme-design-spec.md の「記事」の「コメント欄」を参照)
+ * この記事を共有の段と同じく、見出し(--comment-label)を左に、「コメントを書く」を右に置く。
+ * コメントがあれば見出しの下に並べ、「コメントを書く」はその後に置く(HTMLの順のまま。キーボードで移る順と見た目の順を揃える)
+ */
 .comment-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
     margin-top: 32px;
-    padding-top: 24px;
+    padding-top: 16px;
     border-top: 1px solid var(--border);
 
+    &::before {
+        @include footer-section-label;
+        content: var(--comment-label);
+        margin-right: auto;
+    }
+
+    // コメントの一覧など、「コメントを書く」以外は1行を占める
+    > :not(.leave-comment-title) {
+        flex-basis: 100%;
+    }
+
     .comment {
-        margin: 0 0 16px;
+        margin: 0;
         padding: 0;
         list-style: none;
         font-size: .875rem;
+
+        // コメントがなければ一覧を出さず、見出しと「コメントを書く」を1行に並べる。
+        // コメントを投稿すると、はてながここにコメントを足すので、そのときは出る
+        &:not(:has(> .entry-comment)) {
+            display: none;
+        }
     }
 
     .entry-comment {
@@ -739,8 +777,14 @@ $share-link-selectors: ();
     }
 }
 
+// はてなは href のない a で出力し、スクリプトで書き込み欄を開く
 .leave-comment-title {
-    @include var.outline-button;
+    @include footer-action;
+    margin-left: auto;
+
+    &::before {
+        mask-image: fn.url-svg(var.$svg-comment, #000);
+    }
 }
 
 /* Pager */
