@@ -30,6 +30,7 @@
     - ダークモードはOSの設定に合わせて切り替わりますが、常にライト、常にダークにも固定できます。
     - はてなのヘッダーメニューとブログのヘッダーを1つにまとめ、「読者になる」をヘッダーの右端に置きます。
     - 記事ページでは、パンくずリストの代わりにカテゴリをタイトルの上に表示します。パンくずリストの表示はテーマで隠しますが、検索エンジン向けの情報は残ります。
+    - 記事下の「書いた人・投稿してからの時間・読者になる」の行は表示しません。複数人で書くブログでは、書いた人の名前が記事に出なくなります。表示するときは、デザインCSSに .entry-footer-section { display: block; } と書きます。
     - コードブロックは、ハイライトを種類ごとに色分けし、上の帯に言語名を表示します。
 
     * JavaScriptのカスタマイズで使える機能
@@ -51,7 +52,7 @@
     [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています(MITライセンス)。
 
     * 変更履歴:
-    - 2026/10/09: [https://github.com/guitarrapc/hatenablog-theme-swifty/releases/tag/v1.0.0:title=v1.0.0] 初回リリース。
+    - 2026/10/10: [https://github.com/guitarrapc/hatenablog-theme-swifty/releases/tag/v1.0.0:title=v1.0.0] 初回リリース。
   Released under the MIT License.
 */
 

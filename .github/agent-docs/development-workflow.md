@@ -50,7 +50,7 @@ GitHub ActionsでCIを実行して、SCSSやJavaScriptの動作を担保しま�
 
 ### ビルドワークフロー
 
-* `master`ブランチにpushした、PRが作成された際に自動で実行されます。
+* `main`ブランチにpushした、PRが作成された際に自動で実行されます。
 * `npm run build`でビルドを実行し、ビルドしたCSSの先頭に `Responsive: yes` があることを確かめます。
 * `npm run check:customize`で、配布用の `customize-*.html` が `js/` と同じ処理であることを確かめます。
 * ランナー上で開発サーバーを起動し、`npx playwright test`でE2Eテストを2つのシャードに分けて実行します。開発用ブログのheadが `localhost:5173` を参照するため、ランナー上の開発サーバーがテーマを配信します。
