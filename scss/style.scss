@@ -19,37 +19,38 @@
   Author: guitarrapc_tech
   Responsive: yes
   Description:
-    * このテーマの特徴
-    さわやかで使いやすいワンカラムのテーマです。白と淡いミントを基調に、記事やブログパーツをカードにして読みやすく並べます。
-    デザインCSSに1行書くと、ほぼ白のグレーに青・ピンク・黄色・紫をアクセントにした配色や、ベージュにくすんだ緑を合わせたやわらかい配色、くすみピンクの落ち着いた配色、アプリコットピンクの配色、ネイビーの落ち着いた配色、濃いピンクと緑の配色に切り替えられます。
+    * このテーマについて
+    記事を読み通しやすい、ワンカラムのテーマです。本文の幅、見出し、目次、コードブロックを、読みやすさを優先して整えています。
+    配色テーマはデザインCSSに1行書くと切り替えられます。どの配色もダークモードに対応し、アクセシビリティ(WCAG AA)のコントラストを満たします。
+    既定のmintのほかに、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-greenがあります。
 
     * 特徴
-    OSのダークモードに合わせて、どの配色もダークの配色で表示します。JavaScriptのカスタマイズを追加すると、ヘッダーのボタンで読者がライト・ダーク・自動を選べます。
-    はてなのヘッダーメニューとブログのヘッダーを1つのヘッダーにまとめ、「読者になる」ボタンをヘッダーの右端に置きます。
-    記事ページでは、パンくずリストの代わりに、記事のカテゴリをタイトルの上に表示します(パンくずリストの表示はテーマで隠します。検索エンジン向けのパンくずリストの情報は残ります)。
-    記事の目次は、PCの広い画面では本文の横に常に表示し、スクロールしても画面に残ります。JavaScriptのカスタマイズは不要です。
-    Chrome・Edgeでは、いま読んでいる見出しを目次で示します。
-    JavaScriptのカスタマイズを追加すると、目次を開け閉めでき、本文の横の目次を閉じると本文が広がります。本文の横の長い目次は、いま読んでいる見出しが見える位置まで目次の中をスクロールします。
-    レスポンシブデザインで、タブレットやスマートフォンでは目次を本文中に表示し、本文を広く取ります。
-    コードブロックは、はてなのハイライトを種類ごとに色分けし、上の帯に言語名を表示します。JavaScriptのカスタマイズを追加すると、帯にコピーボタンと折り返しの切り替えボタンが付きます。
-    JavaScriptのカスタマイズを追加すると、GitHubと同じアラート記法(> [!NOTE] など)を種類ごとの色・アイコン・タイトルを付けた囲みで表示できます。
+    - 目次は、PCの広い画面では本文の横に常に表示し、スクロールしても画面に残ります。Chrome・Edgeでは、いま読んでいる見出しを示します。タブレットやスマートフォンでは本文中に表示します。
+    - ダークモードはOSの設定に合わせて切り替わりますが、常にライト、常にダークにも固定できます。
+    - はてなのヘッダーメニューとブログのヘッダーを1つにまとめ、「読者になる」をヘッダーの右端に置きます。
+    - 記事ページでは、パンくずリストの代わりにカテゴリをタイトルの上に表示します。パンくずリストの表示はテーマで隠しますが、検索エンジン向けの情報は残ります。
+    - コードブロックは、ハイライトを種類ごとに色分けし、上の帯に言語名を表示します。
+
+    * JavaScriptのカスタマイズで使える機能
+    - ヘッダーにボタンを追加して、ライト・ダーク・自動を選べるようにします。
+    - 目次を開け閉めできるようにします。長い目次は、いま読んでいる見出しまで目次の中をスクロールするようになります。
+    - コードブロックの上部に帯を追加して、コピーと折り返しの切り替えのボタンが付きます。
+    - GitHubと同じアラート記法(> [!NOTE] など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示します。
 
     * カスタマイズ
-    デザインCSSでCSS変数を上書きして変えられます。
-    - 配色の切り替え: :root { --swifty-scheme: blue; } (mint(既定)、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-green)
-    - ダークモード: :root { --swifty-color-mode: light; } (書かなければOSに合わせる。light: 常にライト、dark: 常にダーク)
+    テーマの見た目は、デザインCSSでCSS変数を上書きすると変更できます。
+    - 配色: :root { --swifty-scheme: blue; } (mint(既定)、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-green)
+    - ダークモード: :root { --swifty-color-mode: light; } (未指定: OSに合わせる、light: 常にライト、dark: 常にダーク)
     - 色を個別に変える: body { --link: #0b7268; --accent: #3cc4b0; } など
-    - 目次の見出し: :root { --toc-label: "Contents"; }
-    - 記事下の共有の見出し: :root { --share-label: "Share"; }
-    - コメント欄の見出し: :root { --comment-label: "Comments"; }
-    - 前後の記事の見出し: :root { --pager-prev-label: "Previous"; --pager-next-label: "Next"; }
-    - 記事ページでもパンくずリストを表示する: :root { --swifty-entry-breadcrumb: show; }
+    - 見出しの文言(目次・共有・コメント欄・前後の記事): :root { --toc-label: "Contents"; --share-label: "Share"; --comment-label: "Comments"; --pager-prev-label: "Previous"; --pager-next-label: "Next"; }
     - 本文の最大幅: :root { --content-max: 720px; }
+    - 記事ページでもパンくずリストを表示する: :root { --swifty-entry-breadcrumb: show; }
 
     * ソースコード
-    [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています。(MITライセンス)
+    [https://github.com/guitarrapc/hatenablog-theme-swifty:title=GitHub]で公開しています(MITライセンス)。
 
     * 変更履歴:
+    - 2026/10/09: [https://github.com/guitarrapc/hatenablog-theme-swifty/releases/tag/v1.0.0:title=v1.0.0] 初回リリース。
   Released under the MIT License.
 */
 
