@@ -971,6 +971,9 @@ $dark-schemes: ();
     }
 }
 
+// カードの影(card)が外へ広がる長さより長く。カードを2つにつなげて1枚に見せるとき、継ぎ目の側の影を clip-path で切るのに使う
+$card-shadow-reach: 48px;
+
 // 記事・アーカイブの記事・ブログパーツに共通のカード。スマホでは画面幅いっぱいにして角丸と左右の枠をなくす
 @mixin card {
     box-sizing: border-box;

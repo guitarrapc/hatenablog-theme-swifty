@@ -515,6 +515,10 @@ $heading-top-levels: (
  */
 $footer-section-gap: 32px;
 
+// コメントのアイコンの大きさと、アイコンと名前・本文の間隔
+$comment-icon-size: 32px;
+$comment-icon-gap: 12px;
+
 .entry-footer {
     margin-top: 48px;
     font-size: .875rem;
@@ -686,48 +690,92 @@ $share-link-selectors: ();
         }
     }
 
+    // 1件ごとに、アイコンを左の列に置き、名前・本文・日時をその右に揃える。コメントの間は線ではなく余白で区切る
     .entry-comment {
-        padding: 14px 0;
-        border-bottom: 1px solid var(--border);
+        position: relative;
+        padding: 12px 0 12px $comment-icon-size + $comment-icon-gap;
+
+        // アイコンのないコメント(ゲストなど)も、アイコンの場所に丸を置いて、ほかのコメントと揃える
+        &:not(:has(.hatena-id-icon))::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            left: 0;
+            box-sizing: border-box;
+            width: $comment-icon-size;
+            height: $comment-icon-size;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background-color: var(--surface-muted);
+        }
     }
 
+    // 「もっと読む」(コメントが多いとき、はてなが出す)
     .read-more-comments {
-        padding: 10px 0;
+        padding: 4px 0 4px $comment-icon-size + $comment-icon-gap;
+
+        a {
+            @include var.footer-action;
+
+            &::before {
+                mask-image: fn.url-svg(var.$svg-toc-chevron, #000);
+            }
+        }
     }
 }
 
+// 名前は、アイコンと上下中央で揃う行に置く
 .comment-user-name {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 0 0 .4em;
+    min-height: $comment-icon-size;
+    margin: 0;
     font-weight: 700;
+    line-height: 1.4;
 
     a {
         color: var(--text-header);
         text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
     }
 
     .hatena-id-icon {
-        width: 28px;
-        height: 28px;
+        position: absolute;
+        top: 12px;
+        left: 0;
+        width: $comment-icon-size;
+        height: $comment-icon-size;
         border-radius: 50%;
     }
 }
 
 .comment-content {
-    margin: 0 0 .4em;
+    margin: 2px 0 6px;
     overflow-wrap: anywhere;
     color: var(--text-body);
+    line-height: 1.8;
 
     p {
-        margin: 0 0 .6em;
+        margin: 0 0 .5em;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 }
 
+// 日時は記事の日付と同じ書体にする(_variable.scss の meta-text)。スターはその右に並べる
 .comment-metadata {
+    @include var.meta-text;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     margin: 0;
-    font-size: .8125rem;
     color: var(--text-light);
 
     a {
@@ -745,8 +793,110 @@ $share-link-selectors: ();
     }
 }
 
-/* Pager */
-.pager {
+/*
+ * 前後の記事 (theme-design-spec.md の「記事」の「前後の記事」を参照)
+ * 記事ページでは、記事のカードの最後の段(記事下の段と同じく、上の線・見出し・記事のタイトル)にする。
+ * はてなは前後の記事(.pager-permalink)を記事のカード(.entry)の外、すぐ後ろに出力するので、
+ * パンくずと同じく、カードの下端の形(背景・枠・下の角丸・影)を付けて記事のカードの下につなげ、1枚のカードに見せる。
+ * 継ぎ目に影が出ないよう、記事は下側、前後の記事は上側の影を切る
+ */
+$card-shadow-reach: var.$card-shadow-reach;
+
+#main-inner > .entry:has(+ .pager-permalink) {
+    margin-bottom: 0;
+    // 前後の記事の線の上の余白。記事下の段の間(16px)に、前後の記事を記事の下に潜り込ませる1pxを足す
+    padding-bottom: 17px;
+    border-bottom: 0;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+    clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
+}
+
+// パンくずもつなげた記事は、上下とも影を切る
+body.page-entry:has(#top-box .breadcrumb) #main-inner > .entry:has(+ .pager-permalink) {
+    clip-path: inset(0 (-$card-shadow-reach));
+}
+
+.pager-permalink {
+    @include var.card;
+    // 本文の列(.entry-inner の子は最大幅で中央に置く)に揃える。前後の記事は .entry-inner の外なので、同じ位置を余白で作る
+    --pager-inline: max(var(--card-padding-inline), calc((100% - 2px - var(--content-max)) / 2));
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 32px;
+    // 記事のカードの下に1px潜り込ませる。継ぎ目が小数のピクセルに来ると、両方の端がにじんでページの背景が線になって見えるため
+    margin: -1px 0 16px;
+    padding: 0 var(--pager-inline) var(--card-padding-block);
+    border-top: 0;
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+    clip-path: inset(0 (-$card-shadow-reach) (-$card-shadow-reach) (-$card-shadow-reach));
+
+    @media #{var.$mq-xs} {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    // 段の上の線(記事下の段と同じ)
+    &::before {
+        content: "";
+        grid-column: 1 / -1;
+        margin-bottom: -16px;
+        border-top: 1px solid var(--border);
+    }
+
+    // はてなの「«」「»」は見出しの矢印に置き換える
+    .pager-arrow {
+        display: none;
+    }
+
+    > .pager-prev {
+        grid-column: 1;
+    }
+
+    > .pager-next {
+        grid-column: -2;
+        text-align: right;
+    }
+
+    // 見出し(前の記事・次の記事)の下に記事のタイトルを置き、全体を1つのリンクにする
+    a {
+        display: flex;
+        flex-direction: column;
+        color: var(--text-header);
+        font-size: .9375rem;
+        font-weight: 600;
+        line-height: 1.5;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+
+        &::before {
+            @include var.footer-section-label;
+        }
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+
+    // 矢印は飾りなので読み上げない
+    .pager-prev a::before {
+        content: "← " var(--pager-prev-label);
+        content: "← " var(--pager-prev-label) / var(--pager-prev-label);
+    }
+
+    .pager-next a {
+        align-items: flex-end;
+
+        &::before {
+            content: var(--pager-next-label) " →";
+            content: var(--pager-next-label) " →" / var(--pager-next-label);
+        }
+    }
+}
+
+/* 記事の一覧のページャー(次のページ・前のページ) */
+.pager:not(.pager-permalink) {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;

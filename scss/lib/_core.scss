@@ -11,6 +11,9 @@
     // 記事下の共有ボタンの段とコメント欄の見出し。--toc-label と同じく変えられる
     --share-label: "この記事を共有";
     --comment-label: "コメント";
+    // 前後の記事の見出し
+    --pager-prev-label: "前の記事";
+    --pager-next-label: "次の記事";
 
     // ヘッダーと、その下のカード(記事ページではパンくずの入ったカード)の間。広い画面ほど空ける
     --header-gap: 32px;
@@ -237,7 +240,7 @@ h6 {
  * 記事のカードの上の枠と角丸をなくして、1枚のカードに見せる。継ぎ目に影が出ないよう、パンくずは下側、記事は上側の影を切る。
  * :has() に対応していないブラウザや、パンくずのない記事ページでは、これまでどおりカードの外に置く
  */
-$card-shadow-reach: 48px; // カードの影(_variable.scss の card)が外へ広がる長さより長く
+$card-shadow-reach: var.$card-shadow-reach;
 
 body.page-entry:has(#top-box .breadcrumb) {
     .breadcrumb {

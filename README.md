@@ -27,8 +27,8 @@
 /* 色を個別に変える。配色を切り替えたときも効くよう body に書く */
 body { --link: #1a5fc8; --accent: #4a8ff0; }
 
-/* 目次・記事下の共有・コメント欄の見出し、本文の最大幅 */
-:root { --toc-label: "Contents"; --share-label: "Share"; --comment-label: "Comments"; --content-max: 720px; }
+/* 目次・記事下の共有・コメント欄・前後の記事の見出し、本文の最大幅 */
+:root { --toc-label: "Contents"; --share-label: "Share"; --comment-label: "Comments"; --pager-prev-label: "Previous"; --pager-next-label: "Next"; --content-max: 720px; }
 ```
 
 配色の切り替えとダークモードは、Chrome・Edge 111以降、Safari 18以降、Firefox 151以降で効きます。それより前のブラウザでは既定の配色(ライト)で表示します。

@@ -228,6 +228,17 @@ $toc-summary-icon: 1.4em;
         --toc-column-gap: var(--toc-rail-gap);
     }
 
+    // 記事のカードの下につなげた前後の記事(_entry.scss)も、記事下と同じく本文の列に揃える。
+    // 前後の記事は .entry の外なので、目次の列の変数を受け継がない。同じ値をここで決める
+    .entry:has(> .entry-inner > .entry-content > #{$toc-item}) + .pager-permalink {
+        --pager-inline: max(var(--card-padding-inline), calc((100% - 2px - var(--content-max) - var(--toc-width) - var(--toc-gap)) / 2));
+        padding-right: calc(var(--pager-inline) + var(--toc-width) + var(--toc-gap));
+    }
+
+    .entry:has(> .entry-inner > .entry-content > .toc-panel:not([open])) + .pager-permalink {
+        padding-right: calc(var(--pager-inline) + var(--toc-rail-width) + var(--toc-rail-gap));
+    }
+
     .entry-content:has(> #{$toc-item}) {
         display: grid;
         grid-template-columns: minmax(0, 1fr) var(--toc-column);

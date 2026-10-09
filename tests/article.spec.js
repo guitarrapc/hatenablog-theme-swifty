@@ -27,8 +27,8 @@ test.describe('記事ページのテスト', () => {
         return el ? /** @type {any} */ (getComputedStyle(el))[corner] : null;
       };
       return {
-        // 記事ページではカードの上端にパンくずが入り、記事の上の角は丸めないので、下の角で測る
-        card: radius('.entry', 'borderBottomRightRadius'),
+        // 記事ページでは記事のカードの上にパンくず、下に前後の記事をつなげて角を丸めないので、同じカードのブログパーツで測る
+        card: radius('#box2 .hatena-module'),
         boxes: {
           コードブロック: radius('.entry-content pre.code'),
           アラート: radius('.entry-content .markdown-alert'),
@@ -367,12 +367,143 @@ test.describe('コメント欄', () => {
     expect(m.writeTop).toBeCloseTo(m.rowTop, 0);
   });
 
+  test('コメントは、アイコンを左の列に置いて名前・本文・日時を揃え、線ではなく余白で区切る', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-comment').first(), '前提: コメントがあること').toBeAttached();
+    // アイコンのないコメント(ゲストなど)を足して、同じ位置に並ぶことも確かめる
+    await page.evaluate(() => {
+      const first = /** @type {Element} */ (document.querySelector('.entry-comment'));
+      const guest = /** @type {Element} */ (first.cloneNode(true));
+      guest.querySelector('.hatena-id-icon')?.remove();
+      /** @type {Element} */ (guest.querySelector('.comment-user-name')).textContent = 'ゲストさん';
+      first.after(guest);
+    });
+
+    const comments = await page.evaluate(() => [...document.querySelectorAll('.entry-comment')].map((comment) => {
+      const left = (/** @type {string} */ selector) => /** @type {Element} */ (comment.querySelector(selector)).getBoundingClientRect().left;
+      const icon = comment.querySelector('.hatena-id-icon');
+      const iconBox = icon ? icon.getBoundingClientRect() : null;
+      const placeholder = getComputedStyle(comment, '::before');
+      return {
+        commentLeft: comment.getBoundingClientRect().left,
+        nameLeft: left('.comment-user-name'),
+        contentLeft: left('.comment-content'),
+        metadataLeft: left('.comment-metadata'),
+        icon: iconBox ? { left: iconBox.left, width: iconBox.width } : null,
+        placeholder: icon ? null : { width: placeholder.width, radius: placeholder.borderTopLeftRadius },
+        border: [getComputedStyle(comment).borderTopWidth, getComputedStyle(comment).borderBottomWidth],
+        metadataFont: getComputedStyle(/** @type {Element} */ (comment.querySelector('.comment-metadata'))).fontFamily,
+      };
+    }));
+    const dateFont = await page.locator('.entry-header .date').evaluate((el) => getComputedStyle(el).fontFamily);
+
+    expect(comments.length).toBeGreaterThanOrEqual(2);
+    for (const [i, c] of comments.entries()) {
+      // 名前・本文・日時は、アイコンの右の同じ位置から始まる
+      expect(c.contentLeft, `${i}番目`).toBeCloseTo(c.nameLeft, 0);
+      expect(c.metadataLeft, `${i}番目`).toBeCloseTo(c.nameLeft, 0);
+      expect(c.nameLeft - c.commentLeft, `${i}番目`).toBe(44);
+      // アイコン(ないときは丸)は左の列
+      if (c.icon) {
+        expect(c.icon).toEqual({ left: c.commentLeft, width: 32 });
+      } else {
+        expect(c.placeholder).toEqual({ width: '32px', radius: '50%' });
+      }
+      expect(c.border).toEqual(['0px', '0px']);
+      // 日時は記事の日付と同じ書体
+      expect(c.metadataFont).toBe(dateFont);
+    }
+  });
+
   test('コメントがあれば見出しの下に並べ、「コメントを書く」はその後に置く', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     const m = await measureComments(page);
     expect(m.lastCommentBottom, '前提: コメントがあること').not.toBeNull();
     expect(m.writeTop).toBeGreaterThanOrEqual(/** @type {number} */ (m.lastCommentBottom));
     expect(m.writeRight).toBeCloseTo(m.boxRight, 0);
+  });
+});
+
+test.describe('前後の記事', () => {
+  /** 前後の記事と、記事のカード・記事下の段の線の位置 */
+  const measurePager = (/** @type {any} */ page) => page.evaluate(() => {
+    const pager = /** @type {Element} */ (document.querySelector('#main-inner > .pager-permalink'));
+    const entry = /** @type {Element} */ (pager.previousElementSibling);
+    const comments = /** @type {Element} */ (entry.querySelector('.comment-box'));
+    const pagerBox = pager.getBoundingClientRect();
+    const pagerStyle = getComputedStyle(pager);
+    const entryStyle = getComputedStyle(entry);
+    const linkName = (/** @type {string} */ selector) => {
+      const a = pager.querySelector(selector);
+      return a ? { label: getComputedStyle(a, '::before').content, right: a.getBoundingClientRect().right, left: a.getBoundingClientRect().left } : null;
+    };
+    return {
+      entryClass: entry.className,
+      entryBottom: [entryStyle.borderBottomWidth, entryStyle.borderBottomLeftRadius],
+      pagerTop: [pagerStyle.borderTopWidth, pagerStyle.borderTopLeftRadius],
+      seam: pagerBox.top - entry.getBoundingClientRect().bottom,
+      background: [entryStyle.backgroundColor, pagerStyle.backgroundColor],
+      // 前後の記事の線(内側の幅)と、コメント欄の線
+      pagerLine: [pagerBox.left + pager.clientLeft + parseFloat(pagerStyle.paddingLeft), pagerBox.right - (pagerBox.width - pager.clientWidth - pager.clientLeft) - parseFloat(pagerStyle.paddingRight)],
+      commentLine: [comments.getBoundingClientRect().left, comments.getBoundingClientRect().right],
+      lineColor: getComputedStyle(pager, '::before').borderTopColor,
+      commentLineColor: getComputedStyle(comments).borderTopColor,
+      arrows: [...pager.querySelectorAll('.pager-arrow')].map((el) => getComputedStyle(el).display),
+      prev: linkName('.pager-prev a'),
+      next: linkName('.pager-next a'),
+    };
+  });
+
+  for (const [name, path, viewport] of /** @type {const} */ ([
+    ['目次を横に出す記事', FIXTURE_URLS.HEADINGS_H2, VIEWPORTS.DESKTOP],
+    ['目次のない記事', TEST_URLS.ARTICLE_WITHOUT_TOC, VIEWPORTS.DESKTOP],
+    ['スマホ', FIXTURE_URLS.HEADINGS_H2, VIEWPORTS.MOBILE],
+  ])) {
+    test(`記事のカードの最後の段としてつなげ、線を記事下の段と揃える(${name})`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator('#main-inner > .entry + .pager-permalink'), '前提: 前後の記事があること').toBeAttached();
+      const m = await measurePager(page);
+
+      // 記事のカードの下の枠と角丸をなくし、前後の記事をすぐ下に1px潜り込ませてつなげる
+      expect(m.entryBottom).toEqual(['0px', '0px']);
+      expect(m.pagerTop).toEqual(['0px', '0px']);
+      expect(m.seam).toBeCloseTo(-1, 0);
+      expect(m.background[1]).toBe(m.background[0]);
+      // 段の上の線は、コメント欄の線と同じ幅・同じ色
+      expect(m.pagerLine[0]).toBeCloseTo(m.commentLine[0], 0);
+      expect(m.pagerLine[1]).toBeCloseTo(m.commentLine[1], 0);
+      expect(m.lineColor).toBe(m.commentLineColor);
+      // はてなの「«」「»」は出さず、見出しを出す。前は左端、次は右端
+      expect(m.arrows.every((d) => d === 'none')).toBe(true);
+      expect(m.prev?.label).toContain('前の記事');
+      expect(m.next?.label).toContain('次の記事');
+      expect(m.prev?.left).toBeCloseTo(m.pagerLine[0], 0);
+      expect(m.next?.right).toBeCloseTo(m.pagerLine[1], 0);
+    });
+  }
+
+  test('目次を閉じて本文が広がると、前後の記事の線も広がる', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-content > .toc-panel'), '前提: 目次の開閉があること').toHaveCount(1);
+    await page.locator('.toc-panel-summary').click();
+    const m = await measurePager(page);
+    expect(m.pagerLine[1]).toBeCloseTo(m.commentLine[1], 0);
+  });
+
+  test('読み上げでは、見出しの矢印を除いた「前の記事」「次の記事」と記事のタイトルをリンクの名前にする', async ({ page }) => {
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    const prev = page.locator('.pager-permalink .pager-prev a');
+    await expect(prev).toHaveAccessibleName(/^前の記事 ?Fixture/);
+  });
+
+  test('次の記事しかないときも、次の記事は右に置く', async ({ page }) => {
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await page.evaluate(() => document.querySelector('.pager-permalink .pager-prev')?.remove());
+    const m = await measurePager(page);
+    expect(m.prev).toBeNull();
+    expect(m.next?.right).toBeCloseTo(m.pagerLine[1], 0);
   });
 });
 
