@@ -188,6 +188,22 @@
     }
 }
 
+// 記事下のブログパーツ(関連記事など)は、この記事を共有・コメント欄と同じ段にする(_entry.scss の「記事下」)。
+// 上にだけ線を引き、見出しは段の見出しの形(丸の印を付けない)にする
+.customized-footer .hatena-module {
+    padding-block: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.customized-footer .hatena-module-title {
+    @include var.footer-section-label;
+    margin: 0 0 8px;
+
+    &::before {
+        content: none;
+    }
+}
+
 // 記事下の関連記事は横に2列並べる
 .customized-footer .hatena-module-related-entries .related-entries {
     display: grid;

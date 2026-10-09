@@ -922,6 +922,55 @@ $dark-schemes: ();
     }
 }
 
+// 記事下の段(この記事を共有・記事下のブログパーツ・コメント欄)の見出し。
+// 行の高さを段の操作(footer-action)と同じにして、見出しの横に操作がない段でも、線から見出しまでの間隔を揃える
+@mixin footer-section-label {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--text-light);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+}
+
+// 記事下の段の操作(共有するリンク・コメントを書く)。アイコンと名前を並べ、下線を引いたリンクの形にする。
+// アイコンは ::before に mask-image で指定する
+@mixin footer-action {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 2px;
+    border-bottom: 1px solid var(--border-strong);
+    color: var(--text-body);
+    font-size: .8125rem;
+    line-height: 1.5;
+    text-decoration: none;
+    cursor: pointer;
+
+    &::before {
+        content: "";
+        flex: none;
+        width: 15px;
+        height: 15px;
+        background-color: currentColor;
+        mask: no-repeat center / contain;
+
+        // ハイコントラストモードでは背景色が強制されてアイコンが消えるため、文字色で描く
+        @media (forced-colors: active) {
+            forced-color-adjust: none;
+            background-color: CanvasText;
+        }
+    }
+
+    &:hover {
+        border-bottom-color: var(--accent-strong);
+        color: var(--link);
+    }
+}
+
 // 記事・アーカイブの記事・ブログパーツに共通のカード。スマホでは画面幅いっぱいにして角丸と左右の枠をなくす
 @mixin card {
     box-sizing: border-box;

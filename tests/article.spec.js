@@ -215,7 +215,8 @@ test.describe('この記事を共有', () => {
       return { label: getComputedStyle(el, '::before').content, borders: [s.borderTopWidth, s.borderBottomWidth] };
     });
     expect(style.label).toBe('"この記事を共有"');
-    expect(style.borders).toEqual(['1px', '1px']);
+    // 上にだけ線を引く(記事下の段の線の引き方)
+    expect(style.borders).toEqual(['1px', '0px']);
   });
 
   test('記事下の「書いた人・投稿してからの時間・読者になる」の行は出さない', async ({ page }) => {
@@ -228,36 +229,41 @@ test.describe('この記事を共有', () => {
     await expect(page.locator('.blog-controlls-subscribe-btn')).toBeVisible();
   });
 
-  test('共有の段のすぐ下がコメント欄のときは、コメント欄の上の線を段の下の線にして、線を2本並べない', async ({ page }) => {
-    const measureLines = () => page.evaluate(() => {
-      const share = /** @type {Element} */ (document.querySelector('.entry-footer .social-buttons'));
-      const comments = /** @type {Element} */ (document.querySelector('.entry-footer .comment-box'));
-      const items = [...share.querySelectorAll(':scope > .social-button-item')].map((item) => item.getBoundingClientRect());
-      return {
-        related: Boolean(document.querySelector('.entry-footer .hatena-module-related-entries')),
-        shareTop: share.getBoundingClientRect().top,
-        shareBottomLine: getComputedStyle(share).borderBottomWidth,
-        commentsTopLine: getComputedStyle(comments).borderTopWidth,
-        commentsTop: comments.getBoundingClientRect().top,
-        buttonsTop: Math.min(...items.map((r) => r.top)),
-        buttonsBottom: Math.max(...items.map((r) => r.bottom)),
-      };
+  test('記事下の段(共有・関連記事・コメント欄)は上にだけ線を引き、段が抜けても線を2本並べない', async ({ page }) => {
+    // 記事下の段の上の線と、線から見出しの行までの間隔
+    const measureSections = () => page.evaluate(() => {
+      const sections = [
+        ['共有', document.querySelector('.entry-footer .social-buttons'), (/** @type {Element} */ el) => el],
+        ['関連記事', document.querySelector('.entry-footer .customized-footer .hatena-module'), (/** @type {Element} */ el) => el.querySelector('.hatena-module-title')],
+        ['コメント欄', document.querySelector('.entry-footer .comment-box'), (/** @type {Element} */ el) => el],
+      ];
+      return sections.filter(([, el]) => el).map(([name, el, label]) => {
+        const element = /** @type {Element} */ (el);
+        const s = getComputedStyle(element);
+        const top = element.getBoundingClientRect().top;
+        const labelEl = /** @type {(el: Element) => Element} */ (label)(element);
+        // 共有とコメント欄の見出しは ::before なので、要素の内側の上端(線と余白の下)で測る
+        const labelTop = labelEl === element ? top + element.clientTop + parseFloat(s.paddingTop) : labelEl.getBoundingClientRect().top;
+        return { name, top, bottom: element.getBoundingClientRect().bottom, lines: [s.borderTopWidth, s.borderBottomWidth], labelOffset: Math.round(labelTop - top) };
+      });
     });
 
-    // 関連記事のない記事: 段の下の線は引かず、コメント欄の上の線が段の上の線と同じ間隔で続く
-    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
-    await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
-    const alone = await measureLines();
-    expect(alone.related, '前提: 関連記事がないこと').toBe(false);
-    expect(alone.shareBottomLine).toBe('0px');
-    expect(alone.commentsTopLine).toBe('1px');
-    expect(alone.commentsTop - alone.buttonsBottom).toBeCloseTo(alone.buttonsTop - alone.shareTop - 1, 0);
-
-    // 関連記事のある記事: 間に関連記事があるので、段の下の線を残す
-    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    const withRelated = await measureLines();
-    expect(withRelated.related, '前提: 関連記事があること').toBe(true);
-    expect(withRelated.shareBottomLine).toBe('1px');
+    for (const [path, expected] of /** @type {const} */ ([
+      [TEST_URLS.SAMPLE_ARTICLE, ['共有', '関連記事', 'コメント欄']],
+      [FIXTURE_URLS.HEADINGS_H2, ['共有', 'コメント欄']],
+    ])) {
+      await page.navigateTo(path, { waitFor: 'networkidle' });
+      await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
+      const sections = await measureSections();
+      expect(sections.map((s) => s.name), `前提: ${path} の記事下の段`).toEqual(expected);
+      for (const [i, section] of sections.entries()) {
+        // 上にだけ線を引き、線から同じ間隔で見出しを置く
+        expect(section.lines, `${path} ${section.name}`).toEqual(['1px', '0px']);
+        expect(section.labelOffset, `${path} ${section.name}の見出し`).toBe(17);
+        // 次の段の線は、この段のすぐ下に続く(間に線や余白を挟まない)
+        if (i > 0) expect(section.top, `${path} ${section.name}`).toBeCloseTo(sections[i - 1].bottom, 0);
+      }
+    }
   });
 
   // はてなが出力するボタンのHTML(2026年10月に開発用ブログで出力されたもの)。開発用ブログの設定で出していないボタンは、これを差し込んで確かめる
