@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Swifty</title>
+  <defs>
+    <!-- 左右の端で透明にして、風が流れてきて流れ去るように見せる。色はテーマ既定の配色(mint)のミント -->
+    <linearGradient id="swifty-wind" x1="16" y1="0" x2="240" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#92dccf" stop-opacity="0"/>
+      <stop offset=".28" stop-color="#3cc4b0"/>
+      <stop offset=".72" stop-color="#1fa593"/>
+      <stop offset="1" stop-color="#92dccf" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#swifty-wind)" stroke-linecap="round">
+    <!-- 頭文字のSを、右から流れてきて左へ流れ去る1本の風にする -->
+    <path d="M240 70 C 196 64, 150 64, 118 70 C 80 77, 72 110, 106 122 C 134 132, 178 134, 174 168 C 171 196, 132 200, 16 196" stroke-width="18"/>
+    <!-- Sの上下の尾に沿う細い流れ -->
+    <path d="M240 44 C 214 40, 190 39, 166 40" stroke-width="8" opacity=".7"/>
+    <path d="M16 222 C 44 225, 70 225, 94 223" stroke-width="8" opacity=".7"/>
+  </g>
+</svg>

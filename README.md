@@ -1,7 +1,7 @@
 [![Build](https://github.com/guitarrapc/hatenablog-theme-swifty/actions/workflows/build.yaml/badge.svg)](https://github.com/guitarrapc/hatenablog-theme-swifty/actions/workflows/build.yaml)
 [![Release](https://github.com/guitarrapc/hatenablog-theme-swifty/actions/workflows/release.yaml/badge.svg)](https://github.com/guitarrapc/hatenablog-theme-swifty/actions/workflows/release.yaml)
 
-# Swifty
+# <img src="./assets/logo_mark.png" alt="" height="32"> Swifty
 
 **記事を読み通しやすく、テーマ配色を切り替えられるワンカラムのはてなブログテーマ**
 
@@ -210,6 +210,14 @@ npm run screenshots
 
 配色ごとの色の表も出力します。配色を足したり色を変えたりしたら、撮り直して[articles/customize-entry.md](articles/customize-entry.md)の表を貼り直してください。`npm run screenshots -- scheme-blue pc-toc`のように名前を渡すと、名前が前方一致する画像だけを撮ります。
 
+### ロゴを書き出す
+
+[assets/logo.svg](assets/logo.svg)を直したら、PNG(`logo.png`、`logo_large.png`、READMEの見出し用の`logo_mark.png`)を書き出し直します。
+
+```shell
+npm run logo
+```
+
 ## 構成
 
 ```
@@ -241,6 +249,8 @@ hatenablog-theme-swifty/
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ articles/             ... テーマの紹介記事と、開発用ブログに投稿して見た目を確かめるFixture記事
 ┃ ┗ screenshots/        ... 紹介記事のスクリーンショット
+┣ assets/               ... テーマのロゴ(logo.svgが元の画像)
+┣ export-logo.js        ... ロゴをPNGに書き出すスクリプト
 ┣ capture-screenshots.js ... 紹介記事のスクリーンショットを撮るスクリプト
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/

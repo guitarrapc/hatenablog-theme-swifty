@@ -9,6 +9,7 @@
 | .github/ | GitHub Actionsの設定ファイルとエージェント向けの指示ドキュメント |
 | .vscode/ | VSCodeの設定ファイル(scssのフォーマット調整に利用) |
 | articles/ | テーマの紹介記事(`introduce-entry.md`、`customize-entry.md`)と、開発用ブログに投稿して見た目を確かめるFixture記事(Markdown)。投稿のしかたと記事の一覧は `articles/README.md` |
+| assets/ | テーマのロゴ。`logo.svg` が元の画像で、`logo.png`(256px)、`logo_large.png`(1024px)、`logo_mark.png`(READMEの見出し用に余白を除いたもの)は `export-logo.js`(`npm run logo`)でそこから書き出す |
 | build/ | ビルド成果物となるテーマ、本番はてなブログにはこのファイルを配布する |
 | js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉)、`dark-mode.js`(ダークモードの切り替えボタン) |
 | lighthouse-report/ | Lighthouseの計測結果 |
@@ -25,6 +26,7 @@
 | check-customize.js | `customize-*.html` が `js/` の同じ名前のスクリプトと同じ処理であることを確かめるスクリプト(`npm run check:customize`) |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |
 | customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」(`customize-dark-mode.html` は「headに要素を追加」)に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン)、`customize-toc-toggle.html`(目次の開閉)、`customize-dark-mode.html`(ダークモードの切り替えボタン) |
+| export-logo.js | `assets/logo.svg` を `assets/` のPNGに書き出すスクリプト(`npm run logo`) |
 | LICENSE.md | ライセンスファイル |
 | lighthouse.js | 開発用ブログに対してLighthouseを実行するスクリプト |
 | package-lock.json | npmのパッケージロックファイル |
