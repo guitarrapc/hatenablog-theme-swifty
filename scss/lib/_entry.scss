@@ -136,12 +136,14 @@
     }
 }
 
-// 大きく、行の高さと字間を詰めて塊として見せる(theme-design-spec.md の「見出しと引用」を参照)
+// 大きく、行の高さを詰めて塊として見せる(theme-design-spec.md の「見出しと引用」を参照)。
+// 太さは1段細くして重く見せない。英字(Segoe UI Semibold・San Francisco)と日本語(Noto Sans JP・ヒラギノ角ゴ W6)で600が揃う。
+// 字間は詰めない。詰めると日本語が窮屈に見える
 .entry-title {
     margin: 0;
     font-size: 1.625rem;
+    font-weight: 600;
     line-height: 1.3;
-    letter-spacing: -.02em;
     overflow-wrap: anywhere; // 区切りのない長い英単語(名前空間など)も折り返す。記事の一覧のタイトルにも効く
 
     @media #{var.$mq-sm} {
@@ -150,11 +152,10 @@
 }
 
 .entry-header .date {
+    @include var.meta-text;
     order: 1;
     margin: 0;
-    font-size: .8125rem;
     color: var(--text-light);
-    font-variant-numeric: tabular-nums;
 
     a {
         color: var(--text-light);

@@ -43,6 +43,9 @@ $deferred-content: ".entry-content > :not(:nth-child(-n + 5), .footnotes, .footn
 // Font
 $font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "BIZ UDPGothic", Meiryo, sans-serif, "Segoe UI Emoji";
 $font-family-monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "BIZ UDGothic", monospace;
+// 日付とパンくず(meta-text)。英数字はコードと同じ等幅にして桁を揃え、日本語は本文と同じ書体にする
+// (コードの書体の日本語は幅を揃えた BIZ UDGothic なので、カテゴリ名などの日本語が本文と違って見える)
+$font-family-meta: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "BIZ UDPGothic", Meiryo, monospace;
 
 // SVG (_functions.scss の url-svg で色を差し込んで使う)
 // アラートのアイコン(mask-imageで使うため色はcurrentColorのままでよい)
@@ -924,6 +927,14 @@ $dark-schemes: ();
         border-inline: none;
         border-radius: 0;
     }
+}
+
+// 記事の日付とパンくず。本文より小さく字間を空けて、記事の情報として本文や見出しと見分けられるようにする
+// (theme-design-spec.md の「記事」を参照)
+@mixin meta-text {
+    font-family: $font-family-meta;
+    font-size: .75rem;
+    letter-spacing: .06em;
 }
 
 // カテゴリの丸いラベル。タップ領域は高さ24px以上にする(WCAG 2.5.8)。

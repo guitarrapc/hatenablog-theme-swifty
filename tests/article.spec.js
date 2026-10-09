@@ -140,6 +140,70 @@ test.describe('記事ページのテスト', () => {
   });
 });
 
+test.describe('記事の日付とパンくず', () => {
+  /** 日付とパンくずの書体・大きさ・字間 */
+  const metaText = (/** @type {any} */ page, /** @type {string[]} */ selectors) => page.evaluate((/** @type {string[]} */ selectors) => selectors.map((selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return null;
+    const style = getComputedStyle(el);
+    return { selector, family: style.fontFamily, size: style.fontSize, spacing: style.letterSpacing };
+  }), selectors);
+
+  test('日付とパンくずは、英数字を等幅にした同じ書体で、本文より小さく字間を空ける', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    const entry = await metaText(page, ['.entry-header .date', '.breadcrumb']);
+    await page.navigateTo('/archive/category/test', { waitFor: 'networkidle' });
+    const archive = await metaText(page, ['.archive-date', '.breadcrumb']);
+
+    const all = [...entry, ...archive];
+    for (const [i, m] of all.entries()) expect(m, `${i}番目の要素が見つからない`).not.toBeNull();
+    const [first, ...rest] = /** @type {{ selector: string, family: string, size: string, spacing: string }[]} */ (all);
+    // 英数字は等幅(Windowsでは Consolas)、日本語は本文と同じ書体(コードの BIZ UDGothic ではない)
+    expect(first.family).toContain('Consolas');
+    expect(first.family).toContain('Noto Sans JP');
+    expect(first.family).not.toContain('BIZ UDGothic');
+    expect(first.size).toBe('12px');
+    expect(parseFloat(first.spacing)).toBeGreaterThan(0);
+    for (const m of rest) {
+      expect({ family: m.family, size: m.size, spacing: m.spacing }, m.selector).toEqual({ family: first.family, size: first.size, spacing: first.spacing });
+    }
+  });
+
+  test('記事のタイトルは太さを600にする(記事ページと一覧)', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    expect(await page.locator('.entry-header .entry-title').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600');
+    await page.navigateTo('/archive/category/test', { waitFor: 'networkidle' });
+    expect(await page.locator('.archive-entry .entry-title').first().evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600');
+  });
+
+  test('スマホのカテゴリーページでは、パンくず・見出し・並べ替えをカードの文字の位置に揃える', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.MOBILE);
+    await page.navigateTo('/archive/category/test', { waitFor: 'networkidle' });
+
+    const lefts = await page.evaluate(() => {
+      // 要素の箱ではなく、文字が始まる位置
+      const textLeft = (/** @type {string} */ selector) => {
+        const el = document.querySelector(selector);
+        if (!el) return null;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return Math.min(...[...range.getClientRects()].filter((r) => r.width > 0).map((r) => r.left));
+      };
+      return {
+        パンくず: textLeft('.breadcrumb'),
+        見出し: textLeft('.archive-heading'),
+        並べ替え: textLeft('.archive-entries-sort'),
+        カードの日付: textLeft('.archive-entry .archive-date'),
+      };
+    });
+
+    for (const [name, left] of Object.entries(lefts)) {
+      expect(left, `${name}が見つからない`).not.toBeNull();
+      expect(left, name).toBeCloseTo(/** @type {number} */ (lefts.カードの日付), 0);
+    }
+  });
+});
+
 test.describe('アーカイブページのテスト', () => {
   test('アーカイブページが正しくレンダリングされる', async ({ page }) => {
     await page.navigateTo(TEST_URLS.ARCHIVE, { waitFor: 'networkidle' });

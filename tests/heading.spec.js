@@ -153,7 +153,7 @@ test.describe('見出し', () => {
       expect(h.letterSpacing, `${h.id} の字間`).toBeLessThan(result.body ?? 0);
       expect(h.marginBottom, `${h.id} の下の間隔`).toBe(24);
     }
-    // タイトルは字間を少しマイナスにする
-    expect(result.title).toBeLessThan(0);
+    // タイトルは字間を詰めない(詰めると日本語が窮屈に見える)
+    expect(result.title).toBe(0);
   });
 });

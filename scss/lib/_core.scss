@@ -187,9 +187,11 @@ h6 {
     margin-top: 16px;
 }
 
+// 記事の日付と同じ書体と大きさにする(_variable.scss の meta-text)。
+// リンクはリンク色(どの配色でも、カードにもページの背景にも4.5:1以上)、区切りと現在のページは補助テキストの色
 .breadcrumb {
+    @include var.meta-text;
     padding-inline: var(--card-padding-inline);
-    font-size: .8125rem;
     color: var(--text-light);
 
     @media #{var.$mq-sm} {
@@ -197,11 +199,11 @@ h6 {
     }
 
     a {
-        color: var(--text-light);
+        color: var(--link);
         text-decoration: none;
 
         &:hover {
-            color: var(--link);
+            color: var(--link-hover);
             text-decoration: underline;
         }
     }
@@ -221,7 +223,7 @@ h6 {
         content: "/";
         content: "/" / "";
         margin-inline: .15em;
-        font-size: .8125rem;
+        font-size: .75rem;
         color: var(--text-light);
     }
 }
@@ -244,12 +246,6 @@ body.page-entry:has(#top-box .breadcrumb) {
         border-end-start-radius: 0;
         border-end-end-radius: 0;
         clip-path: inset((-$card-shadow-reach) (-$card-shadow-reach) 0 (-$card-shadow-reach));
-        font-size: .75rem;
-        letter-spacing: .06em;
-
-        a {
-            color: var(--link);
-        }
 
         // 記事のタイトルはすぐ下にあるので、パンくずの最後(記事のタイトル)とその前の区切りは出さない
         .breadcrumb-child:last-child,
