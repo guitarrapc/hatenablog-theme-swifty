@@ -46,6 +46,7 @@ JavaScriptのルールは、以下のように実装します。
 * JavaScriptはESモジュール形式で書きます。CommonJS形式は使用しない。
 * JavaScriptは `js/` に置くと自動でビルド対象になります(`vite.config.js` の変更は不要)。開発用ブログのheadに `<script src="http://localhost:5173/js/<ファイル名>.js">` を足して確認します。
 * ユーザーが導入するためのHTMLは `customize-<機能名>.html` としてリポジトリ直下に置きます。リリースのzipに同梱され、`npm run lighthouse` では「ブログタイトル下」に挿入されて計測されます。
+  * 貼る場所は「ブログタイトル下」が基本です。ページが描かれる前に反映しないと明滅するもの(`customize-dark-mode.html`)は、「headに要素を追加」に貼るよう案内します。
 * JavaScriptは、`npm run build`がエラーなく実行できて成果物が`build/`に出力されていることを確認してください。
 
 ## テストのルール

@@ -13,6 +13,7 @@ const MIN_TARGET = 24;
 
 const TARGETS = {
   読者になるボタン: '.blog-controlls-subscribe-btn',
+  表示モードのボタン: '.color-mode-toggle-button',
   記事のカテゴリ: '.entry-categories a',
   コメントを書く: '.leave-comment-title',
   コードブロックのボタン: '.code-block-button',

@@ -6,7 +6,7 @@
 **さわやかで使いやすいワンカラムのはてなブログテーマ**
 
 - 白と淡いミントを基調に、記事やブログパーツをカードにして読みやすく並べます。デザインCSSに1行書くと、ほぼ白のグレーに青・ピンク・黄色・紫をアクセントにした配色や、ベージュにくすんだ緑を合わせたやわらかい配色、くすみピンクの落ち着いた配色、アプリコットピンクの配色、ネイビーの落ち着いた配色、濃いピンクと緑の配色に切り替えられます。
-- OSのダークモードに合わせて、どの配色もダークの配色で表示します(WCAG AAを満たす配色)。デザインCSSで常にライト・常にダークにもできます。
+- OSのダークモードに合わせて、どの配色もダークの配色で表示します(WCAG AAを満たす配色)。デザインCSSで常にライト・常にダークにもできます。JavaScriptのカスタマイズを追加すると、ヘッダーのボタンで読者がライト・ダーク・自動を選べます。
 - はてなのヘッダーメニューとブログのヘッダーを1つのヘッダーにまとめ、「読者になる」ボタンをヘッダーの右端に置きます。
 - 記事の目次は、PCの広い画面(1200px以上)では本文の横に常に表示し、スクロールしても画面に残ります。**JavaScriptのカスタマイズは不要です。**
 - Chrome・Edgeでは、いま読んでいる見出しを目次で示します(CSSの `:target-current`)。
@@ -66,6 +66,16 @@ body { --link: #1a5fc8; --accent: #4a8ff0; }
 > [!TIP]
 > zipの中の[customize-toc-toggle.html](customize-toc-toggle.html)を、はてなブログの「デザイン」->「カスタマイズ」->「ヘッダ」->「ブログタイトル下」に貼り付けます。
 
+### ダークモードの切り替えの機能
+
+ブログのヘッダーの「読者になる」の左隣にボタンを置き、読者がライト・ダーク・自動(OSの設定)を選べるようにします。
+
+- 選んだモードはブラウザに記憶し、次に開いたページでも同じモードで表示します。
+- 読者が選んだモードは、デザインCSSの `--swifty-color-mode` の指定より優先します。「自動」はブログの既定(デザインCSSの指定、なければOSの設定)に戻します。
+
+> [!TIP]
+> zipの中の[customize-dark-mode.html](customize-dark-mode.html)を、はてなブログの「設定」->「詳細設定」->「headに要素を追加」に貼り付けます。`head`で実行すると、ページが描かれる前に選んだモードを反映するので、画面が明滅しません。
+
 ### アラート記法の機能
 
 引用の1行目に`[!NOTE]`、`[!TIP]`、`[!IMPORTANT]`、`[!WARNING]`、`[!CAUTION]`のいずれかを書くと、アラートとして表示します。同じ原稿はGitHubでもアラートとして表示され、スクリプトが動かない環境(RSSリーダーなど)では通常の引用として表示されます。
@@ -119,6 +129,7 @@ npx playwright install chromium
     <script type="text/javascript" src="http://localhost:5173/js/codeblock.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/toc-toggle.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/alert.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://localhost:5173/js/dark-mode.js" crossorigin="anonymous"></script>
     ```
 4. [blog.config.js](blog.config.js) の `BLOG_HOST` を1.のブログのドメイン名 (例: `example.hatenablog.com`) にします。開発サーバー、E2Eテスト、Lighthouseはこの設定を参照します。
 
@@ -193,6 +204,7 @@ hatenablog-theme-swifty/
 ┃   ┣ _functions.scss           ... SVGをdata URIにする関数
 ┃   ┣ _core.scss                ... ページ全体の配置、フッター
 ┃   ┣ _header.scss              ... ヘッダー(はてなのヘッダーメニュー・読者になるボタンとの一体化)
+┃   ┣ _color_mode.scss          ... ダークモードの切り替えボタン
 ┃   ┣ _entry.scss               ... 記事(本文、コード、コメント、ページャー)
 ┃   ┣ _codeblock.scss           ... コードブロック(言語名の帯、ハイライトの色、ボタン)
 ┃   ┣ _alert.scss               ... アラート記法
@@ -203,10 +215,12 @@ hatenablog-theme-swifty/
 ┣ js/
 ┃ ┣ codeblock.js        ... コードブロックのボタン
 ┃ ┣ toc-toggle.js       ... 目次の開閉
-┃ ┗ alert.js            ... アラート記法の変換
+┃ ┣ alert.js            ... アラート記法の変換
+┃ ┗ dark-mode.js        ... ダークモードの切り替えボタン
 ┣ customize-codeblock.html ... コードブロックのボタンの配布用(js/codeblock.jsと同じ処理)
 ┣ customize-toc-toggle.html ... 目次の開閉の配布用(js/toc-toggle.jsと同じ処理)
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
+┣ customize-dark-mode.html ... ダークモードの切り替えボタンの配布用(js/dark-mode.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ articles/             ... 開発用ブログに投稿して見た目を確かめるFixture記事
 ┣ blog.config.js        ... 開発用ブログの設定

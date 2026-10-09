@@ -9,12 +9,12 @@ body {
     // はてなのヘッダーメニューの高さ。「読者になる」ボタンをその直下に置くのに使う
     --hatena-globalheader-height: #{var.$hatena-globalheader-height-legacy};
     --blog-header-height: #{var.$blog-header-height-xs};
-    // ブログのヘッダーの右端に「読者になる」ボタンのぶん空けておく幅
+    // ブログのヘッダーの右端に「読者になる」ボタン(幅99px)のぶん空けておく幅。
+    // ダークモードの切り替えボタン(_color_mode.scss)は、この幅のすぐ左に置く
     --subscribe-space: 112px;
 
     @media #{var.$mq-sm} {
         --blog-header-height: #{var.$blog-header-height};
-        --subscribe-space: 128px;
     }
 
     &.globalheader-ng-enabled {

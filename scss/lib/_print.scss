@@ -7,7 +7,8 @@
 @media print {
 
     /* テーマが置く操作専用のUI */
-    .code-block-toolbar {
+    .code-block-toolbar,
+    .color-mode-toggle {
         display: none;
     }
 

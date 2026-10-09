@@ -18,6 +18,8 @@ const DISTINCT_FROM_TEXT = 3.0; // WCAG 1.4.1 達成方法G183 下線のない�
 const TARGETS = {
   ブログの説明: '#blog-description',
   読者になるボタン: '.blog-controlls-subscribe-btn',
+  // 表示モードのボタン(js/dark-mode.js。開発用ブログはheadで読み込む)。アイコンを文字色で描く
+  表示モードのボタン: '.color-mode-toggle-button',
   パンくずのリンク: '.breadcrumb a',
   カテゴリ: '.entry-categories a',
   本文: '.entry-content p',

@@ -1,0 +1,151 @@
+@use "./_variable" as var;
+@use "./_functions" as fn;
+
+/*
+ * ダークモードの切り替えボタン (js/dark-mode.js。component-specs.md の「ダークモードの切り替え」を参照)
+ * スクリプトが <html> に data-swifty-color-mode-toggle を付けたら、ブログのヘッダーの右端、「読者になる」の左隣にボタンの場所を空ける。
+ * 場所はスクリプトが読み込まれた時点で空けるので、後からボタンが入ってもタイトルの折り返しは変わらない。
+ * ダークテーマはスタイルクエリで切り替えるので(_core.scss)、スタイルクエリに対応していないブラウザではボタンも場所も出さない
+ */
+$toggle-size: 34px; // 「読者になる」と同じ高さ
+$toggle-gap: 8px;
+
+// スタイルクエリに対応しているかを、スタイルクエリそのもので判定するための値
+:root {
+    --swifty-style-queries: supported;
+}
+
+.color-mode-toggle {
+    display: none;
+}
+
+@container style(--swifty-style-queries: supported) {
+    html[data-swifty-color-mode-toggle] #blog-title-inner {
+        position: relative;
+        padding-right: calc(var(--header-gutter) + var(--subscribe-space) + #{$toggle-size + $toggle-gap});
+    }
+
+    .color-mode-toggle {
+        position: absolute;
+        top: 0;
+        right: calc(var(--header-gutter) + var(--subscribe-space));
+        display: flex;
+        align-items: center;
+        height: var(--blog-header-height);
+    }
+
+    // ヘッダ画像を設定したときは、「読者になる」と同じく画像の右上に置く(_header.scss)。タイトルは画像の下側なので場所は空けない
+    html[data-swifty-color-mode-toggle] :is(.header-image-enable, .header-image-only) #blog-title-inner {
+        padding-right: 24px;
+    }
+
+    :is(.header-image-enable, .header-image-only) .color-mode-toggle {
+        top: 12px;
+        right: calc(12px + var(--subscribe-space));
+        height: auto;
+    }
+}
+
+// いまの選択(ライト・ダーク・自動)のアイコンを出す丸いボタン
+.color-mode-toggle-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: $toggle-size;
+    height: $toggle-size;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background-color: var(--surface-header);
+    color: var(--text-light);
+    cursor: pointer;
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    &:hover,
+    &[aria-expanded="true"] {
+        border-color: var(--accent-strong);
+        color: var(--link);
+    }
+
+    &:hover {
+        background-color: var(--accent-soft);
+    }
+}
+
+// 選択肢。ボタンの下に開く
+.color-mode-toggle-menu {
+    position: absolute;
+    // ボタンはヘッダーの帯の高さの中央にあるので、ボタンの下端から少し離す
+    top: calc(50% + #{$toggle-size * 0.5} + 6px);
+    right: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    min-width: 176px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    background-color: var(--surface);
+    box-shadow: 0 8px 24px var(--shadow);
+
+    // display: flex が hidden 属性(display: none)に勝たないようにする
+    &[hidden] {
+        display: none;
+    }
+}
+
+.color-mode-toggle-option {
+    display: flex;
+    align-items: center;
+    gap: .6em;
+    min-height: 36px;
+    padding: 0 .75em;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-body);
+    font-size: .875rem;
+    text-align: left;
+    cursor: pointer;
+
+    svg {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        color: var(--text-light);
+    }
+
+    &:hover {
+        background-color: var(--accent-soft);
+    }
+
+    // 選んでいるもの。色だけに頼らず、太字とチェックの印でも示す
+    &[aria-pressed="true"] {
+        color: var(--link);
+        font-weight: 700;
+
+        svg {
+            color: var(--link);
+        }
+
+        &::after {
+            content: "";
+            flex: none;
+            width: 16px;
+            height: 16px;
+            margin-left: auto;
+            background-color: currentColor;
+            mask: fn.url-svg(var.$svg-code-check, #000) no-repeat center / contain;
+
+            // ハイコントラストモードでは背景色が強制されて印が消えるため、文字色で描く
+            @media (forced-colors: active) {
+                forced-color-adjust: none;
+                background-color: CanvasText;
+            }
+        }
+    }
+}
