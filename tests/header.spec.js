@@ -8,7 +8,12 @@ import { TEST_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
  *
  * はてなのヘッダーメニューは動かさず(はてなのガイドライン)、その直下にブログのヘッダーを続け、
  * はてなの「読者になる」ボタンをブログのヘッダーの右端に置いて1つのヘッダーに見せる。
+ * スマホでは、ボタンをタイトルの右ではなく、タイトルと説明の下の段に置く。
  */
+
+/** 2つの矩形が重なるか */
+const intersects = (/** @type {DOMRect} */ a, /** @type {DOMRect} */ b) =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
 const measure = (/** @type {any} */ page) => page.evaluate(() => {
   const rect = (/** @type {string} */ selector) => document.querySelector(selector)?.getBoundingClientRect().toJSON() ?? null;
@@ -20,7 +25,9 @@ const measure = (/** @type {any} */ page) => page.evaluate(() => {
     globalHeader: rect('#globalheader-container'),
     blogHeader: rect('#blog-title'),
     title: rect('#title a'),
+    description: rect('#blog-description'),
     button: rect('.blog-controlls-subscribe-btn'),
+    toggle: rect('.color-mode-toggle-button'),
     entry: rect('.entry'),
     viewport: document.documentElement.clientWidth,
     controllsTitle: display('.blog-controlls-title'),
@@ -52,10 +59,10 @@ test.describe('ヘッダー', () => {
       // ブログのヘッダーは隙間なくその直下に続く
       expect(Math.abs(m.blogHeader.top - m.globalHeader.bottom)).toBeLessThanOrEqual(1);
 
-      // ボタンはブログのヘッダーの帯の中にあり、タイトルと重ならない
+      // ボタンはブログのヘッダーの帯の中にあり、タイトルと重ならない(スマホではタイトルの下の段にある)
       expect(m.button.top).toBeGreaterThanOrEqual(m.blogHeader.top);
       expect(m.button.bottom).toBeLessThanOrEqual(m.blogHeader.bottom);
-      expect(m.button.left).toBeGreaterThanOrEqual(m.title.right);
+      expect(intersects(m.button, m.title)).toBe(false);
 
       // ボタンの右端は記事のカードの右端に揃う。カードが画面幅いっぱいのスマホでは、カードの文字の右端に揃う
       const cardIsFullWidth = m.entry.width >= m.viewport - 1;
@@ -67,6 +74,32 @@ test.describe('ヘッダー', () => {
       expect(m.controllsIcon).toBe('none');
     });
   }
+
+  test('スマホでは、ボタンをタイトルと説明の下の段に右寄せで置き、タイトルには幅いっぱいを使わせる', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.MOBILE);
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    await expect(page.locator('.color-mode-toggle-button'), '前提: 開発用ブログのheadにjs/dark-mode.jsがあること').toBeVisible();
+    // 長いタイトルでも、ボタンの段がタイトルの高さに合わせて下がることを確かめる
+    await page.evaluate(() => {
+      /** @type {Element} */ (document.querySelector('#title a')).textContent = 'ゆるく続けるエンジニアの技術メモと日々の記録とときどき料理';
+    });
+
+    const m = await measure(page);
+    if (!m.blogHeader || !m.title || !m.description || !m.button || !m.toggle) throw new Error('ヘッダーの要素が見つからない');
+
+    // タイトルはボタンのぶん空けずに、画面の右の余白(16px)の手前まで使う
+    expect(m.title.right).toBeGreaterThan(m.toggle.left);
+    expect(m.title.right).toBeLessThanOrEqual(m.viewport - 16);
+    // ボタンは説明の下の段に、同じ高さで並ぶ。帯の下から12px上
+    expect(m.toggle.top).toBeGreaterThanOrEqual(m.description.bottom);
+    expect(m.button.top).toBeCloseTo(m.toggle.top, 0);
+    expect(m.button.height).toBeCloseTo(m.toggle.height, 0);
+    expect(m.blogHeader.bottom - 1 - m.button.bottom).toBeCloseTo(12, 0);
+    // 右寄せで、表示モードのボタンは「読者になる」の左隣
+    expect(m.button.right).toBeCloseTo(m.viewport - 16, 0);
+    expect(Math.round(m.button.left - m.toggle.right)).toBe(13);
+  });
 
   test('ヘッダーメニューを表示しない設定(はてなブログPro)でも、ボタンはブログのヘッダーの帯の中に並ぶ', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.DESKTOP);

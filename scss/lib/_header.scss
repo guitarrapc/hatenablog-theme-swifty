@@ -12,6 +12,8 @@ body {
     // ブログのヘッダーの右端に「読者になる」ボタン(幅99px)のぶん空けておく幅。
     // ダークモードの切り替えボタン(_color_mode.scss)は、この幅のすぐ左に置く
     --subscribe-space: 112px;
+    // タイトルの右に空ける幅。ダークモードの切り替えボタンがあれば、そのぶん足す(_color_mode.scss)
+    --header-actions-space: var(--subscribe-space);
 
     @media #{var.$mq-sm} {
         --blog-header-height: #{var.$blog-header-height};
@@ -42,7 +44,7 @@ body {
     min-height: var(--blog-header-height);
     max-width: calc(var(--layout-max) + var(--header-gutter) * 2);
     margin-inline: auto;
-    padding: 10px calc(var(--header-gutter) + var(--subscribe-space)) 10px var(--header-gutter);
+    padding: 10px calc(var(--header-gutter) + var(--header-actions-space)) 10px var(--header-gutter);
 }
 
 #blog-title-content {
@@ -98,6 +100,24 @@ body {
 .blog-controlls-blog-icon,
 .blog-controlls-title {
     display: none;
+}
+
+/*
+ * スマホでは、ボタンをタイトルの右ではなく、タイトルと説明の下の段に右寄せで置く。
+ * タイトルの右にボタン2つ分(約170px)を空けると、393pxの画面でもタイトルに残る幅が約200pxになり、短いタイトルでも折り返すため。
+ * ヘッダーの下に段のぶん空け、「読者になる」をアンカー位置指定でその段に合わせる(当てる条件は header-actions-below)
+ */
+@include var.header-actions-below {
+    #blog-title-inner {
+        anchor-name: --swifty-blog-title;
+        padding: 12px var(--header-gutter) #{var.$header-actions-gap + var.$header-actions-height + var.$header-actions-padding-bottom};
+    }
+
+    .blog-controlls {
+        position-anchor: --swifty-blog-title;
+        top: calc(anchor(bottom) - #{var.$header-actions-height + var.$header-actions-padding-bottom});
+        height: var.$header-actions-height;
+    }
 }
 
 // はてなは文字色を白、背景を半透明の灰色にしている。テーマのボタンの形に揃える
