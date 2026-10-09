@@ -87,6 +87,10 @@ test.describe('ダークモードの切り替え(js/dark-mode.js)', () => {
     expect(layout.title.right).toBeLessThanOrEqual(layout.button.left);
     expect(layout.afterTitle).toBe(true);
     await expect(page.locator(BUTTON)).toHaveAccessibleName('表示モード: 自動');
+
+    // スクリプトを何度実行してもボタンは1つ
+    await page.evaluate(darkModeJs);
+    await expect(page.locator('.color-mode-toggle')).toHaveCount(1);
   });
 
   test('選んだモードをページ全体に適用し、記憶して次のページでも使う', async ({ page }) => {
@@ -206,31 +210,5 @@ test.describe('ダークモードの切り替え(js/dark-mode.js)', () => {
     expect(await isDark(page)).toBe(true);
   });
 
-  test('スクリプトを何度実行してもボタンは1つ', async ({ page }) => {
-    await openArticle(page);
-    await page.evaluate(darkModeJs);
-    await expect(page.locator('.color-mode-toggle')).toHaveCount(1);
-  });
-
-  test('印刷ではボタンを出さない', async ({ page }) => {
-    await openArticle(page);
-    await page.emulateMedia({ media: 'print' });
-    await expect(page.locator('.color-mode-toggle')).toBeHidden();
-  });
-
-  test('配布用のcustomize-dark-mode.htmlはjs/dark-mode.jsと同じ処理である', async ({ page }) => {
-    const html = fs.readFileSync(path.resolve(__dirname, '../customize-dark-mode.html'), 'utf-8');
-    // 正規表現ではなくブラウザのHTMLパーサーでscript要素を取り出す(DOMParserはスクリプトを実行しない)
-    const scripts = await page.evaluate((source) => Array.from(new DOMParser().parseFromString(source, 'text/html').scripts)
-      .map((script) => script.textContent ?? ''), html);
-    expect(scripts).toHaveLength(1);
-
-    // インデントとコメント行を除いて比較する
-    const normalize = (/** @type {string} */ code) => code
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//') && !line.startsWith('/**') && !line.startsWith('*'))
-      .join('\n');
-    expect(normalize(scripts[0])).toBe(normalize(darkModeJs));
-  });
+  // 印刷でボタンを出さないことは print.spec.js の「操作専用のUI」で確かめる
 });

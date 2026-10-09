@@ -18,36 +18,21 @@ export default defineConfig({
   use: {
     actionTimeout: 30000, // アクションタイムアウトを30秒に設定
     baseURL: BLOG_URL,
-    trace: 'on', // 常にトレースを取得
+    trace: 'on-first-retry', // 失敗してやり直すときだけトレースを取得
     screenshot: 'only-on-failure', // 失敗時のみスクリーンショットを取得
   },
   reporter: [
     ['html'],
     ['list']
   ],
+  // 画面幅で見た目が変わることは、テストの中で幅を指定して確かめる(tests/constants.js の VIEWPORTS)。
+  // 幅ごとのプロジェクトに分けると、幅に関係のないテストまで同じことを幅の数だけ繰り返す
   projects: [
     {
-      name: 'desktop',
+      name: 'chromium',
       use: {
         browserName: 'chromium',
         viewport: { width: 912, height: 1368 }, // Surface Pro7の解像度
-      },
-    },
-    {
-      name: 'tablet',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1024, height: 1366 }, // iPad Pro 12.9インチの解像度
-        deviceScaleFactor: 1.5,
-      },
-    },
-    {
-      name: 'mobile',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 430, height: 932 }, // iPhone 14 Pro Maxの解像度
-        deviceScaleFactor: 2,
-        isMobile: true,
       },
     },
   ],

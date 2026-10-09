@@ -15,6 +15,7 @@
     "test": "playwright test --reporter=list",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
+    "check:customize": "node check-customize.js",
     "lighthouse": "vite build && node lighthouse.js",
     "lighthouse:dev": "node lighthouse.js --mode=dev"
   },

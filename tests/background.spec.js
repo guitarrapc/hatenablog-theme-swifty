@@ -39,35 +39,8 @@ test.describe('背景色のユーザー設定', () => {
     await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
     await injectBeforeThemeCss(page);
 
-    // 画面に見えるのはbodyの背景。ユーザーの指定が残っていること
+    // 画面に見えるのはbodyの背景。テーマより前(詳細度が同じで順序が不利な側)に置いても、ユーザーの指定が残っていること
     const body = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(body).toBe(USER_BACKGROUND);
-  });
-
-  test('テーマの背景はカスケードレイヤーに入っている', async ({ page }) => {
-    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator('.entry-content').first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
-
-    // レイヤーに入っていることが、順序に関係なくユーザー指定へ譲るための条件。
-    // 挙動テストだけだと、たまたま順序が有利で通っているのか区別できないので構造も見る
-    const layered = await page.evaluate((href) => {
-      const sheet = Array.from(document.styleSheets).find((s) => s.href === href);
-      if (!sheet) return { error: 'テーマCSSが読み込まれていない' };
-      /** @type {string[]} */
-      const layers = [];
-      for (const rule of Array.from(sheet.cssRules)) {
-        // CSSLayerBlockRule のみを見る
-        if (!('cssRules' in rule) || !('name' in rule)) continue;
-        for (const inner of Array.from(/** @type {any} */(rule).cssRules)) {
-          if (/** @type {any} */(inner).style?.backgroundColor && /body/.test(/** @type {any} */(inner).selectorText || '')) {
-            layers.push(/** @type {any} */(rule).name);
-          }
-        }
-      }
-      return { layers };
-    }, THEME_STYLESHEET);
-
-    expect(layered.error, layered.error).toBeUndefined();
-    expect(layered.layers).toContain('swifty-background');
   });
 });

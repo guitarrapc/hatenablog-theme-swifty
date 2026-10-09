@@ -96,13 +96,14 @@ test.describe('ヘッダー', () => {
       await page.navigateTo(path, { waitFor: 'networkidle' });
       await expect(page.locator(selector).first()).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-      const result = await page.evaluate((/** @type {string} */ selector) => ({
-        gap: /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().top
-          - /** @type {Element} */ (document.getElementById('blog-title')).getBoundingClientRect().bottom,
-        width: innerWidth,
-      }), selector);
-
-      expect(Math.round(result.gap)).toBe(result.width >= 768 ? 48 : 32);
+      // 余白はCSSだけで決まるので、1つのページで画面幅を変えて測る
+      for (const [viewport, expected] of /** @type {const} */ ([[VIEWPORTS.SURFACE_PRO, 48], [VIEWPORTS.MOBILE, 32]])) {
+        await page.setViewportSize(viewport);
+        const gap = await page.evaluate((/** @type {string} */ selector) =>
+          /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().top
+          - /** @type {Element} */ (document.getElementById('blog-title')).getBoundingClientRect().bottom, selector);
+        expect(Math.round(gap), `${viewport.width}px`).toBe(expected);
+      }
     });
   }
 });

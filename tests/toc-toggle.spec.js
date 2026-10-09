@@ -183,7 +183,8 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
     await page.setViewportSize(SIDE);
     await openArticle(page);
     await page.locator('.toc-panel-summary').click();
-    expect((await measure(page)).stored).toBe('true');
+    // details の toggle イベントはクリックの後に非同期で届き、そこで記憶する
+    await expect.poll(async () => (await measure(page)).stored).toBe('true');
 
     // 次のページの読み込み中、描くフレームごとに目次の状態を記録する。
     // 目次が本文の途中で届いて本文の横に移るのは目次のあるページの配置そのものなので、ページ全体のずれ(CLS)ではなく、
@@ -210,7 +211,7 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
 
     // 開け直すと、それも記憶する
     await page.locator('.toc-panel-summary').click();
-    expect((await measure(page)).stored).toBe('false');
+    await expect.poll(async () => (await measure(page)).stored).toBe('false');
   });
 
   test('記憶できない環境でも開け閉めできる', async ({ page }) => {
@@ -261,21 +262,5 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
 
     await page.emulateMedia({ media: 'print' });
     expect((await measure(page)).listVisible).toBe(true);
-  });
-
-  test('配布用のcustomize-toc-toggle.htmlはjs/toc-toggle.jsと同じ処理である', async ({ page }) => {
-    const html = fs.readFileSync(path.resolve(__dirname, '../customize-toc-toggle.html'), 'utf-8');
-    // 正規表現ではなくブラウザのHTMLパーサーでscript要素を取り出す(DOMParserはスクリプトを実行しない)
-    const scripts = await page.evaluate((source) => Array.from(new DOMParser().parseFromString(source, 'text/html').scripts)
-      .map((script) => script.textContent ?? ''), html);
-    expect(scripts).toHaveLength(1);
-
-    // インデントとコメント行を除いて比較する
-    const normalize = (/** @type {string} */ code) => code
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//') && !line.startsWith('/**') && !line.startsWith('*'))
-      .join('\n');
-    expect(normalize(scripts[0])).toBe(normalize(tocToggleJs));
   });
 });

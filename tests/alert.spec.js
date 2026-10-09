@@ -184,10 +184,26 @@ const setupFixture = async (page) => {
   await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--alert-note') !== '');
   await page.evaluate((html) => {
     document.querySelector('.entry-content')?.insertAdjacentHTML('beforeend', html);
+  }, FIXTURE);
+  await page.evaluate(alertJs);
+};
+
+/**
+ * フィクスチャだけの本文を開き、アラート変換スクリプトを実行する。
+ * 変換の規則(どの引用をどう変換するか)はテーマのCSSにもブログにも関係しないので、開発用ブログを開かずに確かめる
+ * @param {import('@playwright/test').Page} page
+ */
+const setupParserFixture = async (page) => {
+  await page.route('https://alert.test/', (route) => route.fulfill({
+    contentType: 'text/html; charset=utf-8',
+    body: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div class="entry-content">${FIXTURE}</div></body></html>`,
+  }));
+  await page.goto('https://alert.test/', { waitUntil: 'load' });
+  await page.evaluate(() => {
     // 変換後も本文の要素が作り直されず同じノードのまま残るか確認するため、変換前のノードを覚えておく
     /** @type {any} */ (window).bodyNodes = ['#alert-multi a', '#alert-multi code', '#alert-newline-inline strong', '#alert-image img']
       .map((selector) => ({ selector, node: document.querySelector(selector) }));
-  }, FIXTURE);
+  });
   await page.evaluate(alertJs);
 };
 
@@ -289,7 +305,7 @@ const contrast = (foreground, background) => {
 
 test.describe('アラート記法', () => {
   test('はてなブログが出力する引用をアラートに変換する', async ({ page }) => {
-    await setupFixture(page);
+    await setupParserFixture(page);
 
     const expected = [
       { id: 'alert-br', type: 'note', title: 'Note', body: 'brで改行されたケース' },
@@ -364,7 +380,7 @@ test.describe('アラート記法', () => {
   });
 
   test('結合された引用をマーカーごとのアラートに分割する', async ({ page }) => {
-    await setupFixture(page);
+    await setupParserFixture(page);
 
     expect(await collectBlocks(page, 'merged-start', 'merged-end')).toEqual([
       // マーカーより前の段落は通常の引用のまま残り、idも元の引用に残る
@@ -400,7 +416,7 @@ test.describe('アラート記法', () => {
   });
 
   test('本文のないマーカーはアラートにせず、そのまま表示する', async ({ page }) => {
-    await setupFixture(page);
+    await setupParserFixture(page);
 
     await expect(page.locator('#neg-empty')).not.toHaveClass(/markdown-alert/);
     await expect(page.locator('#neg-empty')).toHaveText('[!NOTE]');
@@ -418,7 +434,7 @@ test.describe('アラート記法', () => {
   });
 
   test('アラート記法でない引用は変換しない', async ({ page }) => {
-    await setupFixture(page);
+    await setupParserFixture(page);
 
     const negatives = {
       'neg-trailing': '[!NOTE] 同じ行に本文があるケース',
@@ -454,10 +470,9 @@ test.describe('アラート記法', () => {
   });
 
   test('スクリプトを複数回実行しても結果が変わらない', async ({ page }) => {
-    await setupFixture(page);
+    await setupParserFixture(page);
 
-    // 埋め込みツイートのwidgets.jsなど他のスクリプトが非同期にDOMを変えても影響しないよう、
-    // 再実行の前後の取得を1回の同期的な評価の中で行う
+    // 再実行の前後の本文を、1回の同期的な評価の中で取得して比べる
     const [before, after] = await page.evaluate(`(() => {
       const entry = document.querySelector('.entry-content');
       const before = entry.innerHTML;
@@ -726,23 +741,6 @@ test.describe('アラート記法', () => {
       expect(s.iconBackground, s.type).toBe(s.titleColor);
       expect(await isIconPainted(page, s.type), s.type).toBe(true);
     }
-  });
-
-  test('配布用のcustomize-alert.htmlはjs/alert.jsと同じ処理である', async ({ page }) => {
-    const html = fs.readFileSync(path.resolve(__dirname, '../customize-alert.html'), 'utf-8');
-    // 正規表現ではなくブラウザのHTMLパーサーでscript要素を取り出す(DOMParserはスクリプトを実行しない)
-    const scripts = await page.evaluate((source) => Array.from(new DOMParser().parseFromString(source, 'text/html').scripts)
-      .map((script) => script.textContent ?? ''), html);
-    expect(scripts).toHaveLength(1);
-    const script = scripts[0];
-
-    // インデントとコメント行を除いて比較する
-    const normalize = (/** @type {string} */ code) => code
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//') && !line.startsWith('/**') && !line.startsWith('*'))
-      .join('\n');
-    expect(normalize(script)).toBe(normalize(alertJs));
   });
 
   for (const [label, url] of [['日本語', TEST_URLS.SAMPLE_ARTICLE], ['英語', TEST_URLS.SAMPLE_ARTICLE_EN]]) {

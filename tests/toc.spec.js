@@ -85,8 +85,11 @@ test.describe('目次を本文の横に常に表示する', () => {
     await page.navigateTo(FIXTURE_URLS.TOC_LONG, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight / 2));
-    await page.waitForTimeout(TIMEOUTS.SHORT);
+    // スクロールして、次のフレームで描かれてから測る
+    await page.evaluate(async () => {
+      scrollTo(0, document.documentElement.scrollHeight / 2);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
 
     const toc = await page.evaluate(() => {
       const el = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents'));
@@ -136,12 +139,11 @@ test.describe('目次を本文の横に常に表示する', () => {
 
     for (const id of ['引用', 'テーブル']) {
       await page.evaluate((id) => document.getElementById(id)?.scrollIntoView({ block: 'start' }), id);
-      await page.waitForTimeout(TIMEOUTS.SHORT);
-      const current = await page.evaluate(() =>
+      // 印はスクロールの次のフレームで移る
+      await expect.poll(() => page.evaluate(() =>
         [...document.querySelectorAll('.entry-content > .table-of-contents a')]
           .filter((a) => a.matches(':target-current'))
-          .map((a) => decodeURIComponent(/** @type {HTMLAnchorElement} */(a).hash.slice(1))));
-      expect(current).toEqual([id]);
+          .map((a) => decodeURIComponent(/** @type {HTMLAnchorElement} */(a).hash.slice(1))))).toEqual([id]);
     }
 
     // 色だけに頼らず、太字と線でも示す

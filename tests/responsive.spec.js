@@ -16,7 +16,6 @@ test.describe('レスポンシブデザインのテスト', () => {
     test(`${name}でのレイアウト確認`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.navigateTo(TEST_URLS.HOME, { waitFor: 'networkidle' });
-      await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
       await page.screenshot({ path: `screenshots/responsive-${viewport.width}.png`, fullPage: true });
 
@@ -45,7 +44,6 @@ test.describe('レスポンシブデザインのテスト', () => {
   test('スマートフォンでの記事ページ確認', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.MOBILE_STANDARD);
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await page.waitForTimeout(TIMEOUTS.MEDIUM);
 
     await page.screenshot({ path: 'screenshots/responsive-smartphone-article.png', fullPage: true });
 
@@ -55,9 +53,10 @@ test.describe('レスポンシブデザインのテスト', () => {
   });
   // Fixture記事のはみ出しやすい要素(長いタイトル、区切りのない文字列、表、長い行のコード、数式、画像)で確かめる。
   // Fixtureのカテゴリのページでは、記事の一覧に並ぶ長いタイトルとカテゴリを確かめる。
-  // 画面の幅はプロジェクト(playwright.config.js)ごとの幅
+  // 本文の幅がいちばん狭く、はみ出しやすいスマートフォンの幅で測る
   for (const [name, path] of Object.entries({ ...FIXTURE_URLS, CATEGORY: '/archive/category/Fixture' })) {
     test(`記事が横にはみ出さない(Fixture: ${name})`, async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.MOBILE);
       await page.navigateTo(path, { waitFor: 'networkidle' });
       await expect(page.locator(SELECTORS.MAIN)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
       // 後回しにしている本文は仮の大きさなので、描いてから測る

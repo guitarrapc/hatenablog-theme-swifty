@@ -21,6 +21,7 @@
 | .gitignore | Gitの無視リスト |
 | .npmrc | npmの設定(バージョン固定、公開から14日未満のパッケージを入れない) |
 | blog.config.js | 開発用ブログのドメインと開発サーバーのポート。開発サーバー、E2Eテスト、Lighthouseが共通で参照する |
+| check-customize.js | `customize-*.html` が `js/` の同じ名前のスクリプトと同じ処理であることを確かめるスクリプト(`npm run check:customize`) |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |
 | customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」(`customize-dark-mode.html` は「headに要素を追加」)に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン)、`customize-toc-toggle.html`(目次の開閉)、`customize-dark-mode.html`(ダークモードの切り替えボタン) |
 | LICENSE.md | ライセンスファイル |
@@ -60,20 +61,20 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | ---- | ---- |
 | `tests/helpers.js` | リトライ付きのナビゲーションなど、テスト共通のフィクスチャ |
 | `tests/constants.js` | テスト対象の記事URL(`TEST_URLS`、Fixture記事の `FIXTURE_URLS`)、ビューポート、セレクタなどの定数 |
-| `tests/home.spec.js` | トップページの表示と、テーマCSSが読み込まれていること |
+| `tests/home.spec.js` | テーマCSSが読み込まれていること(全テストが失敗するときに最初に見る) |
 | `tests/header.spec.js` | はてなのヘッダーメニューとブログのヘッダーの一体化、「読者になる」ボタンの位置 |
 | `tests/article.spec.js` | 記事・アバウト・アーカイブページの表示 |
-| `tests/codeblock.spec.js` | コードブロックの言語名の帯、ハイライトの色分け、アスキーアートの除外、ボタン(`js/codeblock.js`)、`customize-codeblock.html` が同じ処理であること |
-| `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`)、見た目、`customize-alert.html` が同じ処理であること |
+| `tests/codeblock.spec.js` | コードブロックの言語名の帯、ハイライトの色分け、アスキーアートの除外、ボタン(`js/codeblock.js`) |
+| `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`。変換の規則はローカルのページで確かめる)と見た目 |
 | `tests/heading.spec.js` | 本文の見出し(書き方に合わせた帯・破線・縦棒の割り当て、字間と間隔) |
-| `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ、`customize-toc-toggle.html` が同じ処理であること |
-| `tests/dark-mode.spec.js` | ダークモードの切り替えボタン(`js/dark-mode.js`)の置き場所、モードの適用と記憶、読み込み時に別のモードで描かないこと、キーボード操作、`customize-dark-mode.html` が同じ処理であること |
+| `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ |
+| `tests/dark-mode.spec.js` | ダークモードの切り替えボタン(`js/dark-mode.js`)の置き場所、モードの適用と記憶、読み込み時に別のモードで描かないこと、キーボード操作 |
 | `tests/scheme.spec.js` | 配色の切り替え(`--swifty-scheme`)、知らない名前では既定のまま、`body` に書いた色とはてなの背景設定が優先されること。ダークテーマ(OSに合わせる、`--swifty-color-mode`、ダークの背景がはてなの背景設定より優先、印刷はライト) |
 | `tests/toc-follow.spec.js` | 本文の横の長い目次で、いま読んでいる見出しのリンクが見える位置まで目次の中をスクロールすること(`js/toc-toggle.js`) |
 | `tests/toc.spec.js` | 目次を本文の横に常に表示すること、いま読んでいる見出しの表示、本文の間隔が変わらないこと |
 | `tests/target-size.spec.js` | 小さいリンクやボタンのタップ領域(WCAG 2.5.8) |
-| `tests/responsive.spec.js` | 画面幅ごとの表示と、横スクロールが出ないこと |
+| `tests/responsive.spec.js` | 画面幅ごとのトップページの表示と、横スクロールが出ないこと |
 | `tests/background.spec.js` | ユーザーの背景設定がテーマより優先されること |
 | `tests/contrast.spec.js` | テキスト・リンク・引用の線・状態の印のコントラスト(WCAG AA)。すべての配色を、ライトとダークのそれぞれで測る |
 | `tests/deferred-content.spec.js` | 描画の後回しで本文の位置と高さが変わらないこと |
-| `tests/print.spec.js` | 印刷スタイル |
+| `tests/print.spec.js` | 印刷スタイル(操作専用のUI・サイドバーを出さない、閉じた中身や画面外の本文も出す) |

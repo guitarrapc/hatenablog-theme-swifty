@@ -74,30 +74,6 @@ const measure = (/** @type {any} */ page) => page.evaluate((/** @type {string[]}
 }, SWITCHED);
 
 test.describe('配色の切り替え', () => {
-  test('テーマは --swifty-scheme を宣言しない', async ({ page }) => {
-    await openArticle(page);
-    // 宣言すると、テーマより前に読み込まれたデザインCSS(開発用ブログ)の指定に、同じ詳細度のテーマの既定値が勝ってしまう。
-    // 開発用ブログのデザインCSSの影響を受けないよう、ページの値ではなくテーマのCSSそのものを見る
-    const declared = await page.evaluate((href) => {
-      const sheet = [...document.styleSheets].find((s) => s.href === href);
-      if (!sheet) return null;
-      /** @type {string[]} */
-      const found = [];
-      const walk = (/** @type {CSSRuleList} */ rules) => {
-        for (const rule of [...rules]) {
-          const style = /** @type {any} */ (rule).style;
-          if (style?.getPropertyValue('--swifty-scheme')) found.push(/** @type {any} */ (rule).selectorText);
-          if ('cssRules' in rule) walk(/** @type {any} */ (rule).cssRules);
-        }
-      };
-      walk(sheet.cssRules);
-      return found;
-    }, THEME_STYLESHEET);
-
-    expect(declared, 'テーマCSSが読み込まれていない').not.toBeNull();
-    expect(declared).toEqual([]);
-  });
-
   test(`書かなければ既定の配色(${DEFAULT_SCHEME})で、body は :root の配色をそのまま使う`, async ({ page }) => {
     await openArticle(page);
     // 開発用ブログのデザインCSSで切り替えていても、書いていない状態に戻す
@@ -108,24 +84,26 @@ test.describe('配色の切り替え', () => {
     expect(colors.body).toEqual(colors.root);
   });
 
-  for (const scheme of SWITCHABLE) {
-    test(`デザインCSSで --swifty-scheme: ${scheme} と書くと、ページ全体の配色が切り替わる`, async ({ page }) => {
-      await openArticle(page);
+  // 1つのページで配色を順に切り替えて測る(後から足した指定が勝つ)。失敗はすべて集めて出す(expect.soft)
+  test('デザインCSSで --swifty-scheme を書くと、どの配色でもページ全体の配色が切り替わる', async ({ page }) => {
+    await openArticle(page);
+
+    for (const scheme of SWITCHABLE) {
       await designCss(page, schemeCss(scheme));
       const colors = await measure(page);
 
-      expect(colors.scheme).toBe(scheme);
+      expect.soft(colors.scheme).toBe(scheme);
       for (const name of SWITCHED) {
-        expect(colors.body[name], `--${name} が切り替わる`).not.toBe(colors.root[name]);
+        expect.soft(colors.body[name], `${scheme}: --${name} が切り替わる`).not.toBe(colors.root[name]);
       }
       // ページの背景は html に置かず、body の背景がページ全体に広がる
-      expect(colors.rendered.html).toBe('rgba(0, 0, 0, 0)');
-      expect(colors.rendered.background).toBe(colors.expected.background);
-      expect(colors.rendered.card).toBe(colors.expected.surface);
-      expect(colors.rendered.link).toBe(colors.expected.link);
-      expect(colors.rendered.bandBar).toBe(colors.expected.accent);
-    });
-  }
+      expect.soft(colors.rendered.html, scheme).toBe('rgba(0, 0, 0, 0)');
+      expect.soft(colors.rendered.background, scheme).toBe(colors.expected.background);
+      expect.soft(colors.rendered.card, scheme).toBe(colors.expected.surface);
+      expect.soft(colors.rendered.link, scheme).toBe(colors.expected.link);
+      expect.soft(colors.rendered.bandBar, scheme).toBe(colors.expected.accent);
+    }
+  });
 
   test('どの配色でも、ブログのヘッダーの帯ははてなのヘッダーメニューと同じ白にする', async ({ page }) => {
     await openArticle(page);

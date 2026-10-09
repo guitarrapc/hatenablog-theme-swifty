@@ -31,14 +31,16 @@ jobs:
       - name: Verify theme header
         run: |
           head -n 10 build/style.css | grep -q "Responsive: yes"
+      # 配布用の customize-*.html が js/ のスクリプトと同じ処理であること
+      - name: Verify customize html
+        run: npm run check:customize
 
   test:
     needs: [build]
-    # parallel playwright tests with.... project & shards
+    # parallel playwright tests with shards
     strategy:
       fail-fast: false
       matrix:
-        project: ["desktop", "tablet", "mobile"]
         shards: ["1", "2"]
     permissions:
       contents: read
@@ -60,12 +62,11 @@ jobs:
       # 開発用ブログ(blog.config.js)のheadはlocalhost:5173を参照するので、ランナー上の開発サーバーがテーマを配信する
       - name: Run server & Playwright Tests
         env:
-          PROJECT: ${{ matrix.project }}
           SHARD: ${{ matrix.shards }}
         run: |
           npm start &
           for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:5173/scss/style.scss && break; sleep 1; done
-          npx playwright test --reporter=list --project="${PROJECT}" --shard="${SHARD}/2"
+          npx playwright test --reporter=list --shard="${SHARD}/2"
 
   build-and-test:
     needs: [build, test]

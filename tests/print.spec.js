@@ -26,6 +26,7 @@ test.describe('印刷スタイルのテスト', () => {
       closedDetailsHeights: details.map((el) => Math.round(el.getBoundingClientRect().height)),
       hidden: {
         codeBlockToolbar: displayOf('.code-block-toolbar'),
+        colorModeToggle: displayOf('.color-mode-toggle'),
         sidebar: displayOf('#box2'),
         entryFooterModules: displayOf('#entry-footer-secondary-modules'),
         globalHeader: displayOf('#globalheader-container'),

@@ -42,7 +42,7 @@ const openCodeArticle = async (/** @type {any} */ page, path = TEST_URLS.CODE_HI
 
 // 帯とボタンを確かめる記事。Fixture記事には言語名なし(data-lang="")、はてなが対応していない言語名(bash、js)、
 // 折りたたみやアラートの中のコードブロックがある
-// ライトとダーク(theme-design-spec.md の「ダークテーマ」)。色を測るテストは両方で行う
+// ライトとダーク(theme-design-spec.md の「ダークテーマ」)。色を測るテストは、1つのページでOSのモードを切り替えて両方で測る
 const MODES = /** @type {const} */ (['light', 'dark']);
 
 const ARTICLES = {
@@ -52,11 +52,11 @@ const ARTICLES = {
 
 test.describe('コードブロック(CSS)', () => {
   for (const [name, articlePath] of Object.entries(ARTICLES)) {
-    for (const mode of MODES) {
-      test(`はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る(${name}, ${mode})`, async ({ page }) => {
-        await page.emulateMedia({ colorScheme: mode });
-        await openCodeArticle(page, articlePath);
+    test(`はてなのコードブロックの上の帯に言語名を出し、横にスクロールしても帯は左端に残る(${name})`, async ({ page }) => {
+      await openCodeArticle(page, articlePath);
 
+      for (const mode of MODES) {
+        await page.emulateMedia({ colorScheme: mode });
         const blocks = await page.evaluate(() => [...document.querySelectorAll('.entry-content pre.code')].map((pre) => {
           const header = getComputedStyle(pre, '::before');
           const padding = getComputedStyle(pre).paddingLeft;
@@ -83,17 +83,17 @@ test.describe('コードブロック(CSS)', () => {
           expect(b.marginLeft, `${b.lang} の帯の左端`).toBe(b.expectedOffset);
           expect(b.height).toBe(`${HEADER_HEIGHT}px`);
           // 言語名は帯の背景に対してWCAG AA(4.5:1)
-          expect(contrast(b.color, b.background), `${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(b.color, b.background), `${mode}: ${b.lang} の言語名 ${b.color} on ${b.background}`).toBeGreaterThanOrEqual(4.5);
         }
-      });
-    }
+      }
+    });
   }
 
-  for (const mode of MODES) {
-    test(`はてなのハイライトの種類ごとに色を分ける(${mode})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme: mode });
-      await openCodeArticle(page);
+  test('はてなのハイライトの種類ごとに色を分ける', async ({ page }) => {
+    await openCodeArticle(page);
 
+    for (const mode of MODES) {
+      await page.emulateMedia({ colorScheme: mode });
       const colors = await page.evaluate(() => Object.fromEntries(
         ['synStatement', 'synPreProc', 'synType', 'synIdentifier', 'synConstant', 'synSpecial', 'synComment'].map((cls) => {
           // diffは追加・削除の行の色に置き換えるので除く
@@ -105,11 +105,11 @@ test.describe('コードブロック(CSS)', () => {
         expect(color, `前提: ${cls} がコードハイライト記事にあること`).not.toBeNull();
       }
       // 7種類がすべて違う色(キーワードと型、記号と本文の文字が同じ色にならない)
-      expect(new Set(Object.values(colors)).size).toBe(7);
+      expect(new Set(Object.values(colors)).size, mode).toBe(7);
       const text = await page.evaluate(() => getComputedStyle(/** @type {Element} */(document.querySelector('.entry-content pre.code'))).color);
-      expect(Object.values(colors)).not.toContain(text);
-    });
-  }
+      expect(Object.values(colors), mode).not.toContain(text);
+    }
+  });
 
   test('はてなのアスキーアート(pre.lang-aa)はコードブロックにしない', async ({ page }) => {
     await openCodeArticle(page);
@@ -132,68 +132,70 @@ test.describe('コードブロック(CSS)', () => {
     expect(aa.wrapped).toBe(false);
   });
 
-  for (const mode of MODES) {
-    test(`diffは追加と削除の行を、行頭の+/-に加えて枠の内側いっぱいの色で示す(${mode})`, async ({ page }) => {
+  test('diffは追加と削除の行を、行頭の+/-に加えて枠の内側いっぱいの色で示す', async ({ page }) => {
+    await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
+
+    const measure = () => page.evaluate(() => {
+      const pre = /** @type {HTMLElement} */ (document.querySelector('.entry-content pre.code.lang-diff'));
+      const box = pre.getBoundingClientRect();
+      const style = getComputedStyle(pre);
+      const header = /** @type {Element} */ (pre.querySelector('.synType'));
+      return {
+        // 枠の内側(内側の余白を含む)の左右
+        left: box.left + parseFloat(style.borderLeftWidth),
+        right: box.left + parseFloat(style.borderLeftWidth) + pre.clientWidth,
+        scrollWidth: pre.scrollWidth,
+        clientWidth: pre.clientWidth,
+        text: style.color,
+        header: { color: getComputedStyle(header).color, weight: getComputedStyle(header).fontWeight },
+        rows: [...pre.querySelectorAll('.synIdentifier, .synSpecial')].map((row) => {
+          const rect = row.getBoundingClientRect();
+          return {
+            kind: row.classList.contains('synIdentifier') ? 'added' : 'removed',
+            mark: row.textContent?.charAt(0),
+            left: rect.left,
+            right: rect.right,
+            color: getComputedStyle(row).color,
+            background: getComputedStyle(row).backgroundColor,
+          };
+        }),
+      };
+    });
+
+    // 色はライトとダークのそれぞれで測る
+    for (const mode of MODES) {
       await page.emulateMedia({ colorScheme: mode });
-      await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
-
-      const measure = () => page.evaluate(() => {
-        const pre = /** @type {HTMLElement} */ (document.querySelector('.entry-content pre.code.lang-diff'));
-        const box = pre.getBoundingClientRect();
-        const style = getComputedStyle(pre);
-        const header = /** @type {Element} */ (pre.querySelector('.synType'));
-        return {
-          // 枠の内側(内側の余白を含む)の左右
-          left: box.left + parseFloat(style.borderLeftWidth),
-          right: box.left + parseFloat(style.borderLeftWidth) + pre.clientWidth,
-          scrollWidth: pre.scrollWidth,
-          clientWidth: pre.clientWidth,
-          text: style.color,
-          header: { color: getComputedStyle(header).color, weight: getComputedStyle(header).fontWeight },
-          rows: [...pre.querySelectorAll('.synIdentifier, .synSpecial')].map((row) => {
-            const rect = row.getBoundingClientRect();
-            return {
-              kind: row.classList.contains('synIdentifier') ? 'added' : 'removed',
-              mark: row.textContent?.charAt(0),
-              left: rect.left,
-              right: rect.right,
-              color: getComputedStyle(row).color,
-              background: getComputedStyle(row).backgroundColor,
-            };
-          }),
-        };
-      });
-
-      const unwrapped = await measure();
-      expect(unwrapped.rows.map((r) => r.kind).sort(), '前提: 追加と削除の行があること').toEqual(['added', 'removed']);
-      const [added, removed] = ['added', 'removed'].map((kind) => /** @type {any} */ (unwrapped.rows.find((r) => r.kind === kind)));
+      const colors = await measure();
+      expect(colors.rows.map((r) => r.kind).sort(), '前提: 追加と削除の行があること').toEqual(['added', 'removed']);
+      const [added, removed] = ['added', 'removed'].map((kind) => /** @type {any} */ (colors.rows.find((r) => r.kind === kind)));
       // 色だけに頼らず、行頭の+/-を残す
       expect(added.mark).toBe('+');
       expect(removed.mark).toBe('-');
-      expect(added.background).not.toBe(removed.background);
-      for (const r of unwrapped.rows) {
-        expect(contrast(r.color, r.background), `${r.kind} ${r.color} on ${r.background}`).toBeGreaterThanOrEqual(4.5);
+      expect(added.background, mode).not.toBe(removed.background);
+      for (const r of colors.rows) {
+        expect(contrast(r.color, r.background), `${mode}: ${r.kind} ${r.color} on ${r.background}`).toBeGreaterThanOrEqual(4.5);
       }
       // ファイル名の行は追加・削除の色と紛れないよう、本文の文字色の太字にする
-      expect(unwrapped.header.color).toBe(unwrapped.text);
-      expect(Number(unwrapped.header.weight)).toBeGreaterThanOrEqual(700);
+      expect(colors.header.color, mode).toBe(colors.text);
+      expect(Number(colors.header.weight)).toBeGreaterThanOrEqual(700);
+    }
 
-      // 行の塗りは枠の内側の左端から、少なくとも右端まで(長い行は横スクロールの先まで)
-      for (const r of unwrapped.rows) {
-        expect(Math.abs(r.left - unwrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
-        expect(r.right, `${r.kind} の行の右端`).toBeGreaterThanOrEqual(unwrapped.right - 1);
-      }
+    // 行の塗りは枠の内側の左端から、少なくとも右端まで(長い行は横スクロールの先まで)
+    const unwrapped = await measure();
+    for (const r of unwrapped.rows) {
+      expect(Math.abs(r.left - unwrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+      expect(r.right, `${r.kind} の行の右端`).toBeGreaterThanOrEqual(unwrapped.right - 1);
+    }
 
-      // 折り返したときは、塗りも枠の内側にちょうど収まり、横にはみ出さない
-      await page.locator('.code-block:has(> pre.lang-diff) .code-block-wrap').click();
-      const wrapped = await measure();
-      expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
-      for (const r of wrapped.rows) {
-        expect(Math.abs(r.left - wrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
-        expect(Math.abs(r.right - wrapped.right), `${r.kind} の行の右端`).toBeLessThanOrEqual(1);
-      }
-    });
-  }
+    // 折り返したときは、塗りも枠の内側にちょうど収まり、横にはみ出さない
+    await page.locator('.code-block:has(> pre.lang-diff) .code-block-wrap').click();
+    const wrapped = await measure();
+    expect(wrapped.scrollWidth).toBeLessThanOrEqual(wrapped.clientWidth);
+    for (const r of wrapped.rows) {
+      expect(Math.abs(r.left - wrapped.left), `${r.kind} の行の左端`).toBeLessThanOrEqual(1);
+      expect(Math.abs(r.right - wrapped.right), `${r.kind} の行の右端`).toBeLessThanOrEqual(1);
+    }
+  });
 
   test('構文の誤り(synError)は色だけでなく波線でも示す', async ({ page }) => {
     await openCodeArticle(page, FIXTURE_URLS.CODEBLOCKS);
@@ -250,7 +252,7 @@ test.describe('コードブロック(js/codeblock.js)', () => {
     });
   }
 
-  test('ボタンを置いてもコードブロックの高さもコードの位置も変わらない', async ({ page }) => {
+  test('ボタンを置いてもコードブロックの高さもコードの位置も変わらず、スクリプトを再び実行してもボタンは増えない', async ({ page }) => {
     await openCodeArticle(page);
 
     const measure = () => page.evaluate(() => {
@@ -259,6 +261,7 @@ test.describe('コードブロック(js/codeblock.js)', () => {
       range.selectNodeContents(pre);
       return { height: pre.getBoundingClientRect().height, codeTop: range.getClientRects()[0].top - pre.getBoundingClientRect().top };
     });
+    const toolbars = () => page.locator('.entry-content .code-block-toolbar').count();
 
     // 読み込み後に追加したコードブロックで、スクリプトを実行する前後を比べる
     await page.evaluate(() => {
@@ -266,21 +269,15 @@ test.describe('コードブロック(js/codeblock.js)', () => {
         '<pre class="code lang-sh" data-lang="sh" data-unlink id="added-code"><span class="synStatement">echo</span> <span class="synConstant">&quot;hello&quot;</span>\n</pre>');
     });
     const before = await measure();
+    const toolbarsBefore = await toolbars();
     await page.evaluate(codeblockJs);
     await expect(page.locator('#added-code')).toHaveCount(1);
     expect(await page.evaluate(() => document.getElementById('added-code')?.parentElement?.className)).toBe('code-block');
     const after = await measure();
 
     expect(after).toEqual(before);
-  });
-
-  test('スクリプトを複数回実行してもボタンは増えない', async ({ page }) => {
-    await openCodeArticle(page);
-
-    const count = () => page.locator('.entry-content .code-block-toolbar').count();
-    const before = await count();
-    await page.evaluate(codeblockJs);
-    expect(await count()).toBe(before);
+    // 読み込みで変換済みのコードブロックはそのままで、追加した1つにだけボタンが付く
+    expect(await toolbars()).toBe(toolbarsBefore + 1);
     expect(await page.locator('.entry-content .code-block > .code-block').count()).toBe(0);
   });
 
@@ -340,21 +337,5 @@ test.describe('コードブロック(js/codeblock.js)', () => {
     await wrap.click();
     await expect(wrap).toHaveAttribute('aria-pressed', 'false');
     expect(await overflow()).toBeGreaterThan(0);
-  });
-
-  test('配布用のcustomize-codeblock.htmlはjs/codeblock.jsと同じ処理である', async ({ page }) => {
-    const html = fs.readFileSync(path.resolve(__dirname, '../customize-codeblock.html'), 'utf-8');
-    // 正規表現ではなくブラウザのHTMLパーサーでscript要素を取り出す(DOMParserはスクリプトを実行しない)
-    const scripts = await page.evaluate((source) => Array.from(new DOMParser().parseFromString(source, 'text/html').scripts)
-      .map((script) => script.textContent ?? ''), html);
-    expect(scripts).toHaveLength(1);
-
-    // インデントとコメント行を除いて比較する
-    const normalize = (/** @type {string} */ code) => code
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//') && !line.startsWith('/**') && !line.startsWith('*'))
-      .join('\n');
-    expect(normalize(scripts[0])).toBe(normalize(codeblockJs));
   });
 });

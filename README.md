@@ -158,6 +158,12 @@ npm run test
 
 結果は `test-results/`、スクリーンショットは `screenshots/` に保存されます。`npm run test:ui` でUIモード、`npm run test:report` でHTMLレポートを開けます。
 
+`js/` のスクリプトを変えたら、配布用の `customize-*.html` にも同じ変更を写し、同じ処理になっていることを確かめます。
+
+```shell
+npm run check:customize
+```
+
 ### 本番用にコンパイルする
 
 テーマの開発が完了したら、下記のコマンドでSCSSをコンパイルします。コンパイルの結果は `build/style.css` に出力されます。

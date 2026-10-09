@@ -80,7 +80,7 @@ theme-design-spec.md の「アラート記法」を参照。
 * JavaScript: `js/alert.js` - マーカーの判定とDOM変換
 * SCSS: `scss/lib/_alert.scss` - アラートのスタイル
 * 変数定義: `scss/lib/_variable.scss` - アラートの色(`$light-theme` の `alert-*`)とアイコン(`$svg-alerts`)
-* ユーザー設定用: `customize-alert.html` - はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けるコード。`js/alert.js` と同じ処理であることをE2Eテストで確認する
+* ユーザー設定用: `customize-alert.html` - はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けるコード。`js/alert.js` と同じ処理であることを `npm run check:customize` で確認する
 * テスト: `tests/alert.spec.js`
 
 ## コードブロック
@@ -113,7 +113,7 @@ theme-design-spec.md の「アラート記法」を参照。
 
 ### 4. ユーザー設定方法
 
-* `customize-codeblock.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。`js/codeblock.js` と同じ処理であることをE2Eテストで確認する
+* `customize-codeblock.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。`js/codeblock.js` と同じ処理であることを `npm run check:customize` で確認する
 
 ### 5. ファイル構成
 
@@ -174,7 +174,7 @@ theme-design-spec.md の「アラート記法」を参照。
 
 ### 6. ユーザー設定方法
 
-* `customize-toc-toggle.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。記事より前に置くことで、読み込み中の変換が本文より先に動く。`js/toc-toggle.js` と同じ処理であることをE2Eテストで確認する
+* `customize-toc-toggle.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。記事より前に置くことで、読み込み中の変換が本文より先に動く。`js/toc-toggle.js` と同じ処理であることを `npm run check:customize` で確認する
 
 ### 7. ファイル構成
 
@@ -220,7 +220,7 @@ theme-design-spec.md の「アラート記法」を参照。
 
 ### 5. ユーザー設定方法
 
-* `customize-dark-mode.html` の内容を、はてなブログの「設定」→「詳細設定」→「headに要素を追加」に貼り付ける。`js/dark-mode.js` と同じ処理であることをE2Eテストで確認する
+* `customize-dark-mode.html` の内容を、はてなブログの「設定」→「詳細設定」→「headに要素を追加」に貼り付ける。`js/dark-mode.js` と同じ処理であることを `npm run check:customize` で確認する
 
 ### 6. ファイル構成
 
