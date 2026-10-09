@@ -16,6 +16,7 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "check:customize": "node check-customize.js",
+    "screenshots": "node capture-screenshots.js",
     "lighthouse": "vite build && node lighthouse.js",
     "lighthouse:dev": "node lighthouse.js --mode=dev"
   },

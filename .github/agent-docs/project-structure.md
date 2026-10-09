@@ -8,7 +8,7 @@
 | ---- | ---- |
 | .github/ | GitHub Actionsの設定ファイルとエージェント向けの指示ドキュメント |
 | .vscode/ | VSCodeの設定ファイル(scssのフォーマット調整に利用) |
-| articles/ | 開発用ブログに投稿して見た目を確かめるFixture記事(Markdown)。投稿のしかたと記事の一覧は `articles/README.md` |
+| articles/ | テーマの紹介記事(`introduce-entry.md`、`customize-entry.md`)と、開発用ブログに投稿して見た目を確かめるFixture記事(Markdown)。投稿のしかたと記事の一覧は `articles/README.md` |
 | build/ | ビルド成果物となるテーマ、本番はてなブログにはこのファイルを配布する |
 | js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉)、`dark-mode.js`(ダークモードの切り替えボタン) |
 | lighthouse-report/ | Lighthouseの計測結果 |
@@ -20,6 +20,7 @@
 | .editorconfig | エディタ設定ファイル(インデント等の統一) |
 | .gitignore | Gitの無視リスト |
 | .npmrc | npmの設定(バージョン固定、公開から14日未満のパッケージを入れない) |
+| capture-screenshots.js | 紹介記事(`articles/introduce-entry.md`、`articles/customize-entry.md`)のスクリーンショットを `articles/screenshots/` に撮り、配色ごとの色の表を出力するスクリプト(`npm run screenshots`) |
 | blog.config.js | 開発用ブログのドメインと開発サーバーのポート。開発サーバー、E2Eテスト、Lighthouseが共通で参照する |
 | check-customize.js | `customize-*.html` が `js/` の同じ名前のスクリプトと同じ処理であることを確かめるスクリプト(`npm run check:customize`) |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |

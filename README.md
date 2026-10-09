@@ -200,6 +200,16 @@ npm run lighthouse -- https://guitarrapc-theme.hatenablog.com/entry/2025/05/10/2
 
 開発サーバーから読み込んだ状態を計測するときは、`npm run lighthouse:dev`を使います。未圧縮のSCSSや`@vite/client`を読み込むため、Performanceは本番と一致しません。
 
+### 紹介記事のスクリーンショットを撮る
+
+開発サーバーを起動した状態で実行します。開発用ブログの記事を開き、紹介記事(`articles/`)の画像を`articles/screenshots/`に保存します。
+
+```shell
+npm run screenshots
+```
+
+配色ごとの色の表も出力します。配色を足したり色を変えたりしたら、撮り直して[articles/customize-entry.md](articles/customize-entry.md)の表を貼り直してください。`npm run screenshots -- scheme-blue pc-toc`のように名前を渡すと、名前が前方一致する画像だけを撮ります。
+
 ## 構成
 
 ```
@@ -229,7 +239,9 @@ hatenablog-theme-swifty/
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ customize-dark-mode.html ... ダークモードの切り替えボタンの配布用(js/dark-mode.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
-┣ articles/             ... 開発用ブログに投稿して見た目を確かめるFixture記事
+┣ articles/             ... テーマの紹介記事と、開発用ブログに投稿して見た目を確かめるFixture記事
+┃ ┗ screenshots/        ... 紹介記事のスクリーンショット
+┣ capture-screenshots.js ... 紹介記事のスクリーンショットを撮るスクリプト
 ┣ blog.config.js        ... 開発用ブログの設定
 ┗ build/
   ┣ style.css           ... ビルド成果物

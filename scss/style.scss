@@ -24,6 +24,8 @@
     配色テーマはデザインCSSに1行書くと切り替えられます。どの配色もダークモードに対応し、アクセシビリティ(WCAG AA)のコントラストを満たします。
     既定のmintのほかに、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-greenがあります。
 
+    本テーマ導入時は、[https://swifty.hatenablog.jp/entry/2026/10/09/195900:title=こちらの記事]で導入方法と、JavaScriptのカスタマイズの入れ方を紹介しています。
+
     * 特徴
     - 目次は、PCの広い画面では本文の横に常に表示し、スクロールしても画面に残ります。Chrome・Edgeでは、いま読んでいる見出しを示します。タブレットやスマートフォンでは本文中に表示します。
     - ダークモードはOSの設定に合わせて切り替わりますが、常にライト、常にダークにも固定できます。
@@ -38,7 +40,7 @@
     - GitHubと同じアラート記法(> [!NOTE] など)を、種類ごとの色・アイコン・タイトルを付けた囲みで表示します。
 
     * カスタマイズ
-    テーマの見た目は、デザインCSSでCSS変数を上書きすると変更できます。
+    テーマの見た目は、デザインCSSでCSS変数を上書きすると変更できます。書き方と配色ごとの色は、[https://swifty.hatenablog.jp/entry/2026/10/09/200331:title=カスタマイズガイド]で紹介しています。
     - 配色: :root { --swifty-scheme: blue; } (mint(既定)、blue、pink、yellow、purple、beige、dusty-pink、apricot、navy、pink-green)
     - ダークモード: :root { --swifty-color-mode: light; } (未指定: OSに合わせる、light: 常にライト、dark: 常にダーク)
     - 色を個別に変える: body { --link: #0b7268; --accent: #3cc4b0; } など
