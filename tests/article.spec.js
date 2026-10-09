@@ -169,6 +169,30 @@ test.describe('記事の日付とパンくず', () => {
     }
   });
 
+  test('記事のヘッダーのカテゴリは、記事の一覧と同じ小さな文字にし、区切りは読み上げない', async ({ page }) => {
+    const categoryStyle = (/** @type {string} */ selector) => page.locator(selector).first().evaluate((el) => {
+      const s = getComputedStyle(el);
+      const separator = getComputedStyle(el, '::after');
+      return { family: s.fontFamily, size: s.fontSize, color: s.color, background: s.backgroundColor, radius: s.borderTopLeftRadius, separator: separator.content, separatorPosition: separator.position };
+    });
+
+    await page.navigateTo(FIXTURE_URLS.LONG_TITLE, { waitFor: 'networkidle' });
+    const entry = await categoryStyle('.entry-categories a');
+    const entryName = await page.locator('.entry-categories a').first().evaluate((el) => el.textContent?.trim());
+    await expect(page.locator('.entry-categories a').first()).toHaveAccessibleName(/** @type {string} */ (entryName));
+    await page.navigateTo('/archive/category/test', { waitFor: 'networkidle' });
+    const list = await categoryStyle('.archive-entry .categories a');
+
+    // 丸いラベルにしない
+    expect(entry.background).toBe('rgba(0, 0, 0, 0)');
+    expect(entry.radius).toBe('0px');
+    // 一覧と同じ見た目
+    expect(entry).toEqual(list);
+    // 区切りは飾りなので読み上げず(content の代替テキストが空)、マウスを乗せたときの下線も付けない(絶対配置には下線が引き継がれない)
+    expect(entry.separator).toBe('"/" / ""');
+    expect(entry.separatorPosition).toBe('absolute');
+  });
+
   test('記事のタイトルは太さを600にする(記事ページと一覧)', async ({ page }) => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     expect(await page.locator('.entry-header .entry-title').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600');
@@ -771,7 +795,7 @@ test.describe('記事の一覧', () => {
     expect(rows.lines.length, '前提: カテゴリが折り返すこと').toBeGreaterThan(1);
     for (const line of rows.lines) expect(line.firstLeft).toBeCloseTo(rows.left, 0);
     // 折り返した行の最後のカテゴリにも区切りが付き、最後のカテゴリには付かない
-    for (const line of rows.lines.slice(0, -1)) expect(line.lastAfter).toBe('"/"');
+    for (const line of rows.lines.slice(0, -1)) expect(line.lastAfter).toBe('"/" / ""');
     expect(rows.lastAfter).toBe('none');
   });
 

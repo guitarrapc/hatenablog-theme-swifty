@@ -126,16 +126,11 @@
     flex-basis: 100%;
 }
 
+// カテゴリは丸いラベルにせず、記事の一覧と同じ「test / テスト」の形にする(_variable.scss の category-text-list)。
+// 丸いラベルはタイトルの下で目立ちすぎるため
 .entry-categories {
+    @include var.category-text-list;
     order: 2;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0;
-
-    a {
-        @include var.category-chip;
-    }
 }
 
 // 大きく、行の高さを詰めて塊として見せる(theme-design-spec.md の「見出しと引用」を参照)。

@@ -1002,7 +1002,45 @@ $card-shadow-reach: 48px;
     letter-spacing: .06em;
 }
 
-// カテゴリの丸いラベル。タップ領域は高さ24px以上にする(WCAG 2.5.8)。
+// 記事のカテゴリを、パンくずと同じ「test / テスト」の形(リンク色の小さな文字)で並べる。記事のヘッダーと記事の一覧で使う。
+// 区切りの「/」は前のカテゴリの後ろに付け、折り返したときに行の頭ではなく行末に来るようにする。
+// 区切りは飾りなので読み上げない。リンクにマウスを乗せたときの下線が区切りに付かないよう、区切りは絶対配置にする
+// (リンクの中の項目には下線が引き継がれるが、絶対配置の要素には引き継がれない)。区切りの幅はリンクの右の余白で空ける
+@mixin category-text-list {
+    @include meta-text;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    line-height: 1.5;
+
+    a {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        color: var(--link);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        &:not(:last-child) {
+            margin-right: 1.6em;
+
+            &::after {
+                content: "/";
+                content: "/" / "";
+                position: absolute;
+                left: calc(100% + .5em);
+                color: var(--text-light);
+            }
+        }
+    }
+}
+
+// カテゴリの丸いラベル(カテゴリのブログパーツ)。タップ領域は高さ24px以上にする(WCAG 2.5.8)。
 // はてなのガイドラインに沿い、タグやハッシュタグ(#)に見える形にはしない
 @mixin category-chip {
     display: inline-flex;

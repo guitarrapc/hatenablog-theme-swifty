@@ -157,33 +157,10 @@ $archive-thumb-size-xs: 72px;
         }
     }
 
-    // カテゴリはパンくずと同じく「test / テスト」の形(リンク色の小さな文字)。区切りは行末に付け、折り返した行の頭に来ないようにする
+    // カテゴリは記事のヘッダーと同じく「test / テスト」の形(_variable.scss の category-text-list)
     .categories {
-        @include var.meta-text;
+        @include var.category-text-list;
         grid-area: categories;
-        display: flex;
-        flex-wrap: wrap;
-        margin: 0;
-        line-height: 1.5;
-
-        a {
-            display: inline-flex;
-            align-items: center;
-            min-height: 24px;
-            color: var(--link);
-            text-decoration: none;
-
-            &:hover {
-                color: var(--link-hover);
-                text-decoration: underline;
-            }
-
-            &:not(:last-child)::after {
-                content: "/";
-                margin-inline: .5em;
-                color: var(--text-light);
-            }
-        }
     }
 
     .entry-thumb-link {
