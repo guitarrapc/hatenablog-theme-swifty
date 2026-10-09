@@ -654,6 +654,21 @@ $share-link-selectors: ();
             }
         }
     }
+
+    // 記事下のブログパーツ(関連記事など)も記事下のHTMLもなく、共有の段のすぐ下がコメント欄のときは、
+    // コメント欄の上の線を段の下の線として使う。段の下の線とコメント欄の上の線が2本並ばないようにする
+    .entry-footer:not(:has(.customized-footer > :not(.entry-footer-modules), .entry-footer-modules > *)) {
+        .social-buttons:has(> .social-button-item):has(~ .comment-box) {
+            margin-bottom: 0;
+            border-bottom: 0;
+
+            // 空の記事下の余白と、コメント欄の上の余白も詰め、線を段の上の線と同じ間隔(16px)で引く
+            ~ .customized-footer,
+            ~ .comment-box {
+                margin-top: 0;
+            }
+        }
+    }
 }
 
 .entry-footer-section {

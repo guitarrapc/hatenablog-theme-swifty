@@ -218,18 +218,64 @@ test.describe('この記事を共有', () => {
     expect(style.borders).toEqual(['1px', '1px']);
   });
 
-  // [セレクタ, 見た目の名前, 読み上げ名]。Tumblr は中の文字(Share on Tumblr)を読み上げ名として残す
-  for (const [selector, name, accessibleName] of /** @type {const} */ ([
-    ['.entry-share-button-twitter', 'X', 'X'],
-    ['.entry-share-button-mastodon', 'Mastodon', 'Mastodon'],
-    ['.entry-share-button-bluesky', 'Bluesky', 'Bluesky'],
-    ['.entry-share-button-misskey', 'Misskey', 'Misskey'],
-    ['[data-hatenablog-tumblr-share-button]', 'Tumblr', 'Share on Tumblr'],
+  test('共有の段のすぐ下がコメント欄のときは、コメント欄の上の線を段の下の線にして、線を2本並べない', async ({ page }) => {
+    const measureLines = () => page.evaluate(() => {
+      const share = /** @type {Element} */ (document.querySelector('.entry-footer .social-buttons'));
+      const comments = /** @type {Element} */ (document.querySelector('.entry-footer .comment-box'));
+      const items = [...share.querySelectorAll(':scope > .social-button-item')].map((item) => item.getBoundingClientRect());
+      return {
+        related: Boolean(document.querySelector('.entry-footer .hatena-module-related-entries')),
+        shareTop: share.getBoundingClientRect().top,
+        shareBottomLine: getComputedStyle(share).borderBottomWidth,
+        commentsTopLine: getComputedStyle(comments).borderTopWidth,
+        commentsTop: comments.getBoundingClientRect().top,
+        buttonsTop: Math.min(...items.map((r) => r.top)),
+        buttonsBottom: Math.max(...items.map((r) => r.bottom)),
+      };
+    });
+
+    // 関連記事のない記事: 段の下の線は引かず、コメント欄の上の線が段の上の線と同じ間隔で続く
+    await page.navigateTo(FIXTURE_URLS.HEADINGS_H2, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
+    const alone = await measureLines();
+    expect(alone.related, '前提: 関連記事がないこと').toBe(false);
+    expect(alone.shareBottomLine).toBe('0px');
+    expect(alone.commentsTopLine).toBe('1px');
+    expect(alone.commentsTop - alone.buttonsBottom).toBeCloseTo(alone.buttonsTop - alone.shareTop - 1, 0);
+
+    // 関連記事のある記事: 間に関連記事があるので、段の下の線を残す
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    const withRelated = await measureLines();
+    expect(withRelated.related, '前提: 関連記事があること').toBe(true);
+    expect(withRelated.shareBottomLine).toBe('1px');
+  });
+
+  // はてなが出力するボタンのHTML(2026年10月に開発用ブログで出力されたもの)。開発用ブログの設定で出していないボタンは、これを差し込んで確かめる
+  const SHARE_MARKUP = {
+    twitter: '<a class="entry-share-button entry-share-button-twitter test-share-button-twitter" href="https://x.com/intent/tweet?text=test&amp;url=https%3A%2F%2Fexample.com%2F" title="X（Twitter）で投稿する"></a>',
+    mastodon: '<a class="entry-share-button entry-share-button-mastodon" target="_blank" rel="noopener noreferrer" href="https://blog.hatena.ne.jp/-/share/mastodon?text=test" title="Mastodon で共有する"></a>',
+    bluesky: '<a class="entry-share-button entry-share-button-bluesky" target="_blank" rel="noopener noreferrer" href="https://bsky.app/intent/compose?text=test" title="Bluesky で共有する"></a>',
+    misskey: '<a class="entry-share-button entry-share-button-misskey" target="_blank" rel="noopener noreferrer" href="https://blog.hatena.ne.jp/-/share/misskey?text=test" title="Misskey で共有する"></a>',
+    tumblr: '<a href="http://www.tumblr.com/share" data-hatenablog-tumblr-share-button data-share-url="https://example.com/" data-share-title="test" title="Share on Tumblr" style="display:inline-block; text-indent:-9999px; overflow:hidden; width:81px; height:20px; background:url(\'https://platform.tumblr.com/v1/share_1.png\') top left no-repeat transparent; vertical-align: top;">Share on Tumblr</a>',
+  };
+
+  // [サービス, セレクタ, 見た目の名前, 読み上げ名]。Tumblr は中の文字(Share on Tumblr)を読み上げ名として残す
+  for (const [service, selector, name, accessibleName] of /** @type {const} */ ([
+    ['twitter', '.entry-share-button-twitter', 'X', 'X'],
+    ['mastodon', '.entry-share-button-mastodon', 'Mastodon', 'Mastodon'],
+    ['bluesky', '.entry-share-button-bluesky', 'Bluesky', 'Bluesky'],
+    ['misskey', '.entry-share-button-misskey', 'Misskey', 'Misskey'],
+    ['tumblr', '[data-hatenablog-tumblr-share-button]', 'Tumblr', 'Share on Tumblr'],
   ])) {
     test(`${name}のリンクは、はてなや各サービスのボタン画像ではなく、文字色のロゴと名前にする`, async ({ page }) => {
       await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await expect(page.locator('.entry-footer .social-buttons > .social-button-item').first(), '前提: 記事下のソーシャルボタンがあること').toBeAttached();
+      await page.evaluate(({ selector, markup }) => {
+        if (document.querySelector(`.entry-footer a${selector}`)) return;
+        document.querySelector('.entry-footer .social-buttons')?.insertAdjacentHTML('beforeend', `<div class="social-button-item">${markup}</div>`);
+      }, { selector, markup: SHARE_MARKUP[service] });
       const link = page.locator(`.entry-footer a${selector}`);
-      await expect(link, `前提: 開発用ブログで${name}のボタンを出していること`).toBeVisible();
+      await expect(link).toBeVisible();
 
       const style = await link.evaluate((el) => {
         const s = getComputedStyle(el);
