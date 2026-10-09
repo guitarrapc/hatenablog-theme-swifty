@@ -90,6 +90,8 @@
   * パンくずのリンクは、どのページでもリンク色にします。区切りと現在のページ(カテゴリのページの最後)は補助テキストの色です。リンク色は、どの配色でもカードとページの背景の両方で4.5:1以上あります(ページの背景でライト5.02〜7.89:1、ダーク7.01〜10.84:1)。
 * 検証は `tests/article.spec.js` の「記事の日付とパンくず」で行います。
 
+* 記事下の「書いた人・投稿してからの時間・読者になる」の行(`.entry-footer-section`)は出しません。日付は記事のヘッダーに、「読者になる」はブログのヘッダーにあり、どちらも重複するためです。HTMLには残るので、はてなの埋め込みデータ(書いた人・更新日時)はそのままです。
+
 ### この記事を共有
 
 記事下のはてなのソーシャルボタン(`.social-buttons`)を、「この記事を共有」の見出しを付けた1つの段にします。
@@ -688,6 +690,7 @@ OSのダークモード(`prefers-color-scheme: dark`)のとき、どの配色も
 
 ## 未対応の項目
 
+* 複数人で書くブログの書いた人: 記事下の「書いた人・投稿してからの時間・読者になる」の行を出さないため(「記事」を参照)、書いた人の名前が記事のどこにも出ない。出したい場合はデザインCSSで `.entry-footer-section { display: block; }` と書けば戻せる
 * タップ領域(WCAG 2.5.8): ブログパーツのはてなブックマーク数(`a.bookmark-widget-counter`)ははてなの画像で、24×24pxに届かない(Lighthouseの `target-size`)。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/.github/agent-docs/theme-design-spec.md) の「タップ領域」に要素ごとの対処がある
 * 固定表示のUIを足す場合: ページ最上部のはてなのヘッダーメニューと「読者になる」ボタンはテーマ側のz-indexでは上に出せないため、縦に避ける必要がある。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/.github/agent-docs/theme-design-spec.md) の「固定表示UI」に、スクロールに応じて押し下げを戻す実装がある
 * アニメーションを足す場合: 視差効果を減らす設定(`prefers-reduced-motion: reduce`)では止める

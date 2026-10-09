@@ -25,8 +25,6 @@ const TARGETS = {
   本文: '.entry-content p',
   記事の投稿日時: '.entry-date a',
   コメント日時: '.comment-metadata',
-  記事下フッタ: '.entry-footer-section',
-  記事下フッタのリンク: '.entry-footer-section a',
   引用: '.entry-content blockquote',
   目次の開閉の見出し: '.toc-panel-summary',
   ページ内目次のリンク: '.entry-content .table-of-contents a',

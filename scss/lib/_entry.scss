@@ -671,13 +671,10 @@ $share-link-selectors: ();
     }
 }
 
+// 記事下の「書いた人・投稿してからの時間・読者になる」の行は出さない(theme-design-spec.md の「記事」を参照)。
+// 日付は記事のヘッダーに、「読者になる」はブログのヘッダーにあり、どちらも重複するため
 .entry-footer-section {
-    margin: 0 0 1em;
-    color: var(--text-light);
-
-    a {
-        color: var(--text-light);
-    }
+    display: none;
 }
 
 /* コメント */

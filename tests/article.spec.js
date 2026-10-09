@@ -218,6 +218,16 @@ test.describe('この記事を共有', () => {
     expect(style.borders).toEqual(['1px', '1px']);
   });
 
+  test('記事下の「書いた人・投稿してからの時間・読者になる」の行は出さない', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    const row = page.locator('.entry-footer .entry-footer-section');
+    await expect(row, '前提: はてながその行を出力していること').toBeAttached();
+    await expect(row).toBeHidden();
+    // 日付は記事のヘッダーに、「読者になる」はブログのヘッダーに残る
+    await expect(page.locator('.entry-header .date')).toBeVisible();
+    await expect(page.locator('.blog-controlls-subscribe-btn')).toBeVisible();
+  });
+
   test('共有の段のすぐ下がコメント欄のときは、コメント欄の上の線を段の下の線にして、線を2本並べない', async ({ page }) => {
     const measureLines = () => page.evaluate(() => {
       const share = /** @type {Element} */ (document.querySelector('.entry-footer .social-buttons'));
