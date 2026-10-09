@@ -4,7 +4,7 @@
 /*
  * ダークモードの切り替えボタン (js/dark-mode.js。component-specs.md の「ダークモードの切り替え」を参照)
  * スクリプトが <html> に data-swifty-color-mode-toggle を付けたら、ブログのヘッダーの右端、「読者になる」の左隣にボタンの場所を空ける
- * (スマホでは、タイトルと説明の下の段の「読者になる」の左隣)。
+ * (スマホでは、タイトルの下の説明の行の「読者になる」の左隣)。
  * 場所はスクリプトが読み込まれた時点で空けるので、後からボタンが入ってもタイトルの折り返しは変わらない。
  * ダークテーマはスタイルクエリで切り替えるので(_core.scss)、スタイルクエリに対応していないブラウザではボタンも場所も出さない
  */
@@ -38,12 +38,12 @@ $toggle-gap: 8px;
         height: var(--blog-header-height);
     }
 
-    // スマホでは、「読者になる」と同じく、タイトルと説明の下の段に置く(_header.scss)
-    @include var.header-actions-below {
+    // スマホでは、「読者になる」と同じく、タイトルの下の説明の行に置く(_header.scss)
+    @include var.header-actions-beside-description {
         .color-mode-toggle {
-            top: auto;
-            bottom: var.$header-actions-padding-bottom;
-            height: auto;
+            position-anchor: --swifty-blog-title;
+            top: calc(anchor(bottom) + #{var.$header-actions-offset});
+            height: var.$header-actions-height;
         }
     }
 

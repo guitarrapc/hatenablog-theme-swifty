@@ -30,11 +30,10 @@ $hatena-globalheader-height-legacy: 37px; // globalheader-ng-enabled が付か�
 $blog-header-height: 76px;
 $blog-header-height-xs: 64px;
 
-// スマホで、ヘッダーのボタン(「読者になる」とダークモードの切り替え)を置く下の段の高さ(ボタンの高さ)、
-// 段の下の余白、タイトル・説明と段の間隔(header-actions-below を参照)
+// スマホで、ヘッダーのボタン(「読者になる」とダークモードの切り替え)を並べる説明の行の高さ(ボタンの高さ)と、
+// タイトルとその行の間隔(header-actions-beside-description を参照)
 $header-actions-height: 34px;
-$header-actions-padding-bottom: 12px;
-$header-actions-gap: 10px;
+$header-actions-offset: 4px;
 
 // 画面外の描画を後回しにする要素 (theme-design-spec.md の「描画の後回し」を参照)。
 // 本文の先頭の5要素は最初の画面にあることが多く、後回しにすると仮の高さから実際の高さに変わってずれるので外す。
@@ -899,11 +898,11 @@ $dark-schemes: ();
     }
 }
 
-// スマホでは、ヘッダーのボタンをタイトルの右ではなく、タイトルと説明の下の段に右寄せで置く(theme-design-spec.md の「ヘッダー」を参照)。
-// その配置にするときだけ当てる。「読者になる」ははてなが body の直下(ヘッダーの外)に出力するので、アンカー位置指定でヘッダーの下端に合わせる。
+// スマホでは、ヘッダーのボタンをタイトルの右ではなく、タイトルの下の説明の行の右に置く(theme-design-spec.md の「ヘッダー」を参照)。
+// その配置にするときだけ当てる。「読者になる」ははてなが body の直下(ヘッダーの外)に出力するので、アンカー位置指定でタイトルの下端に合わせる。
 // アンカー位置指定に対応していないブラウザと、ヘッダ画像を設定したとき(ボタンは画像の右上)は当てず、タイトルの右に置く。
 // 印刷ではボタンを出さないので(_print.scss)、段も空けない
-@mixin header-actions-below {
+@mixin header-actions-beside-description {
     @supports (anchor-name: --swifty-blog-title) {
         @media screen and #{$mq-xs} {
             body:not(.header-image-enable, .header-image-only) {

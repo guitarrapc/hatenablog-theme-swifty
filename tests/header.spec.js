@@ -8,7 +8,7 @@ import { TEST_URLS, SELECTORS, VIEWPORTS, TIMEOUTS } from './constants.js';
  *
  * はてなのヘッダーメニューは動かさず(はてなのガイドライン)、その直下にブログのヘッダーを続け、
  * はてなの「読者になる」ボタンをブログのヘッダーの右端に置いて1つのヘッダーに見せる。
- * スマホでは、ボタンをタイトルの右ではなく、タイトルと説明の下の段に置く。
+ * スマホでは、ボタンをタイトルの右ではなく、タイトルの下の説明の行の右に置く。
  */
 
 /** 2つの矩形が重なるか */
@@ -59,7 +59,7 @@ test.describe('ヘッダー', () => {
       // ブログのヘッダーは隙間なくその直下に続く
       expect(Math.abs(m.blogHeader.top - m.globalHeader.bottom)).toBeLessThanOrEqual(1);
 
-      // ボタンはブログのヘッダーの帯の中にあり、タイトルと重ならない(スマホではタイトルの下の段にある)
+      // ボタンはブログのヘッダーの帯の中にあり、タイトルと重ならない(スマホではタイトルの下の説明の行にある)
       expect(m.button.top).toBeGreaterThanOrEqual(m.blogHeader.top);
       expect(m.button.bottom).toBeLessThanOrEqual(m.blogHeader.bottom);
       expect(intersects(m.button, m.title)).toBe(false);
@@ -75,31 +75,63 @@ test.describe('ヘッダー', () => {
     });
   }
 
-  test('スマホでは、ボタンをタイトルと説明の下の段に右寄せで置き、タイトルには幅いっぱいを使わせる', async ({ page }) => {
+  test('スマホでは、ボタンをタイトルの下の説明の行の右に置き、タイトルには幅いっぱいを使わせる', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.MOBILE);
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
     await expect(page.locator('.color-mode-toggle-button'), '前提: 開発用ブログのheadにjs/dark-mode.jsがあること').toBeVisible();
-    // 長いタイトルでも、ボタンの段がタイトルの高さに合わせて下がることを確かめる
+    // 長いタイトルと説明でも、ボタンがタイトルの下に付いていき、説明がボタンの左で折り返すことを確かめる
     await page.evaluate(() => {
       /** @type {Element} */ (document.querySelector('#title a')).textContent = 'ゆるく続けるエンジニアの技術メモと日々の記録とときどき料理';
+      /** @type {Element} */ (document.querySelector('#blog-description')).textContent = 'クラウドとゲーム開発まわりの技術メモ。ときどき料理と旅行の記録も書きます。';
     });
 
     const m = await measure(page);
     if (!m.blogHeader || !m.title || !m.description || !m.button || !m.toggle) throw new Error('ヘッダーの要素が見つからない');
+    const descriptionText = await page.evaluate(() => {
+      const range = document.createRange();
+      range.selectNodeContents(/** @type {Element} */ (document.querySelector('#blog-description')));
+      const lines = [...range.getClientRects()];
+      return { right: Math.max(...lines.map((line) => line.right)), firstLineMiddle: (lines[0].top + lines[0].bottom) / 2 };
+    });
 
     // タイトルはボタンのぶん空けずに、画面の右の余白(16px)の手前まで使う
     expect(m.title.right).toBeGreaterThan(m.toggle.left);
     expect(m.title.right).toBeLessThanOrEqual(m.viewport - 16);
-    // ボタンは説明の下の段に、同じ高さで並ぶ。帯の下から12px上
-    expect(m.toggle.top).toBeGreaterThanOrEqual(m.description.bottom);
+    // ボタンはタイトルの下の説明の行に同じ高さで並び、説明の1行目と上下中央で揃う
+    expect(m.toggle.top).toBeGreaterThanOrEqual(m.title.bottom);
     expect(m.button.top).toBeCloseTo(m.toggle.top, 0);
     expect(m.button.height).toBeCloseTo(m.toggle.height, 0);
-    expect(m.blogHeader.bottom - 1 - m.button.bottom).toBeCloseTo(12, 0);
+    expect((m.button.top + m.button.bottom) / 2).toBeCloseTo(descriptionText.firstLineMiddle, 0);
+    // 説明はボタンの左で折り返す
+    expect(descriptionText.right).toBeLessThanOrEqual(m.toggle.left);
     // 右寄せで、表示モードのボタンは「読者になる」の左隣
     expect(m.button.right).toBeCloseTo(m.viewport - 16, 0);
     expect(Math.round(m.button.left - m.toggle.right)).toBe(13);
+    // ボタンも説明もヘッダーの帯の中
+    expect(m.blogHeader.bottom - 1 - Math.max(m.button.bottom, m.description.bottom)).toBeCloseTo(12, 0);
   });
+
+  for (const [name, change] of /** @type {const} */ ([
+    ['説明がない', 'remove'],
+    ['説明が空', 'empty'],
+  ])) {
+    test(`スマホで${name}ブログでも、ボタンはヘッダーの帯の中に並ぶ`, async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.MOBILE);
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      await page.evaluate((/** @type {string} */ change) => {
+        const description = /** @type {Element} */ (document.querySelector('#blog-description'));
+        if (change === 'remove') description.remove();
+        else description.textContent = '';
+      }, change);
+
+      const m = await measure(page);
+      if (!m.blogHeader || !m.title || !m.button) throw new Error('ヘッダーの要素が見つからない');
+      expect(m.button.top).toBeGreaterThanOrEqual(m.title.bottom);
+      expect(m.blogHeader.bottom - 1 - m.button.bottom).toBeCloseTo(12, 0);
+    });
+  }
 
   test('ヘッダーメニューを表示しない設定(はてなブログPro)でも、ボタンはブログのヘッダーの帯の中に並ぶ', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.DESKTOP);

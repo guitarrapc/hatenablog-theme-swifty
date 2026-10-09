@@ -103,19 +103,37 @@ body {
 }
 
 /*
- * スマホでは、ボタンをタイトルの右ではなく、タイトルと説明の下の段に右寄せで置く。
+ * スマホでは、ボタンをタイトルの右ではなく、タイトルの下の説明の行の右に置く。
  * タイトルの右にボタン2つ分(約170px)を空けると、393pxの画面でもタイトルに残る幅が約200pxになり、短いタイトルでも折り返すため。
- * ヘッダーの下に段のぶん空け、「読者になる」をアンカー位置指定でその段に合わせる(当てる条件は header-actions-below)
+ * タイトルは幅いっぱいを使い、説明の右にボタンのぶん空ける。「読者になる」はアンカー位置指定でタイトルの下に合わせる
+ * (当てる条件は header-actions-beside-description)
  */
-@include var.header-actions-below {
+@include var.header-actions-beside-description {
     #blog-title-inner {
+        padding: 12px var(--header-gutter);
+    }
+
+    #title {
         anchor-name: --swifty-blog-title;
-        padding: 12px var(--header-gutter) #{var.$header-actions-gap + var.$header-actions-height + var.$header-actions-padding-bottom};
+    }
+
+    // 説明の行はボタンの高さにし、1行目をボタンと上下中央で揃える。説明が長ければ下へ折り返す
+    #blog-description {
+        box-sizing: border-box;
+        min-height: var.$header-actions-height;
+        margin-top: var.$header-actions-offset;
+        padding-block: calc((#{var.$header-actions-height} - 1.5em) / 2);
+        padding-right: calc(var(--header-actions-space) + 8px);
+    }
+
+    // 説明がないブログでも、ボタンの行のぶんを空ける
+    #title:last-child {
+        margin-bottom: var.$header-actions-offset + var.$header-actions-height;
     }
 
     .blog-controlls {
         position-anchor: --swifty-blog-title;
-        top: calc(anchor(bottom) - #{var.$header-actions-height + var.$header-actions-padding-bottom});
+        top: calc(anchor(bottom) + #{var.$header-actions-offset});
         height: var.$header-actions-height;
     }
 }
