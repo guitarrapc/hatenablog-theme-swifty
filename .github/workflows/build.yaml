@@ -59,6 +59,12 @@ jobs:
         run: npm ci
       - name: Install Playwright
         run: npx playwright install chromium
+      # ランナーには日本語フォントがなく、日本語がすべて豆腐(□)で描かれて文字の幅が読者の環境と変わる。
+      # 文字の幅で決まる配置(「読者になる」の左隣に置くボタンなど)を、読者と同じ幅で確かめるために入れる
+      - name: Install Japanese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
       # 開発用ブログ(blog.config.js)のheadはlocalhost:5173を参照するので、ランナー上の開発サーバーがテーマを配信する
       - name: Run server & Playwright Tests
         env:

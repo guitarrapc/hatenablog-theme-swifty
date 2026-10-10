@@ -37,6 +37,9 @@
 * ブラウザ側の不安定さで失敗するテストは、何が前提かを失敗のメッセージで分かるようにしたうえで、そのテストだけやり直します(`test.describe.configure({ retries })`)。テストの中で待ち時間を延ばしたり、確かめることを減らしたりはしません。
   * 例: `:target-current` の印は、テストを並べて動かして負荷が高いとき、Chromiumがそのページで移さなくなることがある(`tests/toc-follow.spec.js`。component-specs.md の「いま読んでいる見出しを追う」)。
 * 全テストが失敗するときは、まず `tests/home.spec.js` の「開発サーバーのテーマCSSが読み込まれている」を見ます。開発サーバーが起動していないか、開発用ブログのhead設定が違います。
+* テストは日本語フォントのある環境で実行します。日本語フォントのない環境(フォントを入れていないLinuxなど)では、日本語がすべて豆腐(□)で描かれ、文字の幅が読者の環境と変わります。
+  * 文字の幅で決まる配置のテストが、数pxの差で失敗します。例: 「読者になる」は幅99pxを前提に左隣のボタンを置くが、豆腐では83pxになり、ボタンとの間が13pxではなく29pxになる(`tests/header.spec.js`、`tests/dark-mode.spec.js`)。
+  * `tests/home.spec.js` の「日本語を描けるフォントがある」が失敗していたら、日本語フォントを入れます(Ubuntuでは `sudo apt-get install fonts-noto-cjk`)。
 
 ## Lighthouse
 
@@ -53,6 +56,7 @@ GitHub ActionsでCIを実行して、SCSSやJavaScriptの動作を担保しま�
 * `main`ブランチにpushした、PRが作成された際に自動で実行されます。
 * `npm run build`でビルドを実行し、ビルドしたCSSの先頭に `Responsive: yes` があることを確かめます。
 * `npm run check:customize`で、配布用の `customize-*.html` が `js/` と同じ処理であることを確かめます。
+* E2Eテストの前に、ランナーに日本語フォント(`fonts-noto-cjk`)を入れます。ランナー(`ubuntu-24.04`)には日本語フォントがありません(「E2Eテスト」を参照)。
 * ランナー上で開発サーバーを起動し、`npx playwright test`でE2Eテストを2つのシャードに分けて実行します。開発用ブログのheadが `localhost:5173` を参照するため、ランナー上の開発サーバーがテーマを配信します。
 
 ### リリースワークフロー
