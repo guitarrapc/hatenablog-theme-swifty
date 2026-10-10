@@ -621,6 +621,13 @@ $share-link-selectors: ();
             margin: 0;
         }
 
+        // Facebook のボタンは、はてなが中の span を文字のベースラインに載せるので(.fb_iframe_widget > span の vertical-align: baseline !important)、
+        // ボタンの下に文字の下がるぶん(約7px)の空きができ、上下中央で揃えると、ほかのボタンより上にずれる。
+        // span を行に置かないようにして、空きをなくす
+        .fb-share-button {
+            display: flex;
+        }
+
         a:is(#{$share-link-selectors}) {
             @include var.footer-action;
             // はてなのボタンの形(40px四方の色付きの四角)を外す

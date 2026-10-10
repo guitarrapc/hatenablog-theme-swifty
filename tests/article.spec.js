@@ -406,6 +406,33 @@ test.describe('この記事を共有', () => {
       expect(style.href).toMatch(/^https?:\/\//);
     });
   }
+
+  test('Facebookのボタンは、下に空きを作らず、ほかのボタンと上下中央で揃える', async ({ page }) => {
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-footer .social-buttons > .social-button-item').first(), '前提: 記事下のソーシャルボタンがあること').toBeAttached();
+    // FacebookのSDKがボタンを描いた後のHTMLと、SDKがページに足すCSS(2026年10月に開発用ブログで出力されたもの)。
+    // SDKの読み込みに左右されないよう、差し込んで確かめる
+    await page.evaluate(() => {
+      document.head.insertAdjacentHTML('beforeend', '<style>.fb_iframe_widget{display:inline-block;position:relative}.fb_iframe_widget span{display:inline-block;position:relative;text-align:justify}.fb_iframe_widget iframe{position:absolute}</style>');
+      document.querySelector('.entry-footer .social-buttons')?.insertAdjacentHTML('beforeend', '<div class="social-button-item" id="facebook-fixture"><div class="fb-share-button fb_iframe_widget" data-layout="box_count"><span style="vertical-align: bottom; width: 91px; height: 40px;"><iframe style="border: none; visibility: visible; width: 91px; height: 40px;"></iframe></span></div></div>');
+    });
+
+    const m = await page.evaluate(() => {
+      const rect = (/** @type {string} */ selector) => /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect().toJSON();
+      return {
+        item: rect('#facebook-fixture'),
+        button: rect('#facebook-fixture span'),
+        other: rect('.entry-footer .social-buttons > .social-button-item'),
+        verticalAlign: getComputedStyle(/** @type {Element} */ (document.querySelector('#facebook-fixture span'))).verticalAlign,
+      };
+    });
+    // はてなのCSSは span を文字のベースラインに載せる。行の中に置くと、ボタンの下に文字の下がるぶんの空きができる
+    expect(m.verticalAlign, '前提: はてなが span に vertical-align: baseline を当てていること').toBe('baseline');
+    expect(m.button.height).toBe(40);
+    expect(m.item.height).toBeCloseTo(m.button.height, 1);
+    // ほかのボタン(先頭のボタン)と上下中央が揃う
+    expect((m.button.top + m.button.bottom) / 2).toBeCloseTo((m.other.top + m.other.bottom) / 2, 1);
+  });
 });
 
 test.describe('コメント欄', () => {
