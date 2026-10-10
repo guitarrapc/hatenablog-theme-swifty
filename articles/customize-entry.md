@@ -268,6 +268,78 @@ title: Swiftyテーマのカスタマイズガイド
 | リンク(`--link`) | <span style="background:#b43f45;border:1px solid #8886;border-radius:3px">　</span> `#b43f45` | <span style="background:#eb8180;border:1px solid #8886;border-radius:3px">　</span> `#eb8180` |
 | アクセント(`--accent`) | <span style="background:#cb5457;border:1px solid #8886;border-radius:3px">　</span> `#cb5457` | <span style="background:#eb8180;border:1px solid #8886;border-radius:3px">　</span> `#eb8180` |
 
+### ink(インク)
+
+色みのない、ほぼ白の地に、ほぼ黒の文字と濃い青のアクセントです。白い紙に濃紺のインクで書いたように、コードブロックはライトでも濃紺の地にします。ダークは、ほかの配色より少し明るい、青みのある暗いグレーです。
+
+```css
+:root { --swifty-scheme: ink; }
+```
+
+| ライト | ダーク |
+| ---- | ---- |
+| <figure class="figure-image figure-image-fotolife" title="inkのライト">[f:id:guitarrapc_tech:20261011013111p:plain]<figcaption>inkのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="inkのダーク">[f:id:guitarrapc_tech:20261011013126p:plain]<figcaption>inkのダーク</figcaption></figure> |
+
+<!-- screenshots/scheme-ink.png | screenshots/scheme-ink-dark.png -->
+
+| 色 | ライト | ダーク |
+| ---- | ---- | ---- |
+| ページの背景(`--background`) | <span style="background:#fafafa;border:1px solid #8886;border-radius:3px">　</span> `#fafafa` | <span style="background:#1a1f27;border:1px solid #8886;border-radius:3px">　</span> `#1a1f27` |
+| カード(`--surface`) | <span style="background:#ffffff;border:1px solid #8886;border-radius:3px">　</span> `#ffffff` | <span style="background:#20262f;border:1px solid #8886;border-radius:3px">　</span> `#20262f` |
+| タイトル・見出し(`--text-header`) | <span style="background:#111111;border:1px solid #8886;border-radius:3px">　</span> `#111111` | <span style="background:#f0f6fc;border:1px solid #8886;border-radius:3px">　</span> `#f0f6fc` |
+| 本文(`--text-body`) | <span style="background:#1b1b1b;border:1px solid #8886;border-radius:3px">　</span> `#1b1b1b` | <span style="background:#e6edf3;border:1px solid #8886;border-radius:3px">　</span> `#e6edf3` |
+| 補助の文字(`--text-light`) | <span style="background:#666666;border:1px solid #8886;border-radius:3px">　</span> `#666666` | <span style="background:#959ea8;border:1px solid #8886;border-radius:3px">　</span> `#959ea8` |
+| リンク(`--link`) | <span style="background:#0969da;border:1px solid #8886;border-radius:3px">　</span> `#0969da` | <span style="background:#58a6ff;border:1px solid #8886;border-radius:3px">　</span> `#58a6ff` |
+| アクセント(`--accent`) | <span style="background:#0969da;border:1px solid #8886;border-radius:3px">　</span> `#0969da` | <span style="background:#58a6ff;border:1px solid #8886;border-radius:3px">　</span> `#58a6ff` |
+
+### zenn(Zenn)
+
+技術記事のサイト Zenn の色をもとにした配色です。青みのあるグレーの地に白いカード、明るい青のアクセントです。コードブロックは、ライトでもダークでも黒に近い紺の地にします。ダークは濃紺です。
+
+```css
+:root { --swifty-scheme: zenn; }
+```
+
+| ライト | ダーク |
+| ---- | ---- |
+| <figure class="figure-image figure-image-fotolife" title="zennのライト">[f:id:guitarrapc_tech:20261011013148p:plain]<figcaption>zennのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="zennのダーク">[f:id:guitarrapc_tech:20261011013207p:plain]<figcaption>zennのダーク</figcaption></figure> |
+
+<!-- screenshots/scheme-zenn.png | screenshots/scheme-zenn-dark.png -->
+
+| 色 | ライト | ダーク |
+| ---- | ---- | ---- |
+| ページの背景(`--background`) | <span style="background:#edf2f7;border:1px solid #8886;border-radius:3px">　</span> `#edf2f7` | <span style="background:#081d35;border:1px solid #8886;border-radius:3px">　</span> `#081d35` |
+| カード(`--surface`) | <span style="background:#ffffff;border:1px solid #8886;border-radius:3px">　</span> `#ffffff` | <span style="background:#0d223a;border:1px solid #8886;border-radius:3px">　</span> `#0d223a` |
+| タイトル・見出し(`--text-header`) | <span style="background:#1a1a1a;border:1px solid #8886;border-radius:3px">　</span> `#1a1a1a` | <span style="background:#f5faff;border:1px solid #8886;border-radius:3px">　</span> `#f5faff` |
+| 本文(`--text-body`) | <span style="background:#2e2e2e;border:1px solid #8886;border-radius:3px">　</span> `#2e2e2e` | <span style="background:#ecf5ff;border:1px solid #8886;border-radius:3px">　</span> `#ecf5ff` |
+| 補助の文字(`--text-light`) | <span style="background:#5f6b75;border:1px solid #8886;border-radius:3px">　</span> `#5f6b75` | <span style="background:#a4bcd5;border:1px solid #8886;border-radius:3px">　</span> `#a4bcd5` |
+| リンク(`--link`) | <span style="background:#0868ce;border:1px solid #8886;border-radius:3px">　</span> `#0868ce` | <span style="background:#3ea8ff;border:1px solid #8886;border-radius:3px">　</span> `#3ea8ff` |
+| アクセント(`--accent`) | <span style="background:#3ea8ff;border:1px solid #8886;border-radius:3px">　</span> `#3ea8ff` | <span style="background:#3ea8ff;border:1px solid #8886;border-radius:3px">　</span> `#3ea8ff` |
+
+### qiita(Qiita)
+
+技術記事のサイト Qiita の色をもとにした配色です。色みのほとんどないグレーの地に白いカード、緑のアクセントです。コードブロックは、ライトでもダークでも黒に近いグレーの地にします。
+
+```css
+:root { --swifty-scheme: qiita; }
+```
+
+| ライト | ダーク |
+| ---- | ---- |
+| <figure class="figure-image figure-image-fotolife" title="qiitaのライト">[f:id:guitarrapc_tech:20261011014655p:plain]<figcaption>qiitaのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="qiitaのダーク">[f:id:guitarrapc_tech:20261011014706p:plain]<figcaption>qiitaのダーク</figcaption></figure> |
+
+<!-- screenshots/scheme-qiita.png | screenshots/scheme-qiita-dark.png -->
+
+| 色 | ライト | ダーク |
+| ---- | ---- | ---- |
+| ページの背景(`--background`) | <span style="background:#f5f6f6;border:1px solid #8886;border-radius:3px">　</span> `#f5f6f6` | <span style="background:#1d2020;border:1px solid #8886;border-radius:3px">　</span> `#1d2020` |
+| カード(`--surface`) | <span style="background:#ffffff;border:1px solid #8886;border-radius:3px">　</span> `#ffffff` | <span style="background:#2f3232;border:1px solid #8886;border-radius:3px">　</span> `#2f3232` |
+| タイトル・見出し(`--text-header`) | <span style="background:#141414;border:1px solid #8886;border-radius:3px">　</span> `#141414` | <span style="background:#f8f8f8;border:1px solid #8886;border-radius:3px">　</span> `#f8f8f8` |
+| 本文(`--text-body`) | <span style="background:#212121;border:1px solid #8886;border-radius:3px">　</span> `#212121` | <span style="background:#eeeeee;border:1px solid #8886;border-radius:3px">　</span> `#eeeeee` |
+| 補助の文字(`--text-light`) | <span style="background:#666666;border:1px solid #8886;border-radius:3px">　</span> `#666666` | <span style="background:#bcbdbd;border:1px solid #8886;border-radius:3px">　</span> `#bcbdbd` |
+| リンク(`--link`) | <span style="background:#357a00;border:1px solid #8886;border-radius:3px">　</span> `#357a00` | <span style="background:#8ad74f;border:1px solid #8886;border-radius:3px">　</span> `#8ad74f` |
+| アクセント(`--accent`) | <span style="background:#55c500;border:1px solid #8886;border-radius:3px">　</span> `#55c500` | <span style="background:#55c500;border:1px solid #8886;border-radius:3px">　</span> `#55c500` |
+
 ## ダークモードを固定する
 
 既定では、OSの設定に合わせてライトとダークが切り替わります。`--swifty-color-mode` で固定できます。

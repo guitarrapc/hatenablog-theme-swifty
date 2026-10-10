@@ -79,6 +79,10 @@ const measure = (/** @type {any} */ page, /** @type {Record<string,string>} */ t
   };
   // 半透明の背景を持つ要素があるため、実際に色が乗っている祖先まで遡る
   const effectiveBackground = (/** @type {Element | null} */ el) => {
+    // コードブロックのボタンは、コードブロックの帯(pre.code::before)に重ねて置く。帯は祖先ではないので、帯の色を返す。
+    // ライトでもコードブロックを暗い地にする配色(ink、zenn、qiita)では、帯の色がカードと違う
+    const codeBlock = el?.closest('.code-block-toolbar')?.parentElement?.querySelector(':scope > pre.code');
+    if (codeBlock) return getComputedStyle(codeBlock, '::before').backgroundColor;
     let node = el;
     while (node) {
       const color = getComputedStyle(node).backgroundColor;
@@ -153,18 +157,21 @@ const resetToThemeBackground = (page) => page.addStyleTag({ content: 'body { bac
 /** デザインCSSで配色を切り替える(theme-design-spec.md の「配色の切り替え」)。デザインCSSはテーマより後に読み込まれるので、head の末尾に足す */
 const applyScheme = (/** @type {any} */ page, /** @type {string} */ scheme) => page.addStyleTag({ content: schemeCss(scheme) });
 
-/** 変数の値を、本文の中で描いたときの色(rgb)にする */
-const resolveColors = (/** @type {any} */ page, /** @type {string[]} */ names) => page.evaluate((/** @type {string[]} */ names) => {
+/**
+ * 変数の値を、本文の中で描いたときの色(rgb)にする。
+ * within を渡すと、その要素の中で描いたときの色にする(コードブロックの中だけ色を置き換える配色がある)
+ */
+const resolveColors = (/** @type {any} */ page, /** @type {string[]} */ names, /** @type {string} */ within = '.entry-content') => page.evaluate((/** @type {{ names: string[], within: string }} */ { names, within }) => {
   const probe = document.createElement('span');
   // 記事の一覧などの本文のないページでは body で測る(配色の変数は body に置くので、どちらでも同じ値になる)
-  /** @type {Element} */ (document.querySelector('.entry-content') ?? document.body).appendChild(probe);
+  /** @type {Element} */ (document.querySelector(within) ?? document.body).appendChild(probe);
   const colors = Object.fromEntries(names.map((name) => {
     probe.style.color = `var(--${name})`;
     return [name, getComputedStyle(probe).color];
   }));
   probe.remove();
   return colors;
-}, names);
+}, { names, within });
 
 /** WCAGのコントラスト比(rgb()の値どうし) */
 const ratio = (/** @type {string} */ fg, /** @type {string} */ bg) => {
@@ -275,6 +282,13 @@ for (const mode of /** @type {const} */ (['light', 'dark'])) {
       // :focus-visible が当たらないと outline-color は文字色(currentColor)のままなので、枠が出ていることを先に確かめる
       expect(outline.focusVisible && outline.style !== 'none', 'フォーカスの枠が出ていない').toBe(true);
       expect(outline.color, 'フォーカスの枠がリンク色ではない').toBe(outline.link);
+      await expect(page.locator('.code-block').first(), '前提: コードブロックのボタン(js/codeblock.js)があること').toBeAttached();
+
+      // 横にスクロールするコードブロックは、ブラウザがキーボードでフォーカスできるようにする。
+      // サンプル記事のコードブロックは広い画面ではスクロールしないので、フォーカスできるようにして枠を出す
+      const codeBlock = page.locator('.entry-content pre.code').first();
+      await codeBlock.evaluate((el) => el.setAttribute('tabindex', '0'));
+      await codeBlock.focus();
 
       for (const scheme of SCHEMES) {
         await applyScheme(page, scheme);
@@ -284,6 +298,26 @@ for (const mode of /** @type {const} */ (['light', 'dark'])) {
         for (const background of ['surface', 'background', 'surface-muted']) {
           expect.soft(ratio(colors.link, colors[background]), `${scheme}: フォーカスの枠 ${colors.link} と ${background} ${colors[background]}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
         }
+        // コードブロックのボタンの枠は、帯(surface)とコードの背景(surface-muted)の上に来る。
+        // ライトでもコードブロックを暗い地にする配色(ink、zenn、qiita)では、コードブロックの中だけ色が違うので、コードブロックの中の色で測る
+        const inCode = await resolveColors(page, ['link', 'surface', 'surface-muted'], '.code-block');
+        for (const background of ['surface', 'surface-muted']) {
+          expect.soft(ratio(inCode.link, inCode[background]), `${scheme}: コードブロックの中のフォーカスの枠 ${inCode.link} と ${background} ${inCode[background]}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
+        }
+        // コードブロックそのものの枠は、外側に描くならカードの上、内側に描くならコードの背景の上に来る
+        const ring = await codeBlock.evaluate((el) => {
+          const style = getComputedStyle(el);
+          return {
+            visible: el.matches(':focus-visible') && style.outlineStyle !== 'none',
+            color: style.outlineColor,
+            inside: parseFloat(style.outlineOffset) < 0,
+            code: style.backgroundColor,
+            card: getComputedStyle(/** @type {Element} */ (el.closest('.entry'))).backgroundColor,
+          };
+        });
+        expect.soft(ring.visible, `${scheme}: コードブロックのフォーカスの枠が出ていない`).toBe(true);
+        const under = ring.inside ? ring.code : ring.card;
+        expect.soft(ratio(ring.color, under), `${scheme}: コードブロックのフォーカスの枠 ${ring.color} と、その下の${ring.inside ? 'コードの背景' : 'カード'} ${under}`).toBeGreaterThanOrEqual(AA_NON_TEXT);
       }
     });
   });

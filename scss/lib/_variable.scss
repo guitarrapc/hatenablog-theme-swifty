@@ -1,4 +1,5 @@
 @use "sass:map";
+@use "sass:string";
 @use "./_functions" as fn;
 
 // Media Queries
@@ -188,6 +189,35 @@ $color-olive-700: #515d46;
 $color-olive-800: #3f4836;
 $color-olive-900: #333c2b;
 
+// Paper系 (色みのない、ほぼ白の地とほぼ黒の文字。配色 ink の地と文字)
+$color-paper-50: #fafafa;
+$color-paper-100: #f5f5f5;
+$color-paper-200: #e5e5e5;
+$color-paper-300: #d0d0d0;
+$color-paper-500: #858585;
+$color-paper-600: #666666;
+$color-paper-800: #1b1b1b;
+$color-paper-900: #111111;
+
+// Fog系 (青みを帯びたグレーの地と線、色みのない濃いグレーの文字。配色 zenn の地と文字)
+$color-fog-100: #f5f9fc;
+$color-fog-150: #edf2f7;
+$color-fog-300: #d6e3ed;
+$color-fog-400: #acbcc7;
+$color-fog-500: #788793;
+$color-fog-600: #5f6b75;
+$color-fog-800: #2e2e2e;
+$color-fog-900: #1a1a1a;
+
+// Ash系 (色みのほとんどないグレーの地と線、ほぼ黒の文字。配色 qiita の地と文字)
+$color-ash-100: #f5f6f6;
+$color-ash-200: #dfe0e0;
+$color-ash-300: #bcbdbd;
+$color-ash-500: #7a7d7d;
+$color-ash-600: #666666;
+$color-ash-800: #212121;
+$color-ash-900: #141414;
+
 // Mint系 (アクセント)
 $color-mint-50: #e9f8f5;
 $color-mint-100: #d2f1eb;
@@ -274,6 +304,31 @@ $color-rouge-500: #cb5457;
 $color-rouge-700: #b43f45;
 $color-rouge-800: #8f2f35;
 
+// Cobalt系 (配色 ink のアクセント。濃い青は白地で5.19:1あるので、飾りにも文字にも状態の印にも使える)
+$color-cobalt-50: #ecf5ff;
+$color-cobalt-100: #dcecff;
+$color-cobalt-300: #bfdcff;
+$color-cobalt-700: #0969da;
+$color-cobalt-800: #05458a;
+
+// Sky系 (配色 zenn のアクセント。明るい青は白地で淡いので飾りだけに使い、文字と状態の印には濃くした色を使う)
+$color-sky-50: #ecf5ff;
+$color-sky-100: #e0efff;
+$color-sky-300: #bfdcff;
+$color-sky-400: #3ea8ff;
+$color-sky-500: #0f83fd;
+$color-sky-700: #0868ce;
+$color-sky-800: #0656ac;
+
+// Leaf系 (配色 qiita のアクセント。明るい緑は白地で淡いので飾りだけに使い、文字と状態の印には濃くした色を使う)
+$color-leaf-50: #f0fae9;
+$color-leaf-100: #dff4cf;
+$color-leaf-300: #aae280;
+$color-leaf-400: #55c500;
+$color-leaf-500: #409500;
+$color-leaf-700: #357a00;
+$color-leaf-800: #2b6300;
+
 // コードハイライト用
 $color-purple-600: #7b3fb3;
 $color-indigo-600: #4a4fbf;
@@ -303,6 +358,9 @@ $color-alpha-shadow-haze: rgba(34, 41, 44, 0.06);
 $color-alpha-shadow-peach: rgba(72, 32, 25, 0.06);
 $color-alpha-shadow-frost: rgba(19, 40, 64, 0.07);
 $color-alpha-shadow-olive: rgba(81, 93, 70, 0.07);
+$color-alpha-shadow-paper: rgba(0, 0, 0, 0.07);
+$color-alpha-shadow-fog: rgba(36, 60, 90, 0.06);
+$color-alpha-shadow-ash: rgba(0, 0, 0, 0.06);
 
 // ライトテーマ
 // キーがそのままCSS変数名になる(例: "text-body" → --text-body)。
@@ -605,6 +663,94 @@ $schemes: (
         "code-text": $color-olive-800,
         "code-comment": $color-olive-600,
     )),
+    // 色みのないほぼ白の地に、ほぼ黒の文字と青のアクセントを合わせた配色。白い紙に濃紺のインクで書いたように、
+    // コードブロックだけはライトでも濃紺の地にする($scheme-code-blocks)。ここの code-text と code-comment は、
+    // インラインコードと、コードブロックを暗い地にしないとき(印刷)に使う。
+    // 青(#0969da)は白地で5.19:1あるので、ほかの配色と違い、飾り・リンク・状態の印に同じ色を使う。
+    // 地がカードの白とほとんど同じなので、カードは枠と影で分け、影をほかの配色より少し濃くする
+    "ink": map.merge($light-theme, (
+        "background": $color-paper-50,
+        "surface-muted": $color-paper-100,
+
+        "text-body": $color-paper-800,
+        "text-header": $color-paper-900,
+        "text-light": $color-paper-600,
+
+        "link": $color-cobalt-700,
+        "link-hover": $color-cobalt-800,
+
+        "accent": $color-cobalt-700,
+        "accent-strong": $color-cobalt-700,
+        "accent-line": $color-cobalt-300,
+        "accent-soft": $color-cobalt-50,
+        "accent-soft-hover": $color-cobalt-100,
+
+        "border": $color-paper-200,
+        "border-strong": $color-paper-300,
+        "border-quote": $color-paper-500,
+        "shadow": $color-alpha-shadow-paper,
+
+        "code-text": $color-paper-800,
+        "code-comment": $color-paper-600,
+    )),
+    // 技術記事のサイト Zenn の色をもとにした配色。青みのあるグレーの地に白いカード、明るい青のアクセント。
+    // コードブロックは、ライトでもダークでも同じ暗い地にする($scheme-code-blocks)。ここの code-text と code-comment は、
+    // インラインコードと、コードブロックを暗い地にしないとき(印刷)に使う。
+    // 明るい青(#3ea8ff)は白地で2.55:1しかないので飾りだけに使い、リンクと状態の印は同じ色相を濃くする
+    "zenn": map.merge($light-theme, (
+        "background": $color-fog-150,
+        "surface-muted": $color-fog-100,
+
+        "text-body": $color-fog-800,
+        "text-header": $color-fog-900,
+        "text-light": $color-fog-600,
+
+        "link": $color-sky-700,
+        "link-hover": $color-sky-800,
+
+        "accent": $color-sky-400,
+        "accent-strong": $color-sky-500,
+        "accent-line": $color-sky-300,
+        "accent-soft": $color-sky-50,
+        "accent-soft-hover": $color-sky-100,
+
+        "border": $color-fog-300,
+        "border-strong": $color-fog-400,
+        "border-quote": $color-fog-500,
+        "shadow": $color-alpha-shadow-fog,
+
+        "code-text": $color-fog-800,
+        "code-comment": $color-fog-600,
+    )),
+    // 技術記事のサイト Qiita の色をもとにした配色。色みのほとんどないグレーの地に白いカード、緑のアクセント。
+    // コードブロックは、ライトでもダークでも同じ暗い地にする($scheme-code-blocks)。ここの code-text と code-comment は、
+    // インラインコードと、コードブロックを暗い地にしないとき(印刷)に使う。
+    // 明るい緑(#55c500)は白地で2.24:1しかないので飾りだけに使い、リンクと状態の印は同じ色相を濃くする
+    "qiita": map.merge($light-theme, (
+        "background": $color-ash-100,
+        "surface-muted": $color-ash-100,
+
+        "text-body": $color-ash-800,
+        "text-header": $color-ash-900,
+        "text-light": $color-ash-600,
+
+        "link": $color-leaf-700,
+        "link-hover": $color-leaf-800,
+
+        "accent": $color-leaf-400,
+        "accent-strong": $color-leaf-500,
+        "accent-line": $color-leaf-300,
+        "accent-soft": $color-leaf-50,
+        "accent-soft-hover": $color-leaf-100,
+
+        "border": $color-ash-200,
+        "border-strong": $color-ash-300,
+        "border-quote": $color-ash-500,
+        "shadow": $color-alpha-shadow-ash,
+
+        "code-text": $color-ash-800,
+        "code-comment": $color-ash-600,
+    )),
 );
 
 // ダークテーマ (theme-design-spec.md の「ダークテーマ」を参照)
@@ -614,9 +760,9 @@ $schemes: (
 // 選び方: 背景は純黒にしない。カードとコードブロックは背景より少し明るい面にし、影ではなく明るさの差で階層を作る。文字は純白にしない。
 // 文字(本文・補助テキスト・リンク)は背景・カード・コードブロックのどれに対しても4.5:1以上、状態の印と引用の線は3:1以上にする
 
-// 配色によらない暗い色(影、コードハイライト、diff、アラート)。どの配色のコードブロック・カードの上でもAAを満たす
-$dark-shared: (
-    "shadow": rgba(0, 0, 0, 0.35),
+// 配色によらない、暗い地のコードブロックの色(コードハイライト、diff)。
+// ダークのコードブロックと、ライトでもコードブロックを暗い地にする配色($scheme-code-blocks)で使う
+$dark-code: (
     "code-keyword": #d2a8ff,
     "code-preproc": #a5b4fc,
     "code-type": #7ee787,
@@ -627,6 +773,11 @@ $dark-shared: (
     "code-diff-added-bg": #173a2a,
     "code-diff-removed": #ffa8a0,
     "code-diff-removed-bg": #47201e,
+);
+
+// 配色によらない暗い色(影、コードハイライト、diff、アラート)。どの配色のコードブロック・カードの上でもAAを満たす
+$dark-shared: map.merge($dark-code, (
+    "shadow": rgba(0, 0, 0, 0.35),
     "alert-note": #4493f8,
     "alert-tip": #3fb950,
     "alert-important": #ab7df8,
@@ -635,6 +786,42 @@ $dark-shared: (
     // 検索ボタンのアイコン。データURIのSVGはCSS変数を参照できないので、暗い背景で見える色を焼き込む。
     // ライトではこの変数を出力せず、_modules.scss の既定のアイコンを使う
     "icon-search": fn.url-svg($svg-search, #82908c),
+));
+
+// 配色 ink のコードの色。ライトのコードブロック(濃紺の地。$scheme-code-blocks)とダークで同じ色を使い、
+// どちらで見ても同じ種類が同じ色になるようにする。型(code-type)とdiffは $dark-code のまま
+$ink-code: (
+    "code-text": #e6edf3,
+    "code-keyword": #ff8fa3,
+    "code-preproc": #bc8cff,
+    "code-function": #38c7ff,
+    "code-constant": #ffc56d,
+    "code-special": #939bc1,
+    "code-comment": #959ea8,
+);
+
+// 配色 zenn のコードの色。diffは $dark-code のまま
+$zenn-code: (
+    "code-text": #e1e4e8,
+    "code-keyword": #f97583,
+    "code-preproc": #79b8ff,
+    "code-type": #85e89d,
+    "code-function": #b392f0,
+    "code-constant": #9ecbff,
+    "code-special": #ffab70,
+    "code-comment": #a0aab5,
+);
+
+// 配色 qiita のコードの色。diffは $dark-code のまま
+$qiita-code: (
+    "code-text": #e3e3e3,
+    "code-keyword": #ebd247,
+    "code-preproc": #ff8095,
+    "code-type": #7bb7e6,
+    "code-function": #8bdf4c,
+    "code-constant": #3bbfbf,
+    "code-special": #b08cf6,
+    "code-comment": #979797,
 );
 
 // 配色ごとの暗い色。キーは $light-theme の配色の部分と同じで、ダークにだけある変数は次の2つ。
@@ -871,6 +1058,84 @@ $dark-scheme-colors: (
         "code-text": #dde4d8,
         "code-comment": #878f80,
     ),
+    // ほかの配色より少し明るい、青みのある暗いグレー。カードが明るいぶん、アラートのCaution(#f85149)は
+    // タイトルが4.35:1になるので、この配色だけ明るくする
+    "ink": map.merge($ink-code, (
+        "background": #1a1f27,
+        "surface": #20262f,
+        "surface-muted": #272f3b,
+        "surface-header": #20262f,
+        "text-body": #e6edf3,
+        "text-header": #f0f6fc,
+        "text-light": #959ea8,
+        "link": #58a6ff,
+        "link-hover": #b6d7ff,
+        "accent": #58a6ff,
+        "accent-strong": #1a85ff,
+        "accent-line": #2f64a8,
+        "accent-soft": #1f3757,
+        "accent-soft-hover": #27436b,
+        "border": #333a45,
+        "border-strong": #4f5866,
+        "border-quote": #7d8794,
+        "button-solid": #0969da,
+        "button-solid-hover": #0757b8,
+        "alert-caution": #ff7b72,
+    )),
+    // 濃紺の地に、明るい青のアクセント。コードブロックはライトと同じ色に置き換えるので($scheme-code-blocks)、
+    // ここの code-text と code-comment はインラインコードに使う
+    "zenn": (
+        "background": #081d35,
+        "surface": #0d223a,
+        "surface-muted": #0b2c53,
+        "surface-header": #0d223a,
+        "text-body": #ecf5ff,
+        "text-header": #f5faff,
+        "text-light": #a4bcd5,
+        "link": #3ea8ff,
+        "link-hover": #a8d6ff,
+        "accent": #3ea8ff,
+        "accent-strong": #0f83fd,
+        "accent-line": #0868ce,
+        "accent-soft": #09376d,
+        "accent-soft-hover": #05458a,
+        "border": #2e445c,
+        "border-strong": #3d5674,
+        "border-quote": #8f9faa,
+        "button-solid": #0868ce,
+        "button-solid-hover": #0656ac,
+        "code-text": #ecf5ff,
+        "code-comment": #a4bcd5,
+    ),
+    // 色みのほとんどない暗いグレーに、明るい緑のアクセント。カードがほかの配色より明るいので、
+    // アラートのNote・Important・Cautionは、タイトルが4.5:1に届く明るい色にする。
+    // コードブロックはライトと同じ色に置き換えるので($scheme-code-blocks)、ここの code-text と code-comment はインラインコードに使う
+    "qiita": (
+        "background": #1d2020,
+        "surface": #2f3232,
+        "surface-muted": #3a3c3c,
+        "surface-header": #2f3232,
+        "text-body": #eeeeee,
+        "text-header": #f8f8f8,
+        "text-light": #bcbdbd,
+        "link": #8ad74f,
+        "link-hover": #c7ecab,
+        "accent": #55c500,
+        "accent-strong": #4cb100,
+        "accent-line": #357a00,
+        "accent-soft": #254f08,
+        "accent-soft-hover": #2b6300,
+        "border": #494b4b,
+        "border-strong": #5e6060,
+        "border-quote": #9c9e9e,
+        "button-solid": #357a00,
+        "button-solid-hover": #2b6300,
+        "code-text": #eeeeee,
+        "code-comment": #bcbdbd,
+        "alert-note": #58a6ff,
+        "alert-important": #b392f0,
+        "alert-caution": #ff7b72,
+    ),
 );
 
 // 既定の配色(mint)のダークテーマ。ダークのときは、ライトの配色の変数をすべてこのマップで上書きする
@@ -889,6 +1154,64 @@ $dark-schemes: ();
 @each $name, $value in $light-theme {
     @if not map.has-key($dark-theme, $name) {
         @error "ダークテーマに #{$name} がない";
+    }
+}
+
+// ライトでもコードブロックを暗い地にする配色 (theme-design-spec.md の「配色の切り替え」の ink・zenn・qiita を参照)。
+// コードブロックの中だけ、配色の変数をここの色(colors)に置き換える(_core.scss)。コードブロックの帯・ボタン・ハイライトは
+// どれも配色の変数で色を決めているので、置き換えるだけでそろって暗い地の色になる。
+// コードブロック(_codeblock.scss)が使う変数は、すべて colors に書く。書き漏らすと、ライトの色が暗い地に残る。
+// dark が true なら、ダークでも同じ色に置き換える。false なら、ダークでは body に置いたダークの配色をそのまま使う
+$scheme-code-blocks: (
+    // 濃紺の地。帯はコードの背景より少し暗くする。ダークのコードブロックは、ダークの配色の面に合わせる
+    "ink": (
+        "dark": false,
+        "colors": map.merge($dark-code, map.merge($ink-code, (
+            "surface": #141d2b, // 帯
+            "surface-muted": #1a2638, // コードの背景、ボタンのホバー
+            "border": #2a3c52, // 枠、帯の下の線
+            "border-strong": #465872, // スクロールバー
+            "text-light": #959ea8, // 帯の言語名とボタン
+            "link": #58a6ff, // ボタンのホバー・押した状態・コピーできたとき、フォーカスの枠
+            "accent-soft": #1e3454, // 押した状態のボタン
+        ))),
+    ),
+    // 黒に近い紺の地。帯はコードの背景より明るくする。ライトでもダークでも同じ色
+    "zenn": (
+        "dark": true,
+        "colors": map.merge($dark-code, map.merge($zenn-code, (
+            "surface": #323e52,
+            "surface-muted": #151e2c,
+            "border": #323e52, // 帯と同じ色にして、帯の下の線を出さない
+            "border-strong": #56637a,
+            "text-light": #b8c2cc,
+            "link": #79b8ff,
+            "accent-soft": #1a2a45,
+        ))),
+    ),
+    // 黒に近いグレーの地。帯はコードの背景より少し明るくする。ライトでもダークでも同じ色
+    "qiita": (
+        "dark": true,
+        "colors": map.merge($dark-code, map.merge($qiita-code, (
+            "surface": #2f3232,
+            "surface-muted": #1d2020,
+            "border": #3a3c3c,
+            "border-strong": #5e6060,
+            "text-light": #bcbdbd,
+            "link": #8ad74f,
+            "accent-soft": #254f08,
+        ))),
+    ),
+);
+
+@each $scheme, $block in $scheme-code-blocks {
+    @if not map.has-key($schemes, $scheme) {
+        @error "コードブロックを暗い地にする配色 #{$scheme} が $schemes にない";
+    }
+    @each $name, $value in $light-theme {
+        @if string.index($name, "code-") == 1 and not map.has-key(map.get($block, "colors"), $name) {
+            @error "配色 #{$scheme} のコードブロックに #{$name} がない";
+        }
     }
 }
 
