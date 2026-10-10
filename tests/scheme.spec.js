@@ -174,6 +174,29 @@ const isDark = (/** @type {any} */ colors) => luminance(colors.rendered.backgrou
 const AUTO = ':root { --swifty-color-mode: initial; --swifty-scheme: initial; }';
 
 /**
+ * 要素を撮った画像の1点の色。別ドメインの iframe の中は page.evaluate から読めないので、撮った画像から読む
+ * @param {any} page
+ * @param {import('@playwright/test').Locator} locator
+ * @param {number} x
+ * @param {number} y
+ */
+const paintedColor = async (page, locator, x, y) => {
+  // 先に画面内へスクロールし、描画の後回し(content-visibility)が解けて位置が動き終わってから撮る。
+  // 撮るときのスクロールで位置が動くと、要素からずれた場所を撮ってしまう
+  await locator.scrollIntoViewIfNeeded();
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const png = await locator.screenshot();
+  return page.evaluate(async (/** @type {{ base64: string, x: number, y: number }} */ { base64, x, y }) => {
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const context = /** @type {OffscreenCanvasRenderingContext2D} */ (new OffscreenCanvas(bitmap.width, bitmap.height).getContext('2d'));
+    context.drawImage(bitmap, 0, 0);
+    const [r, g, b] = context.getImageData(x, y, 1, 1).data;
+    return `rgb(${r}, ${g}, ${b})`;
+  }, { base64: png.toString('base64'), x, y });
+};
+
+/**
  * ダークテーマのテスト (theme-design-spec.md の「ダークテーマ」を参照)
  *
  * OSのダークモード(prefers-color-scheme: dark)に合わせ、デザインCSSの --swifty-color-mode で常にライト・常にダークにもできる。
@@ -245,6 +268,37 @@ test.describe('ダークテーマ', () => {
 
     expect(colors.rendered.background).toBe(colors.expected.background);
     expect(isDark(colors)).toBe(true);
+  });
+
+  test('ダークでも、はてなスターと共有ボタンの iframe を白く塗らない', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await openArticle(page);
+    await designCss(page, AUTO);
+    const card = (await measure(page)).rendered.card;
+
+    // iframe の中はライトの配色の別のページ。ダークの color-scheme の中に置くと、ブラウザが iframe を不透明な白で塗る。
+    // スターのボタンは幅32px・高さ24pxの iframe の中央の丸(直径24px)なので、左端(丸の外)にカードの色が透ける。
+    // 記事の一覧のスターも同じ入れ物([data-hatena-star-container])なので、記事ページで確かめる
+    for (const [name, selector] of [['記事下', '.entry-footer .hatena-star-container iframe'], ['コメント', '.comment-box [data-hatena-star-container] iframe']]) {
+      const star = page.locator(selector).first();
+      await expect(star, `前提: ${name}のスターの iframe がある`).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+      expect(await paintedColor(page, star, 1, 12), `${name}のスター`).toBe(card);
+    }
+
+    // 共有ボタン(はてなブックマーク・Facebook・LINE)は iframe いっぱいに描かれ、透ける場所がサービスごとに違う。
+    // 中身が透明な iframe を同じ段に足して確かめる
+    await page.evaluate(() => {
+      const buttons = document.querySelector('.entry-footer .social-buttons');
+      if (!buttons) throw new Error('前提: 記事下に共有ボタンの段(.social-buttons)がある');
+      const frame = document.createElement('iframe');
+      frame.id = 'transparent-share-frame';
+      frame.srcdoc = '<!doctype html>';
+      frame.style.cssText = 'width: 40px; height: 40px; border: 0;';
+      buttons.appendChild(frame);
+    });
+    const share = page.locator('#transparent-share-frame');
+    await expect(share).toBeVisible();
+    expect(await paintedColor(page, share, 20, 20), '共有ボタンの iframe').toBe(card);
   });
 
   test('印刷はOSがダークモードでもライトにする', async ({ page }) => {
