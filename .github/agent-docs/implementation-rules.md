@@ -14,6 +14,7 @@
   3. 切り替えられる配色(`$schemes`)で既定と違う色にしたいときは、その配色の差分に足す。足さなければ既定の配色の色を使う
   4. ダークテーマの色を足す。配色ごとの暗い色は `$dark-scheme-colors` に、配色によらない暗い色は `$dark-shared` に置く。ほかの配色と共有する色がほとんどないので、カラーパレットを経由せず値をそのまま書く(theme-design-spec.md の「ダークテーマ」)
 * `$light-theme` にある変数がダークテーマ(`$dark-theme`)にない、または `$schemes` の配色に暗い色がないと、ビルドがエラーで止まります。ダークで上書きしない変数があると、ライトの色が暗い背景に残るためです。
+* コードブロック(`_codeblock.scss`)で使う配色の変数を増やしたら、`$scheme-code-blocks` にも足します。ライトでもコードブロックを暗い地にする配色(`ink`、`zenn`、`qiita`)は、コードブロックの中だけ配色の変数を置き換えるので、足し忘れた変数はライトの色のまま暗い地に残ります(theme-design-spec.md の「配色の切り替え」の `ink`・`zenn`・`qiita`)。コードの色(`code-` で始まる変数)が抜けていると、ビルドがエラーで止まります。
 * 配色を足したら、`tests/constants.js` の `SCHEMES` にも足します。ライトとダークの両方で、AA(`tests/contrast.spec.js`、`tests/alert.spec.js`)と切り替え(`tests/scheme.spec.js`)を確かめます。
 * data URIのSVGはCSS変数を参照できないため、`_functions.scss` の `url-svg($svg, $color)` で色を焼き込みます。SVGは `_variable.scss` に読める形のまま置き、色を差し込む箇所は `currentColor` と書きます。
 * テキストはWCAG 2.2 AA(4.5:1以上)を満たす色にします。色を変えたら `tests/contrast.spec.js` が通ることを確認し、選定理由を theme-design-spec.md に残します。

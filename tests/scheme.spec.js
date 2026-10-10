@@ -174,6 +174,115 @@ const isDark = (/** @type {any} */ colors) => luminance(colors.rendered.backgrou
 const AUTO = ':root { --swifty-color-mode: initial; --swifty-scheme: initial; }';
 
 /**
+ * ライトでもコードブロックを暗い地にする配色のテスト (theme-design-spec.md の「配色の切り替え」の ink・zenn・qiita を参照)
+ *
+ * コードブロックの中だけ、配色の変数を暗い地の色に置き換える。印刷では置き換えない。
+ * ダークでは、ink は置き換えず(ダークの配色をそのまま使う)、zenn と qiita はライトと同じ色に置き換える。
+ * 暗い地の上の色のコントラストは、ほかの配色と同じく contrast.spec.js で確かめる。
+ */
+test.describe('コードブロックを暗い地にする配色(ink・zenn・qiita)', () => {
+  // _variable.scss の $scheme-code-blocks と揃える。dark はダークでも同じ色に置き換えるか
+  const CODE_BLOCK_SCHEMES = [{ scheme: 'ink', dark: false }, { scheme: 'zenn', dark: true }, { scheme: 'qiita', dark: true }];
+  const NAMES = CODE_BLOCK_SCHEMES.map(({ scheme }) => scheme);
+
+  /** コードブロック・その帯・インラインコードの色と、body に置いた配色(コードブロックの外)の色 */
+  const measureCode = (/** @type {any} */ page) => page.evaluate(() => {
+    const pre = document.querySelector('.entry-content pre.code');
+    const inline = document.querySelector('.entry-content :not(pre) > code');
+    if (!pre || !inline) throw new Error('前提: 記事にコードブロックとインラインコードがある');
+    const probe = document.createElement('span');
+    document.body.appendChild(probe);
+    const resolve = (/** @type {string} */ name) => {
+      probe.style.color = `var(--${name})`;
+      return getComputedStyle(probe).color;
+    };
+    const header = getComputedStyle(pre, '::before');
+    const result = {
+      code: { background: getComputedStyle(pre).backgroundColor, text: getComputedStyle(pre).color },
+      header: { background: header.backgroundColor, text: header.color },
+      inline: { background: getComputedStyle(inline).backgroundColor, text: getComputedStyle(inline).color },
+      body: { code: resolve('surface-muted'), header: resolve('surface'), text: resolve('code-text') },
+    };
+    probe.remove();
+    return result;
+  });
+
+  /** 暗い地に明るい文字か */
+  const isDarkSurface = (/** @type {{ background: string, text: string }} */ colors) => luminance(colors.background) < luminance(colors.text);
+
+  test('ライトでは、コードブロックと帯だけを暗い地にする。ほかの配色のコードブロックは明るいまま', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await openArticle(page);
+    await designCss(page, AUTO);
+
+    for (const scheme of SCHEMES) {
+      await designCss(page, schemeCss(scheme));
+      const colors = await measureCode(page);
+      // ページとインラインコードは、どの配色でも明るいまま。インラインコードの文字は、コードブロックの明るい文字に引きずられない
+      expect.soft(isDark(await measure(page)), `${scheme} のページ`).toBe(false);
+      expect.soft(isDarkSurface(colors.inline), `${scheme} のインラインコード ${colors.inline.text} on ${colors.inline.background}`).toBe(false);
+      if (NAMES.includes(scheme)) {
+        expect.soft(isDarkSurface(colors.code), `${scheme} のコードブロック ${colors.code.text} on ${colors.code.background}`).toBe(true);
+        expect.soft(isDarkSurface(colors.header), `${scheme} の帯 ${colors.header.text} on ${colors.header.background}`).toBe(true);
+      } else {
+        expect.soft(isDarkSurface(colors.code), `${scheme} のコードブロック`).toBe(false);
+        expect.soft(colors.code.background, `${scheme} のコードブロックは body の配色のまま`).toBe(colors.body.code);
+      }
+    }
+  });
+
+  // ダークにする条件(OSがダーク、常にダーク)と、ダークにしない条件(常にライトなら、OSがダークでも)のそれぞれで確かめる
+  for (const [name, os, css, pageIsDark] of /** @type {const} */ ([
+    ['OSがダーク', 'dark', '', true],
+    ['常にダーク(OSはライト)', 'light', ':root { --swifty-color-mode: dark; }', true],
+    ['常にライト(OSはダーク)', 'dark', ':root { --swifty-color-mode: light; }', false],
+  ])) {
+    test(`${name}のとき、ダークでは ink は置き換えず、zenn と qiita はライトと同じ色に置き換える`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: os });
+      await openArticle(page);
+
+      for (const { scheme, dark } of CODE_BLOCK_SCHEMES) {
+        // ライトのときのコードブロックの色
+        await designCss(page, `${AUTO} ${schemeCss(scheme)} :root { --swifty-color-mode: light; }`);
+        const light = await measureCode(page);
+
+        await designCss(page, `${AUTO} ${schemeCss(scheme)} ${css}`);
+        const colors = await measureCode(page);
+        const replaced = !pageIsDark || dark;
+
+        expect(isDark(await measure(page)), `前提: ${scheme} のページの配色`).toBe(pageIsDark);
+        expect(isDarkSurface(colors.code), `${scheme} のコードブロック`).toBe(true);
+        expect(colors.code.background === light.code.background, `${scheme}: コードの背景 ${colors.code.background} / ライトのとき ${light.code.background}`).toBe(replaced);
+        expect(colors.header.background === light.header.background, `${scheme}: 帯 ${colors.header.background} / ライトのとき ${light.header.background}`).toBe(replaced);
+        if (!replaced) {
+          // 置き換えないときは、body に置いたダークの配色をそのまま使う
+          expect(colors.code.background, `${scheme}: コードの背景`).toBe(colors.body.code);
+          expect(colors.header.background, `${scheme}: 帯`).toBe(colors.body.header);
+        }
+      }
+    });
+  }
+
+  test('印刷では、コードブロックも明るい地にする', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await openArticle(page);
+
+    for (const scheme of NAMES) {
+      await page.emulateMedia({ media: 'screen', colorScheme: 'light' });
+      await designCss(page, `${AUTO} ${schemeCss(scheme)}`);
+      expect(isDarkSurface((await measureCode(page)).code), `前提: ${scheme} は画面では暗い地`).toBe(true);
+
+      // 紙は白地で背景が刷られないので、明るい文字が読めなくなる
+      await page.emulateMedia({ media: 'print', colorScheme: 'light' });
+      const colors = await measureCode(page);
+
+      expect(isDarkSurface(colors.code), `${scheme} のコードブロック ${colors.code.text} on ${colors.code.background}`).toBe(false);
+      expect(colors.code.text, scheme).toBe(colors.body.text);
+    }
+  });
+});
+
+/**
  * 要素を撮った画像の1点の色。別ドメインの iframe の中は page.evaluate から読めないので、撮った画像から読む
  * @param {any} page
  * @param {import('@playwright/test').Locator} locator

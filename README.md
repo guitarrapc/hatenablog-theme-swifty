@@ -25,7 +25,7 @@ JavaScriptのカスタマイズを追加すると、次の機能も使えます(
 デザインCSSでCSS変数を上書きして変更できます。
 
 ```css
-/* 配色(mint: 既定、blue・pink・yellow・purple: ほぼ白のグレーに各色のアクセント、beige: ベージュとくすんだ緑、dusty-pink: くすみピンク、apricot: ピーチベージュとアプリコットピンク、navy: ほぼ白とネイビー、pink-green: 濃いピンクと緑) */
+/* 配色(mint: 既定、blue・pink・yellow・purple: ほぼ白のグレーに各色のアクセント、beige: ベージュとくすんだ緑、dusty-pink: くすみピンク、apricot: ピーチベージュとアプリコットピンク、navy: ほぼ白とネイビー、pink-green: 濃いピンクと緑、ink: ほぼ白と濃い青に濃紺のコードブロック、zenn: 青みのグレーと明るい青に黒に近い紺のコードブロック、qiita: グレーと緑に黒に近いグレーのコードブロック) */
 :root { --swifty-scheme: blue; }
 
 /* ダークモード(未指定: OSに合わせる、light: 常にライト、dark: 常にダーク) */

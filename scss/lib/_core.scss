@@ -1,3 +1,4 @@
+@use "sass:map";
 @use "./_variable" as var;
 
 :root {
@@ -96,6 +97,35 @@ $dark-condition: "(style(--swifty-color-mode: dark) or (style(--swifty-os-color-
         @container #{$dark-condition} and style(--swifty-scheme: #{$name}) {
             body {
                 @include var.css-variables(var.changed-entries(var.$dark-theme, $map));
+            }
+        }
+    }
+
+    /*
+     * ライトでもコードブロックを暗い地にする配色(ink・zenn・qiita。theme-design-spec.md の「配色の切り替え」を参照)。
+     * コードブロックの中だけ、配色の変数を暗い地の色に置き換える。帯・ボタン・ハイライトはどれも配色の変数で色を決めているので、
+     * コードブロックのスタイル(_codeblock.scss)は変えずに、そろって暗い地の色になる。
+     * ダークでも同じ色にする配色(zenn・qiita)のほかは、ダークのときは置き換えず、body に置いたダークの配色をそのまま使う。
+     * 印刷では置き換えない(@media screen)。紙は白地で、明るい文字が読めなくなるため
+     */
+    @each $name, $block in var.$scheme-code-blocks {
+        $condition: "style(--swifty-scheme: #{$name})";
+        @if not map.get($block, "dark") {
+            $condition: "#{$condition} and (not #{$dark-condition})";
+        }
+
+        @container #{$condition} {
+            .entry-content pre:not(.lang-aa),
+            .code-block {
+                @include var.css-variables(map.get($block, "colors"));
+                // スクロールバーなど、ブラウザが描く部品も暗い地に合わせる
+                color-scheme: dark;
+            }
+
+            // キーボードで横にスクロールするときのフォーカスの枠は、内側に描く。
+            // 外側(カードの上)に描くと、暗い地に合わせた明るい枠の色がカードの白に対して3:1に届かない
+            .entry-content pre:not(.lang-aa):focus-visible {
+                outline-offset: -2px;
             }
         }
     }

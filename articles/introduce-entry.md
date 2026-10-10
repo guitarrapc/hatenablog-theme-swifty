@@ -121,6 +121,9 @@ print(f"Total = {sum(points, Point(0, 0))}")
 | `apricot` | <figure class="figure-image figure-image-fotolife" title="apricotのライト">[f:id:guitarrapc_tech:20261009191610p:plain]<figcaption>apricotのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="apricotのダーク">[f:id:guitarrapc_tech:20261009191624p:plain]<figcaption>apricotのダーク</figcaption></figure> |
 | `navy` | <figure class="figure-image figure-image-fotolife" title="navyのライト">[f:id:guitarrapc_tech:20261009191645p:plain]<figcaption>navyのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="navyのダーク">[f:id:guitarrapc_tech:20261009191658p:plain]<figcaption>navyのダーク</figcaption></figure> |
 | `pink-green` | <figure class="figure-image figure-image-fotolife" title="pink-greenのライト">[f:id:guitarrapc_tech:20261009191718p:plain]<figcaption>pink-greenのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="pink-greenのダーク">[f:id:guitarrapc_tech:20261009191733p:plain]<figcaption>pink-greenのダーク</figcaption></figure> |
+| `ink` | <figure class="figure-image figure-image-fotolife" title="inkのライト">[f:id:guitarrapc_tech:20261011013111p:plain]<figcaption>inkのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="inkのダーク">[f:id:guitarrapc_tech:20261011013126p:plain]<figcaption>inkのダーク</figcaption></figure> |
+| `zenn` | <figure class="figure-image figure-image-fotolife" title="zennのライト">[f:id:guitarrapc_tech:20261011013148p:plain]<figcaption>zennのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="zennのダーク">[f:id:guitarrapc_tech:20261011013207p:plain]<figcaption>zennのダーク</figcaption></figure> |
+| `qiita` | <figure class="figure-image figure-image-fotolife" title="qiitaのライト">[f:id:guitarrapc_tech:20261011014655p:plain]<figcaption>qiitaのライト</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="qiitaのダーク">[f:id:guitarrapc_tech:20261011014706p:plain]<figcaption>qiitaのダーク</figcaption></figure> |
 
 <!-- screenshots/scheme-mint.png | screenshots/scheme-mint-dark.png -->
 <!-- screenshots/scheme-blue.png | screenshots/scheme-blue-dark.png -->
@@ -132,7 +135,9 @@ print(f"Total = {sum(points, Point(0, 0))}")
 <!-- screenshots/scheme-apricot.png | screenshots/scheme-apricot-dark.png -->
 <!-- screenshots/scheme-navy.png | screenshots/scheme-navy-dark.png -->
 <!-- screenshots/scheme-pink-green.png | screenshots/scheme-pink-green-dark.png -->
-
+<!-- screenshots/scheme-ink.png | screenshots/scheme-ink-dark.png -->
+<!-- screenshots/scheme-zenn.png | screenshots/scheme-zenn-dark.png -->
+<!-- screenshots/scheme-qiita.png | screenshots/scheme-qiita-dark.png -->
 
 ### ダークモード
 
