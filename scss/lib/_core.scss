@@ -101,6 +101,15 @@ $dark-condition: "(style(--swifty-color-mode: dark) or (style(--swifty-os-color-
     }
 }
 
+// はてなスターと共有ボタン(はてなブックマーク・Facebook・LINE)の iframe は、ダークでもライトのままにする。
+// iframe の中はライトの配色の別のページなので、ダークの color-scheme の中に置くと、ブラウザが iframe を不透明な白で塗り、
+// ボタンのまわりに白い四角が出る(theme-design-spec.md の「ダークテーマ」を参照)。
+// スターの iframe はシャドウDOMの中にあって直接は選べないので、入れ物に書いて継承させる
+[data-hatena-star-container],
+.social-buttons iframe {
+    color-scheme: light;
+}
+
 html {
     // 目次などからページ内の見出しへ飛んだとき、見出しを画面の上端に貼り付けない
     scroll-padding-top: 24px;
