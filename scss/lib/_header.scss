@@ -1,5 +1,13 @@
 @use "./_variable" as var;
 
+// 「読者になる」ボタンの幅と、左隣のボタン(ダークモードの切り替え)との間隔。ブログのヘッダーの右端にこのぶんを空ける(--subscribe-space)
+$subscribe-button-width: 99px;
+$subscribe-button-gap: 13px;
+
+// ヘッダーのボタンの右端。記事のカードの右端(スマホではカードの文字の右端)に揃える(#blog-title-inner と同じ計算)
+$header-actions-right: max(var(--header-gutter), calc((100% - var(--layout-max)) / 2));
+
+
 /*
  * ヘッダー (theme-design-spec.md の「ヘッダー」を参照)
  * はてなのヘッダーメニュー(白の帯、テーマから変えられない)の直下に、ブログのヘッダーを同じ白の帯として続ける。
@@ -11,7 +19,7 @@ body {
     --blog-header-height: #{var.$blog-header-height-xs};
     // ブログのヘッダーの右端に「読者になる」ボタン(幅99px)のぶん空けておく幅。
     // ダークモードの切り替えボタン(_color_mode.scss)は、この幅のすぐ左に置く
-    --subscribe-space: 112px;
+    --subscribe-space: #{$subscribe-button-width + $subscribe-button-gap};
     // タイトルの右に空ける幅。ダークモードの切り替えボタンがあれば、そのぶん足す(_color_mode.scss)
     --header-actions-space: var(--subscribe-space);
 
@@ -88,8 +96,7 @@ body {
 .blog-controlls {
     position: absolute;
     top: var(--hatena-globalheader-height);
-    // ヘッダーの文字の右端に揃える(#blog-title-inner と同じ計算)
-    right: max(var(--header-gutter), calc((100% - var(--layout-max)) / 2));
+    right: $header-actions-right;
     display: flex;
     align-items: center;
     height: var(--blog-header-height);
@@ -186,7 +193,20 @@ body {
     // 画像の右上に置く
     .blog-controlls {
         top: calc(var(--hatena-globalheader-height) + 28px);
-        right: calc(max(var(--header-gutter), calc((100% - var(--layout-max)) / 2)) + 12px);
+        right: calc(#{$header-actions-right} + 12px);
         height: auto;
     }
+}
+
+/*
+ * はてなブログProの「ブログにヘッダを表示しない」のとき (theme-design-spec.md の「ヘッダー」を参照)
+ * はてなはヘッダーメニューを隠すだけでなく、「読者になる」の帯(.blog-controlls)も出力しないので、ヘッダーのボタンがなくなる
+ * (hatena-blog-html-structure.md の「ヘッダーメニューと「読者になる」」)。
+ * 代わりに、はてなが出力するのと同じHTML(nav.blog-controlls の中の a.blog-controlls-subscribe-btn。リンク先はブログの購読ページ)を
+ * 「ブログタイトル下」に貼ってもらう。上の指定がそのまま効き、同じ場所に同じ形で出る。
+ * ここでは、ヘッダーメニューを表示しているとき(はてなの「読者になる」がヘッダーにある)に貼ったものを重ねて出さないようにするだけ。
+ * 設定を切り替えても貼り直さなくてよい
+ */
+body:not(.globalheader-off) #top-editarea .blog-controlls {
+    display: none;
 }

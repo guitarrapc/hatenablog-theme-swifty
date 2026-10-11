@@ -133,22 +133,23 @@ test.describe('ヘッダー', () => {
     });
   }
 
-  test('ヘッダーメニューを表示しない設定(はてなブログPro)でも、ボタンはブログのヘッダーの帯の中に並ぶ', async ({ page }) => {
+  test('ヘッダーメニューを表示しない設定(はてなブログPro)では、ブログのヘッダーがページの最上部から始まる', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.DESKTOP);
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
-    await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    await expect(page.locator(SELECTORS.BLOG_HEADER)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
 
-    // はてなはヘッダーメニューを消し、bodyに globalheader-off を付ける
+    // はてなはヘッダーメニューを隠し(display: none)、「読者になる」(.blog-controlls)を出力せず、bodyに globalheader-off を付ける。
+    // 「読者になる」を入れ直すのは js/subscribe-button.js(tests/subscribe-button.spec.js)
     await page.evaluate(() => {
-      document.querySelector('#globalheader-container')?.remove();
+      const globalHeader = document.getElementById('globalheader-container');
+      if (globalHeader) globalHeader.style.display = 'none';
+      document.querySelectorAll('.blog-controlls').forEach((el) => el.remove());
       document.body.classList.add('globalheader-off');
     });
 
     const m = await measure(page);
-    if (!m.blogHeader || !m.button) throw new Error('ヘッダーか読者になるボタンが見つからない');
+    if (!m.blogHeader) throw new Error('ヘッダーが見つからない');
     expect(m.blogHeader.top).toBe(0);
-    expect(m.button.top).toBeGreaterThanOrEqual(m.blogHeader.top);
-    expect(m.button.bottom).toBeLessThanOrEqual(m.blogHeader.bottom);
   });
 
   // ヘッダーの下の余白は、続く要素の上の余白と相殺されるので、ページの作りによらず同じになる

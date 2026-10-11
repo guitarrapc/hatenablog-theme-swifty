@@ -7,6 +7,37 @@
 * ページは大きく分けて、記事部分`<div id="wrapper">`、ブログフッター部分`<aside id="box">`の2つのブロックで構成されます。記事部分の下に、ブログフッター部分があります。
 * 記事部分は、記事ページ、アーカイブページ、アバウトページで構造が異なります。それぞれは別セクションで説明します。
 
+## ヘッダーメニューと「読者になる」
+
+ページの先頭は、はてなのヘッダーメニュー、「読者になる」の帯、ブログ本体の順です。いずれも `body` の直下にあります。
+
+```html
+<body class="page-entry globalheader-ng-enabled">
+  <div id="globalheader-container" data-brand="hatenablog">
+    <iframe id="globalheader" ...></iframe>
+  </div>
+  <nav class="blog-controlls">
+    <div class="blog-controlls-blog-icon"><a href="ブログURL"><img ...></a></div>
+    <div class="blog-controlls-title"><a href="ブログURL">ブログ名</a></div>
+    <a href="https://blog.hatena.ne.jp/{はてなID}/{ブログのドメイン}/subscribe?utm_source=blogs_topright_button&amp;utm_campaign=subscribe_blog&amp;utm_medium=button" class="blog-controlls-subscribe-btn">読者になる</a>
+  </nav>
+  <div id="container">
+    <div id="container-inner">
+      <header id="blog-title">...</header>
+```
+
+* ヘッダーメニュー(`#globalheader-container`)は別ドメインのiframeで、新しいヘッダーでは `body` に `globalheader-ng-enabled` が付きます(高さ56px。旧ヘッダーは37px)。
+* 「読者になる」(`.blog-controlls`)はサーバーが出力します。ブラウザ以外のUser-Agent(curlなど)で取得したHTMLには入らないので、構造を確かめるときはブラウザのUser-Agentで取得します。
+* はてなブログProの「ブログにヘッダを表示しない」では、次のようになります。
+  * `body` に `globalheader-off` が付く
+  * `#globalheader-container` は残り、`style="display: none"` で隠れる。iframeには `src` が付かない(公式ガイドの「要素が消える」とは違う)
+  * `.blog-controlls` は出力されない。テーマがブログのヘッダーに置く「読者になる」はこれなので、ボタンがなくなる(theme-design-spec.md の「ヘッダー」で、同じHTMLをタイトル下に貼ってもらう)
+* 「ブログタイトル下」のHTMLは、`#blog-title` の直後の `<div id="top-editarea">` にそのまま入ります(`body` に `enable-top-editarea` が付く)。
+* はてなの「設定」→「詳細設定」→「読者になるボタン」のHTMLは `<iframe src="https://blog.hatena.ne.jp/{はてなID}/{ブログのドメイン}/subscribe/iframe" allowtransparency="true" frameborder="0" scrolling="no" width="150" height="28">` です。
+  * 中はプロフィールのブログパーツと同じ「読者になる」(`.hatena-module > .hatena-follow-button-box`)で、`body` の背景は透明。ボタン(`.hatena-follow-button`)は文字10px、幅77px(アイコンと全角5文字)、高さ20pxで、上に7pxの余白(`.hatena-follow-button-box` の `margin: .7em 0`)がある。読者が1人以上いると右に読者数の箱が続く(`data-subscribers-count`)
+  * 押すと購読ページ(`…/subscribe?from_url=…&utm_source=iframe_subscribe_button`)を新しいウィンドウで開く。中のスクリプトははてなの `bundle-globalheader.js` で、ハンドラは1つ。中の見た目はテーマから変えられないので、テーマでは使わない(theme-design-spec.md の「ヘッダー」)
+* `body` の末尾(はてなのスクリプトの前)には、`<div id="hidden-subscribe-button" style="display: none;">` に、プロフィールのブログパーツと同じ「読者になる」(`.hatena-follow-button-box`)があります。ヘッダーメニューの設定によらず出力されます。はてなの `hatenablog.js` が、ヘッダーメニューのiframeからの購読のメッセージを受けて開くために使うもので、`.hatena-follow-button-box` すべてへの初期化と合わせて同じボタンにクリックのハンドラが2つ付きます。表示して直接押すと購読ページが2つ開くので、テーマからは使いません。
+
 ## ブログフッター部分
 
 * ブログフッター部分は、ブログパーツを配置する`<div id="box2-inner">`があり、flexboxでブログパーツを配置します。flexboxは、横に最大3つ配置されます。ブログパーツはユーザーがカスタマイズ可能です。
