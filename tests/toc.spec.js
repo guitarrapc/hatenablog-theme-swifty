@@ -363,3 +363,44 @@ test.describe('狭い画面では目次を本文中に表示する', () => {
     expect(layout.next ?? 0).toBeGreaterThanOrEqual(layout.toc.bottom);
   });
 });
+
+test.describe('目次のスクロールでページを動かさない', () => {
+  // 本文の外(body の直下)に足されるフロート目次(.floating-toc)は、このテーマでは画面に固定されずページの最下部に並ぶ。
+  // その中のリンクへ scrollIntoView するとページごと最下部へスクロールするので、表示しない
+  test('body の直下のフロート目次を表示せず、その中のリンクへの scrollIntoView でページが動かない', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.DESKTOP);
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator(SELECTORS.TABLE_OF_CONTENTS)).toBeVisible({ timeout: TIMEOUTS.VERY_LONG });
+    // 後回しにしている本文が描かれて高さが変わると、ブラウザがページのスクロール位置を直すので、先に全部描く
+    await page.addStyleTag({ content: RENDER_ALL });
+
+    const before = await page.evaluate(() => {
+      const floating = document.createElement('div');
+      floating.className = 'floating-toc';
+      const list = /** @type {Element} */ (document.querySelector('.entry-content > .table-of-contents')).cloneNode(true);
+      /** @type {Element} */ (list).className = 'floating-toc-list';
+      floating.appendChild(list);
+      document.body.appendChild(floating);
+
+      scrollTo(0, 600);
+      return {
+        links: floating.querySelectorAll('a').length,
+        display: getComputedStyle(floating).display,
+        room: document.documentElement.scrollHeight - innerHeight - scrollY,
+        scrollY: Math.round(scrollY),
+      };
+    });
+    expect(before.links, '前提: フロート目次にリンクがあること').toBeGreaterThan(0);
+    expect(before.room, '前提: ページが下へスクロールできること').toBeGreaterThan(500);
+    expect(before.scrollY).toBe(600);
+    expect(before.display).toBe('none');
+
+    await page.evaluate(() => {
+      const link = /** @type {Element} */ (document.querySelector('.floating-toc a'));
+      link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
+    // なめらかなスクロールが始まっていれば、この間に動く
+    await page.waitForTimeout(TIMEOUTS.SHORT);
+    expect(await page.evaluate(() => Math.round(scrollY))).toBe(600);
+  });
+});

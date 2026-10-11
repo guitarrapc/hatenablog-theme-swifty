@@ -333,3 +333,9 @@ $toc-summary-icon: 1.4em;
         }
     }
 }
+
+// 目次のスクロールの制御を厳密にする。本文の外(body の直下)に足されるフロート目次は表示せず、
+// その中のリンクへのスクロール(scrollIntoView)でページが動かないようにする (theme-design-spec.md の「目次」を参照)
+body > .floating-toc {
+    display: none;
+}
