@@ -96,6 +96,7 @@
    * 作成日付: `<time class="date entry-date first">`
    * 更新日付: `<span class="date-last-updated">` (トップページでは省略される)
    * カテゴリ: `<div class="entry-categories categories">` (0-複数ありえる)
+   * ソーシャルボタン: `<div class="social-buttons">` (はてなの設定でソーシャルボタンを記事の上にも出すときだけ。記事フッターのものと同じHTMLが、ヘッダーの最後に入る)
 
 2. **記事本文** `<div class="entry-content hatenablog-entry">`
    * 記事本文は、このブロックに直接配置されます
