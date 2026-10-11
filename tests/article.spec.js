@@ -309,7 +309,7 @@ test.describe('この記事を共有', () => {
     await expect(row).toBeHidden();
     // 日付は記事のヘッダーに、「読者になる」はブログのヘッダーに残る
     await expect(page.locator('.entry-header .date')).toBeVisible();
-    await expect(page.locator('.blog-controlls-subscribe-btn')).toBeVisible();
+    await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible();
   });
 
   test('記事下の段(共有・関連記事・コメント欄)は上にだけ線を引き、段が抜けても線を2本並べない', async ({ page }) => {

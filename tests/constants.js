@@ -84,7 +84,9 @@ export const SELECTORS = {
   // ヘッダー関連
   GLOBAL_HEADER: '#globalheader-container',
   BLOG_HEADER: '#blog-title',
-  SUBSCRIBE_BUTTON: '.blog-controlls-subscribe-btn',
+  // 表示されている「読者になる」。開発用ブログはタイトル下にも同じHTMLを貼っていて(theme-design-spec.md の「ヘッダー」)、
+  // ヘッダーメニューを表示している間はテーマがそれを隠すので、page.locator が2つ見つけないよう :visible で絞る(querySelector では使えない)
+  SUBSCRIBE_BUTTON: '.blog-controlls-subscribe-btn:visible',
 
   // 記事関連
   ENTRY: '.entry',
