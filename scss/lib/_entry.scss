@@ -104,7 +104,8 @@
 /*
  * 記事のヘッダー: 1行目にカテゴリ、2行目にタイトル、その下に日付を置く。
  * はてなのHTMLは日付 → タイトル → カテゴリの順なので order で並べ替える。
- * パンくずを表示する設定(--swifty-entry-breadcrumb: show)では、カテゴリを日付の横に置く
+ * パンくずを表示する設定(--swifty-entry-breadcrumb: show)では、カテゴリを日付の横に置く。
+ * はてなの設定でソーシャルボタンを記事の上にも出すときは、日付の行の右に置く(「この記事を共有」を参照)
  */
 .entry-header {
     position: relative;
@@ -575,7 +576,8 @@ $comment-icon-gap: 12px;
 
 /*
  * この記事を共有 (theme-design-spec.md の「記事」の「この記事を共有」を参照)
- * はてなのソーシャルボタン(.social-buttons)を、見出し(--share-label)の付いた1つの段にする。
+ * はてなのソーシャルボタン(.social-buttons)を、記事下では見出し(--share-label)の付いた1つの段にする。
+ * はてなの設定で記事の上にも出すときは、記事のヘッダーの日付の行に、記事下と同じ形のボタンを置く。
  * リンクで出力されるボタンは、テーマのアイコン(文字色で描くロゴ)と名前に揃える。
  * はてなブックマーク・Facebook・LINE は、各サービスのスクリプトが差し込む iframe で、中身は変えられない。
  * はてなの設定でボタンを1つも出さないときは段を作らない。印刷ではソーシャルボタンを出さないので(_print.scss)、画面だけにする
@@ -594,26 +596,18 @@ $share-link-selectors: ();
     $share-link-selectors: list.append($share-link-selectors, list.nth($link, 1), $separator: comma);
 }
 
+// 記事上も記事下と同じく、ボタンが1つもなければ出さない(空の要素が記事のヘッダーの項目になり、日付の行に間隔を足すため)
+.entry-header > .social-buttons:not(:has(> .social-button-item)) {
+    display: none;
+}
+
 @media screen {
-    .entry-footer .social-buttons:has(> .social-button-item) {
+    // ボタンの並びと形は、記事上と記事下で揃える
+    :is(.entry-header, .entry-footer) .social-buttons:has(> .social-button-item) {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 8px 20px;
-        margin: $footer-section-gap 0 0;
-        padding-block: 16px;
-        border-top: 1px solid var(--border);
-
-        // 見出し。ボタンを右へ寄せる。スマホでは見出しを1行にし、ボタンはその下の行に左から並べる
-        &::before {
-            @include var.footer-section-label;
-            content: var(--share-label);
-            margin-right: auto;
-
-            @media #{var.$mq-xs} {
-                flex-basis: 100%;
-            }
-        }
 
         > .social-button-item {
             display: flex;
@@ -680,6 +674,45 @@ $share-link-selectors: ();
         }
     }
 
+    // 記事下: 見出しの付いた1つの段にする
+    .entry-footer .social-buttons:has(> .social-button-item) {
+        margin: $footer-section-gap 0 0;
+        padding-block: 16px;
+        border-top: 1px solid var(--border);
+
+        // 見出し。ボタンを右へ寄せる。スマホでは見出しを1行にし、ボタンはその下の行に左から並べる
+        &::before {
+            @include var.footer-section-label;
+            content: var(--share-label);
+            margin-right: auto;
+
+            @media #{var.$mq-xs} {
+                flex-basis: 100%;
+            }
+        }
+    }
+
+    // 記事上: 記事のヘッダーの日付の行の右端に置く(記事下の「見出しを左、ボタンを右」と同じ並び)。
+    // 記事のヘッダーの下の線が区切りになるので、見出しや線は付けない。
+    // はてなのHTMLでは記事のヘッダーの最後にあり、order を付けないとタイトルと日付の間に入る
+    .entry-header > .social-buttons:has(> .social-button-item) {
+        order: 3;
+        margin: 0;
+
+        // スマホでは日付の下の行に左から並べる
+        @media #{var.$mq-xs} {
+            flex-basis: 100%;
+        }
+    }
+
+    // 日付(パンくずを表示するときは、その横のカテゴリ)とボタンの間を空白で埋めて、ボタンを右端へ押す。
+    // ボタンに margin-left: auto を付けると、ボタンが多くて次の行に送られたときも右に寄り、左端が揃わない。
+    // 空白で押せば、送られたボタンは左から並ぶ
+    .entry-header:has(> .social-buttons > .social-button-item)::after {
+        content: "";
+        order: 2;
+        flex-grow: 1;
+    }
 }
 
 // 記事下の「書いた人・投稿してからの時間・読者になる」の行は出さない(theme-design-spec.md の「記事」を参照)。

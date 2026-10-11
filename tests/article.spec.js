@@ -433,6 +433,161 @@ test.describe('この記事を共有', () => {
     // ほかのボタン(先頭のボタン)と上下中央が揃う
     expect((m.button.top + m.button.bottom) / 2).toBeCloseTo((m.other.top + m.other.bottom) / 2, 1);
   });
+
+  test.describe('記事上のソーシャルボタン', () => {
+    /**
+     * 記事上のソーシャルボタンを用意する。はてなは、記事下と同じHTMLを記事のヘッダーの最後に出力する(2026年10月に開発用ブログで出力されたもの)。
+     * 開発用ブログの設定で記事の上に出していなければ、同じ形のHTMLを差し込む。buttons を渡すと、ボタンをその並びに入れ替える
+     */
+    const prepareHeaderShare = async (/** @type {import('@playwright/test').Page} */ page, /** @type {string[] | undefined} */ buttons = undefined) => {
+      await expect(page.locator('.entry-header > .entry-title'), '前提: 記事のヘッダーがあること').toBeAttached();
+      await page.evaluate(({ buttons, fallback }) => {
+        const items = (/** @type {string[]} */ markups) => markups.map((markup) => `<div class="social-button-item">${markup}</div>`).join('');
+        const header = /** @type {Element} */ (document.querySelector('.entry-header'));
+        if (!header.querySelector(':scope > .social-buttons')) header.insertAdjacentHTML('beforeend', `<div class="social-buttons">${items(fallback)}</div>`);
+        if (buttons) /** @type {Element} */ (header.querySelector(':scope > .social-buttons')).innerHTML = items(buttons);
+      }, { buttons, fallback: [SHARE_MARKUP.twitter, SHARE_MARKUP.bluesky] });
+    };
+
+    /** 記事のヘッダーの内側の左右の端と、中の要素の位置 */
+    const measureHeader = (/** @type {import('@playwright/test').Page} */ page) => page.evaluate(() => {
+      const header = /** @type {Element} */ (document.querySelector('.entry-header'));
+      const rect = (/** @type {string} */ selector) => header.querySelector(selector)?.getBoundingClientRect().toJSON() ?? null;
+      const s = getComputedStyle(header);
+      return {
+        left: header.getBoundingClientRect().left + parseFloat(s.paddingLeft),
+        right: header.getBoundingClientRect().right - parseFloat(s.paddingRight),
+        title: rect(':scope > .entry-title'),
+        date: rect(':scope > .date'),
+        categories: rect(':scope > .entry-categories'),
+        social: rect(':scope > .social-buttons'),
+        firstButton: rect(':scope > .social-buttons > .social-button-item'),
+      };
+    });
+
+    test('ボタンは記事下と同じ形にし、段の見出しや線は付けない', async ({ page }) => {
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await prepareHeaderShare(page);
+      await expect(page.locator('.entry-footer .social-buttons > .social-button-item').first(), '前提: 記事下のソーシャルボタンがあること').toBeAttached();
+      // 記事上と記事下のどちらにも、同じボタンがあるようにする
+      await page.evaluate((markup) => {
+        for (const buttons of document.querySelectorAll('.entry-header > .social-buttons, .entry-footer .social-buttons')) {
+          if (!buttons.querySelector('.entry-share-button-bluesky')) buttons.insertAdjacentHTML('beforeend', `<div class="social-button-item">${markup}</div>`);
+        }
+      }, SHARE_MARKUP.bluesky);
+      await expect(page.locator('.entry-header a.entry-share-button-bluesky')).toBeVisible();
+
+      const m = await page.evaluate(() => {
+        const shape = (/** @type {string} */ selector) => {
+          const el = /** @type {Element} */ (document.querySelector(selector));
+          const s = getComputedStyle(el);
+          const icon = getComputedStyle(el, '::before');
+          const rect = el.getBoundingClientRect();
+          return {
+            width: rect.width,
+            height: rect.height,
+            color: s.color,
+            fontSize: s.fontSize,
+            background: s.backgroundImage,
+            backgroundColor: s.backgroundColor,
+            radius: s.borderTopLeftRadius,
+            borderBottom: [s.borderBottomWidth, s.borderBottomColor],
+            iconMask: icon.maskImage,
+            iconColor: icon.backgroundColor,
+            iconSize: [icon.width, icon.height],
+            label: getComputedStyle(el, '::after').content,
+          };
+        };
+        const section = /** @type {Element} */ (document.querySelector('.entry-header > .social-buttons'));
+        const s = getComputedStyle(section);
+        return {
+          header: shape('.entry-header a.entry-share-button-bluesky'),
+          footer: shape('.entry-footer a.entry-share-button-bluesky'),
+          section: { label: getComputedStyle(section, '::before').content, borders: [s.borderTopWidth, s.borderBottomWidth], padding: [s.paddingTop, s.paddingBottom], margin: [s.marginTop, s.marginBottom] },
+        };
+      });
+      expect(m.header).toEqual(m.footer);
+      expect(m.header.label).toContain('"Bluesky"');
+      expect(m.header.iconMask).toContain('data:image/svg+xml');
+      expect(m.header.height).toBe(32);
+      // 記事のヘッダーの下の線が区切りになるので、段の見出し・線・余白は付けない
+      expect(m.section).toEqual({ label: 'none', borders: ['0px', '0px'], padding: ['0px', '0px'], margin: ['0px', '0px'] });
+    });
+
+    test('広い画面では、日付の行の右端に置く', async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.DESKTOP);
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await prepareHeaderShare(page);
+      const m = await measureHeader(page);
+      expect(m.categories, '前提: カテゴリのある記事であること').not.toBeNull();
+
+      // はてなのHTMLでは記事のヘッダーの最後(カテゴリの後)にあるが、カテゴリ → タイトル → 日付とボタンの行、の順に並べる
+      expect(m.title.top).toBeGreaterThanOrEqual(m.categories.bottom);
+      expect(m.social.top).toBeGreaterThanOrEqual(m.title.bottom);
+      // 日付と同じ行で、上下中央を揃える。日付は左端、ボタンは右端
+      expect((m.social.top + m.social.bottom) / 2).toBeCloseTo((m.date.top + m.date.bottom) / 2, 0);
+      expect(m.date.left).toBeCloseTo(m.left, 0);
+      expect(m.social.left).toBeGreaterThan(m.date.right);
+      expect(m.social.right).toBeCloseTo(m.right, 0);
+    });
+
+    test('パンくずを表示するときも、日付とカテゴリの行の右端に置く', async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.DESKTOP);
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await page.addStyleTag({ content: ':root { --swifty-entry-breadcrumb: show; }' });
+      await prepareHeaderShare(page);
+      const m = await measureHeader(page);
+      expect(m.categories, '前提: カテゴリのある記事であること').not.toBeNull();
+
+      // カテゴリは日付のすぐ横(間隔12px)に残り、ボタンだけが右端に寄る
+      expect(m.categories.left, '前提: カテゴリが日付の横にあること').toBeGreaterThan(m.date.right);
+      expect(m.categories.left - m.date.right).toBeLessThan(13);
+      expect(m.social.left).toBeGreaterThan(m.categories.right);
+      expect(m.social.right).toBeCloseTo(m.right, 0);
+      expect((m.social.top + m.social.bottom) / 2).toBeCloseTo((m.date.top + m.date.bottom) / 2, 0);
+    });
+
+    test('日付の行に収まらないときは、次の行に左から並べる', async ({ page }) => {
+      // タブレットの最小の幅(記事のカードがいちばん狭い)で、ボタンを多く出す
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await prepareHeaderShare(page, [...Object.values(SHARE_MARKUP), SHARE_MARKUP.twitter, SHARE_MARKUP.mastodon]);
+      const m = await measureHeader(page);
+
+      expect(m.date.width + m.social.width, '前提: 日付とボタンが1行に収まらないこと').toBeGreaterThan(m.right - m.left);
+      // 幅いっぱいだと、左右のどちらに寄せても同じ位置になる
+      expect(m.social.width, '前提: ボタンだけなら1行に収まること').toBeLessThan(m.right - m.left - 1);
+      expect(m.social.top).toBeGreaterThanOrEqual(m.date.bottom);
+      expect(m.social.left).toBeCloseTo(m.left, 0);
+    });
+
+    test('スマホでは、日付の下の行に左から並べる', async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.MOBILE);
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      // 日付の横に収まる数でも、下の行に置く
+      await prepareHeaderShare(page, [SHARE_MARKUP.twitter]);
+      const m = await measureHeader(page);
+
+      expect(m.date.right + 24 + m.firstButton.width, '前提: ボタンが日付の横に収まる幅であること').toBeLessThan(m.right);
+      expect(m.social.top).toBeGreaterThanOrEqual(m.date.bottom);
+      expect(m.social.left).toBeCloseTo(m.left, 0);
+      expect(m.firstButton.left).toBeCloseTo(m.left, 0);
+      expect(m.date.left).toBeCloseTo(m.left, 0);
+    });
+
+    test('ボタンが1つもなければ出さず、日付を左端から動かさない', async ({ page }) => {
+      await page.setViewportSize(VIEWPORTS.DESKTOP);
+      await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+      await prepareHeaderShare(page, []);
+      const empty = page.locator('.entry-header > .social-buttons');
+      await expect(empty, '前提: 空の .social-buttons があること').toBeAttached();
+      await expect(empty).toBeHidden();
+
+      // 空の要素が記事のヘッダーの項目になると、日付の前に間隔が入る
+      const m = await measureHeader(page);
+      expect(m.date.left).toBeCloseTo(m.left, 0);
+    });
+  });
 });
 
 test.describe('コメント欄', () => {
