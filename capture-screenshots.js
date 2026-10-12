@@ -31,8 +31,15 @@ const REGION_VIEWPORT_HEIGHT = 1600;
 // 撮る範囲の周りの余白
 const REGION_PADDING = 24;
 
-// テーマストアの画像(theme-store-catch.html)で、ダークのスマートフォンの前に置くライトの配色
-const STORE_SCHEMES = ['pink'];
+/**
+ * テーマストアの画像(theme-store-catch.html)に並べる記事の配色。手前から順に並べる
+ * @type {{ scheme: string, dark?: boolean }[]}
+ */
+const STORE_SHEETS = [{ scheme: 'mint' }, { scheme: 'pink-green' }, { scheme: 'beige' }, { scheme: 'mint', dark: true }];
+
+// テーマストアの画像の記事に出すタイトルとカテゴリ。記事を拡大して見せるので、サンプル記事の確認用の文言
+// (「サンプルエントリー」「test / テスト」)を、本文(宮沢賢治「ポラーノの広場」)に合わせたものに差し替える
+const STORE_ARTICLE = { title: 'ポラーノの広場', categories: ['読書', '宮沢賢治'] };
 
 /**
  * 配色の表に載せる色。customize-entry.md の「色のCSS変数」と同じ名前で書く
@@ -71,9 +78,10 @@ const BOOKMARK_COMMENTS = [
  *   dark?: boolean,
  *   scheme?: string,
  *   region?: Region,
+ *   pixelRatio?: number,
  *   setup?: (page: import('@playwright/test').Page) => Promise<void>,
  *   prepare?: (page: import('@playwright/test').Page) => Promise<void>,
- * }} Shot setup はページを開く前(通信の差し替えなど)、prepare は開いた後(スクロールや操作)に呼ぶ
+ * }} Shot pixelRatio は撮る解像度の倍率(省略すると1倍)。setup はページを開く前(通信の差し替えなど)、prepare は開いた後(スクロールや操作)に呼ぶ
  */
 
 /** @type {Shot[]} */
@@ -172,12 +180,15 @@ const SHOTS = [
     scheme,
     dark,
   }))),
-  // テーマストアの画像(theme-store-catch.html)のスマートフォン(ダークは smartphone-article-top-dark を使う)
-  ...STORE_SCHEMES.map((scheme) => ({
-    name: `store-smartphone-${scheme}`,
+  // テーマストアの画像(theme-store-catch.html)に並べる記事。
+  // 縮めて傾けても文字がにじまないよう2倍の解像度で撮り、タイトルとカテゴリは画像用の文言に差し替える
+  ...STORE_SHEETS.map(({ scheme, dark = false }) => ({
+    name: `store-article-${scheme}${dark ? '-dark' : ''}`,
     path: TEST_URLS.SAMPLE_ARTICLE,
-    device: /** @type {const} */ ('smartphone'),
     scheme,
+    dark,
+    pixelRatio: 2,
+    prepare: replaceStoreArticleText,
   })),
 ];
 
@@ -198,6 +209,21 @@ async function scrollToHeading(page, text) {
   await scroll();
   // いま読んでいる見出し(:target-current)と、目次の中のスクロール(js/toc-toggle.js)が追いつくのを待つ
   await page.waitForTimeout(1000);
+}
+
+/**
+ * 記事のタイトルとカテゴリを、テーマストアの画像用の文言(STORE_ARTICLE)に差し替える
+ * @param {import('@playwright/test').Page} page
+ */
+async function replaceStoreArticleText(page) {
+  await page.evaluate(({ title, categories }) => {
+    const titleLink = document.querySelector('.entry-header .entry-title-link');
+    const categoryLinks = [...document.querySelectorAll('.entry-header .entry-category-link')];
+    if (!titleLink || categoryLinks.length < categories.length) throw new Error('記事のタイトルかカテゴリが見つからない');
+    titleLink.textContent = title;
+    // 余ったカテゴリは外す
+    categoryLinks.forEach((link, i) => (i < categories.length ? link.textContent = categories[i] : link.remove()));
+  }, STORE_ARTICLE);
 }
 
 /**
@@ -305,6 +331,7 @@ async function capture(browser, shot) {
     // Chromium 141以降で、HTTPSの開発用ブログから開発サーバー(http://localhost)を読み込むのに要る
     permissions: ['local-network-access'],
     viewport: shot.region ? { width: device.width, height: REGION_VIEWPORT_HEIGHT } : device,
+    deviceScaleFactor: shot.pixelRatio ?? 1,
     colorScheme: shot.dark ? 'dark' : 'light',
   });
   try {

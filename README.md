@@ -243,7 +243,7 @@ npm run logo
 
 ### テーマストアの画像を作る
 
-[theme-store-catch.html](theme-store-catch.html)を、はてなブログのテーマストアに載せる620×460の画像(`theme-store-catch.png`)にします。画面の画像は`articles/screenshots/`のものを使うので、テーマの見た目を変えたら先に`npm run screenshots`で撮り直してください。文字にWebフォントを使うので、ネットにつながっている必要があります。
+[theme-store-catch.html](theme-store-catch.html)を、はてなブログのテーマストアに載せる620×460の画像(`theme-store-catch.png`)にします。記事の画像は`articles/screenshots/store-article-*.png`を使うので、テーマの見た目を変えたら先に`npm run screenshots -- store-article`で撮り直してください。文字にWebフォントを使うので、ネットにつながっている必要があります。
 
 ```shell
 npm run theme-store

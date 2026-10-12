@@ -34,7 +34,7 @@
 | package.json | npmのパッケージファイル |
 | playwright.config.js | Playwrightの設定ファイル |
 | README.md | このリポジトリの説明 |
-| theme-store-catch.html | テーマストアの画像の元のページ。画面の画像は `articles/screenshots/` のもの、色見本は各配色のライトの `--accent` |
+| theme-store-catch.html | テーマストアの画像の元のページ。記事の画像は `articles/screenshots/store-article-*.png`(`capture-screenshots.js` の `STORE_SHEETS` の配色を、2倍の解像度と画像用のタイトル・カテゴリで撮ったもの)を使う |
 | theme-store-catch.png | テーマストアの画像(620×460。はてなの指定する大きさ) |
 | server.js | ローカル開発サーバーの動作ファイル |
 | vite.config.js | Viteの設定ファイル |

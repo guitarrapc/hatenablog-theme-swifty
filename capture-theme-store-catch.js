@@ -3,7 +3,7 @@
  * はてなブログのテーマストアに載せる画像(theme-store-catch.png)を、theme-store-catch.html から作る。
  *
  * `npm run theme-store` で実行する。テーマストアの画像は620×460ピクセル(JPEG・PNG・GIF)。
- * 画面の画像は articles/screenshots/ のもの(npm run screenshots で撮る)を使うので、テーマの見た目を変えたら先に撮り直す。
+ * 記事の画像は articles/screenshots/store-article-*.png(npm run screenshots -- store-article で撮る)を使うので、テーマの見た目を変えたら先に撮り直す。
  * 文字はWebフォント(Google Fonts)を使うので、ネットにつながっている必要がある。
  */
 import { chromium } from '@playwright/test';
