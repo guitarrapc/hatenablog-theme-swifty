@@ -11,7 +11,7 @@ Fixture記事は、開発用ブログ([blog.config.js](../blog.config.js) の `B
 | ファイル | 内容 |
 | ---- | ---- |
 | [introduce-entry.md](introduce-entry.md) | テーマの特徴、導入方法、導入後の設定(レスポンシブデザイン、JavaScriptの追加) |
-| [customize-entry.md](customize-entry.md) | デザインCSSで変えられる項目(配色、ダークモード、色、見出しの文言、本文の幅と角丸、パンくずリスト、フォント) |
+| [customize-entry.md](customize-entry.md) | デザインCSSで変えられる項目(配色、ダークモード、色、見出しの文言、本文の幅と角丸、パンくずリスト、フォント)と、HTMLやJavaScriptを貼り付けて使うもの(ヘッダを表示しないときの「読者になる」ボタン、はてなブックマークコメントの見た目) |
 
 * 画像は `screenshots/` を相対パスで参照しています(GitHubやエディタのプレビューで確かめられる)。投稿するときは、はてなフォトライフにアップロードして `[f:id:...:plain:alt=...]` に差し替えます。
 * 画像はリポジトリのルートの `capture-screenshots.js`(`npm run screenshots`)で撮ります。開発用ブログの記事を開いて撮るので、開発サーバーを起動しておきます。

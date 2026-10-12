@@ -106,7 +106,63 @@
    * 著者と記事日付: `<div class="entry-footer-selection">`
    * ソーシャルボタン: `<div class="social-buttons">`
    * カスタマイズフッター: `<div class="customized-footer">`
+     * はてなブックマークコメント: `<iframe class="hatena-bookmark-comment-iframe">` (はてなの設定で表示するときだけ。カスタマイズフッターの先頭に入る)
    * コメント: `<div class="comment-box js-comment-box">`
+
+### カスタマイズフッターのはてなブックマークコメント
+
+はてなの設定で記事にはてなブックマークのコメントを表示すると(「デザイン」→「カスタマイズ」→「記事」の「ソーシャルパーツ」の「はてなブックマークコメント」)、カスタマイズフッターの先頭に iframe が出力されます(記事ページだけ。2026年10月に確認):
+
+```html
+<div class="customized-footer">
+  <iframe class="hatena-bookmark-comment-iframe" data-src="https://ブログのドメイン/iframe/hatena_bookmark_comment?canonical_uri=記事のURL" frameborder="0" scrolling="no" style="border: none; width: 100%;">
+  </iframe>
+  <div class="entry-footer-modules" id="entry-footer-secondary-modules"><!-- 関連記事など --></div>
+</div>
+```
+
+* iframe は `src` を持たず、はてなのスクリプト(`hatenablog.js`)がページの準備ができたときに、中を `data-src` のURL(ブログと同じドメイン)へ移します。
+* 中のページは、はてなブックマークのスクリプト(`https://b.hatena.ne.jp/js/bookmark_blogparts.js` の `HBBlogParts`)がAPI(JSONP)の応答からコメントを描き、はてなのCSS(`https://b.st-hatena.com/css/blogparts/basic.css`)を足します。`HBBlogParts.useUserCSS` が `true` なら、はてなのCSSは足されません。
+* 中のページは1秒ごとに `body` の高さを測ってページに伝え、ページ側が iframe の高さ(`style` 属性)を「中身 + 30px」にします。
+
+中のHTML(はてなブックマークのスクリプトが描く):
+
+```html
+<div class="hatena-bookmark-container" id="hatena-bookmark-container">
+  <div class="hatena-bookmark-title">
+    <div class="hatena-bookmark-entry-navigator">
+      <div class="hatena-bookmark-comment-header">
+        <a href="はてなブックマークのこの記事のページ">はてなブックマークでのコメント </a>
+        <span class="hatena-bookmark-users">(公開の数 + 非公開の数)</span>
+      </div>
+    </div>
+  </div>
+  <ul id="hatena-bookmark-list-container">
+    <li class="hatena-bookmark-item hatena-bookmark-addcomment-container">
+      <div class="hatena-bookmark-addcomment"><a href="ブックマークの追加ページ">はてなブックマークでコメントする</a></div>
+    </li>
+    <li class="hatena-bookmark-item" style="display: block;">
+      <span class="hatena-bookmark-user-info">
+        <img class="hatena-bookmark-profile-image" width="16" height="16" src="…/profile_s.gif">
+        <a class="hatena-bookmark-username" href="このブックマークのページ">はてなID</a>
+      </span>
+      <span class="hatena-bookmark-tags"><a class="hatena-bookmark-user-tag" href="…">タグ</a></span>
+      <span class="hatena-bookmark-comment">コメント</span>
+      <span class="hatena-bookmark-timestamp">2026/10/10</span>
+      <span class="hatena-bookmark-star"><img src="スターの数の画像" style="height: 10px;"></span>
+    </li>
+  </ul>
+  <div class="hatena-bookmark-footer">
+    <div class="hatena-bookmark-showall-comment"><span class="hatena-bookmark-span-button">すべてのコメントを表示する</span></div>
+    <div class="hatena-bookmark-entrypage-link"><a class="hatena-bookmark-comment-show" href="…" style="display: inline;">はてなブックマークで確認</a></div>
+  </div>
+</div>
+```
+
+* コメントのあるブックマークを3件まで表示し、残りは `style="display: none;"` と `hatena-bookmark-overlimit` を付けて出力します。表示していない項目は、表示するまで中身が空です。
+* コメントのないブックマークには `nocomment` が付き、`hatena-bookmark-comment` は空です。
+* 「すべてのコメントを表示する」は、項目が上限より多いときだけ表示されます(少なければ `hatena-bookmark-showall-comment` に `display: none`)。押すと文言が「元に戻す」になり、`span` に `hatena-bookmark-hide-overlimit` が付きます。
+* ブックマークがないときは、見出しのリンクが「はてなブックマークでのコメント」だけになり、リストは操作と `<li class="hatena-bookmark-item">まだこの記事のブックマークはありません。</li>`、`hatena-bookmark-footer` は空です。
 
 ### カスタマイズフッターの関連記事
 

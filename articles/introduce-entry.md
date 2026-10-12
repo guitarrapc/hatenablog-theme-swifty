@@ -289,7 +289,7 @@ GitHubから導入すると、テーマを更新するたびに貼り直す必�
 
 ### JavaScriptを追加する
 
-使いたい機能のファイルの内容をコピーし、表の場所に貼り付けて保存します。ファイルはリリースのzipにも入っています。
+使いたい機能のファイルの内容をコピーし、表の場所に貼り付けて保存します。
 
 | 機能 | ファイル | 貼り付ける場所 |
 | ---- | ---- | ---- |
@@ -297,6 +297,7 @@ GitHubから導入すると、テーマを更新するたびに貼り直す必�
 | 目次の開閉 | [customize-toc-toggle.html](https://github.com/guitarrapc/hatenablog-theme-swifty/blob/main/customize-toc-toggle.html) | 「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」 |
 | アラート記法 | [customize-alert.html](https://github.com/guitarrapc/hatenablog-theme-swifty/blob/main/customize-alert.html) | 「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」 |
 | ダークモードの切り替え | [customize-dark-mode.html](https://github.com/guitarrapc/hatenablog-theme-swifty/blob/main/customize-dark-mode.html) | 「設定」→「詳細設定」→「headに要素を追加」 |
+| はてなブックマークコメント | [customize-bookmark-comment.html](https://github.com/guitarrapc/hatenablog-theme-swifty/blob/main/customize-bookmark-comment.html) | 「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」 |
 
 ダークモードの切り替えだけは `head` に追加します。ページが表示される前にモードを反映するので、画面がちらつきません。
 

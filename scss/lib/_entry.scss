@@ -545,7 +545,7 @@ $heading-top-levels: (
 
 /*
  * 記事下 (theme-design-spec.md の「記事」の「記事下の段」を参照)
- * 記事下の段(この記事を共有・記事下のブログパーツ・コメント欄)は、どれも上にだけ線を引き、線から16px空けて見出しを置く。
+ * 記事下の段(この記事を共有・はてなブックマークコメント・記事下のブログパーツ・コメント欄)は、どれも上にだけ線を引き、線から16px空けて見出しを置く。
  * 段の間は線1本で区切られ、はてなの設定や記事によって段が抜けても、線は2本並ばない。
  * 最初の段だけ、上(本文やスター)から32px空ける
  */
@@ -563,13 +563,13 @@ $comment-icon-gap: 12px;
         display: none;
     }
 
-    // 共有の段がなければ、ブログパーツが最初の段になる
+    // 共有の段がなければ、ブログパーツの入れ物(はてなブックマークコメント、ブログパーツ)が最初の段になる
     &:not(:has(.social-buttons > .social-button-item)) .customized-footer {
         margin-top: $footer-section-gap;
     }
 
     // コメント欄の前に段があれば、上の余白は前の段に任せる(なければ、コメント欄が最初の段になる)
-    &:has(.social-buttons > .social-button-item, .customized-footer .hatena-module) .comment-box {
+    &:has(.social-buttons > .social-button-item, .customized-footer :is(.hatena-module, .hatena-bookmark-comment-iframe)) .comment-box {
         margin-top: 0;
     }
 }

@@ -48,6 +48,19 @@ const SCHEME_COLORS = [
   ['--accent', 'アクセント'],
 ];
 
+// 記事下のはてなブックマークコメント(はてなが出力する iframe)
+const BOOKMARK_COMMENT_IFRAME = 'iframe.hatena-bookmark-comment-iframe';
+
+// はてなブックマークコメントの画像に出すブックマーク。サンプル記事にブックマークはないので、はてなブックマークのAPIの応答をこれに差し替える。
+// はてなは記事ページでコメントのあるものを3件まで出し、残りがあると「すべてのコメントを表示する」を出す
+const BOOKMARK_COMMENTS = [
+  { user: 'example-user1', color: '#6aa9d8', tags: ['デザイン'], timestamp: '2026/10/10 12:34', comment: '見出しの形が段ごとに違っていて、流し読みでも構成がつかみやすい。' },
+  { user: 'example-user2', color: '#e0a15c', tags: [], timestamp: '2026/10/10 09:02', comment: 'あとで読む' },
+  { user: 'example-user3', color: '#8cc084', tags: ['はてなブログ', 'テーマ'], timestamp: '2026/10/09 23:11', comment: 'ダークモードの配色が落ち着いていて良い。コードブロックの上の帯に言語名が出るのも便利。' },
+  { user: 'example-user4', color: '#b59ad6', tags: [], timestamp: '2026/10/09 20:00', comment: '目次が本文の横に残るのが助かる。' },
+  { user: 'example-user5', color: '#d98b9f', tags: [], timestamp: '2026/10/09 18:45', comment: '' },
+];
+
 /**
  * @typedef {{ selector: string, text?: string }} Target 要素。text を指定すると、中の文字が一致する要素を選ぶ
  * @typedef {{ from: Target, to?: Target, frame?: Target }} Region from の上端から to の下端まで。左右は frame(省略すると from)に合わせる
@@ -58,8 +71,9 @@ const SCHEME_COLORS = [
  *   dark?: boolean,
  *   scheme?: string,
  *   region?: Region,
+ *   setup?: (page: import('@playwright/test').Page) => Promise<void>,
  *   prepare?: (page: import('@playwright/test').Page) => Promise<void>,
- * }} Shot
+ * }} Shot setup はページを開く前(通信の差し替えなど)、prepare は開いた後(スクロールや操作)に呼ぶ
  */
 
 /** @type {Shot[]} */
@@ -124,6 +138,21 @@ const SHOTS = [
       frame: { selector: '#main-inner > .entry' },
     },
   },
+  // はてなブックマークコメント(カスタマイズガイドの「はてなブックマークコメントをテーマの見た目に揃える」)。
+  // JavaScriptを追加する前(テーマのCSSだけ)と、追加した後(js/bookmark-comment.js)。
+  // 開発用ブログではてなブックマークコメントを表示し、headでスクリプトを読み込んでいること
+  ...[false, true].map((script) => ({
+    name: `tablet-bookmark-comment${script ? '' : '-default'}`,
+    path: TEST_URLS.SAMPLE_ARTICLE,
+    device: /** @type {const} */ ('tablet'),
+    setup: (/** @type {import('@playwright/test').Page} */ page) => mockBookmarkComments(page, script),
+    prepare: (/** @type {import('@playwright/test').Page} */ page) => waitForBookmarkComments(page, script),
+    region: {
+      from: { selector: '.entry-footer .social-buttons' },
+      to: { selector: BOOKMARK_COMMENT_IFRAME },
+      frame: { selector: '#main-inner > .entry' },
+    },
+  })),
   // 記事の一覧。開発用ブログのトップページは確認用の記事(Fixture)が並ぶので、サムネイルのある記事が並ぶ2025年のアーカイブで撮る
   ...(/** @type {const} */ (['pc', 'smartphone'])).map((device) => ({
     name: `${device}-archive`,
@@ -169,6 +198,50 @@ async function scrollToHeading(page, text) {
   await scroll();
   // いま読んでいる見出し(:target-current)と、目次の中のスクロール(js/toc-toggle.js)が追いつくのを待つ
   await page.waitForTimeout(1000);
+}
+
+/**
+ * はてなブックマークのAPI(JSONP)とアイコンの応答を、画像用のブックマークに差し替える
+ * @param {import('@playwright/test').Page} page
+ * @param {boolean} script js/bookmark-comment.js を読み込むか(読み込まなければ、はてなの見た目のまま)
+ */
+async function mockBookmarkComments(page, script) {
+  const articleUrl = `${BLOG_URL}${TEST_URLS.SAMPLE_ARTICLE}`;
+  await page.route(/\/\/b\.hatena\.ne\.jp\/entry\/jsonlite\//, (route) => {
+    const callback = new URL(route.request().url()).searchParams.get('callback');
+    const entry = {
+      // 公開していないブックマークが2件あることにする(見出しの「(公開 + 非公開)」に出る)
+      count: BOOKMARK_COMMENTS.length + 2,
+      bookmarks: BOOKMARK_COMMENTS.map(({ user, tags, timestamp, comment }) => ({ user, tags, timestamp, comment })),
+      url: articleUrl, requested_url: articleUrl, eid: '4700000000000000000',
+      entry_url: `https://b.hatena.ne.jp/entry/s/${articleUrl.replace(/^https:\/\//, '')}`, title: '', screenshot: '',
+    };
+    return route.fulfill({ contentType: 'application/javascript; charset=utf-8', body: `${callback}(${JSON.stringify(entry)});` });
+  });
+  // アイコンは、ブックマークごとの色の四角にする。はてなのアイコン(16pxの画像)と同じ大きさを持たせる
+  // (はてなのCSSは img の幅と高さの指定を外すので、大きさのない画像は箱いっぱいに広がる)
+  await page.route(/\/\/cdn\.profile-image\.st-hatena\.com\/users\//, (route) => {
+    const user = new URL(route.request().url()).pathname.split('/')[2];
+    const color = BOOKMARK_COMMENTS.find((bookmark) => bookmark.user === user)?.color ?? '#999999';
+    return route.fulfill({ contentType: 'image/svg+xml', body: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" fill="${color}"/></svg>` });
+  });
+  if (!script) await page.route('**/js/bookmark-comment.js', (route) => route.abort());
+}
+
+/**
+ * はてなブックマークコメントが描かれ、iframe の高さが落ち着くまで待つ
+ * @param {import('@playwright/test').Page} page
+ * @param {boolean} themed テーマの形になるのを待つか
+ */
+async function waitForBookmarkComments(page, themed) {
+  if (themed) await page.locator(`${BOOKMARK_COMMENT_IFRAME}[data-swifty-bookmark-comment="themed"]`).waitFor({ state: 'attached', timeout: 15000 });
+  await page.frameLocator(BOOKMARK_COMMENT_IFRAME).locator('.hatena-bookmark-username').first().waitFor({ state: 'attached', timeout: 15000 });
+  // はてなのスクリプトは1秒ごとに中の高さを測り、iframe の高さを「中身 + 30px」にする
+  await page.waitForFunction((selector) => {
+    const iframe = /** @type {HTMLIFrameElement} */ (document.querySelector(selector));
+    const body = iframe.contentDocument?.body;
+    return Boolean(body) && Math.round(iframe.getBoundingClientRect().height - parseFloat(getComputedStyle(/** @type {HTMLElement} */ (body)).height)) === 30;
+  }, BOOKMARK_COMMENT_IFRAME, { timeout: 15000 });
 }
 
 /**
@@ -236,6 +309,7 @@ async function capture(browser, shot) {
   });
   try {
     const page = await context.newPage();
+    await shot.setup?.(page);
     await page.goto(`${BLOG_URL}${shot.path}`, { waitUntil: 'load', timeout: 60000 });
     // 開発用ブログのデザインCSSで配色を切り替えていても、狙った配色で撮る
     await page.addStyleTag({ content: schemeCss(shot.scheme ?? 'mint') });

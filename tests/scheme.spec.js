@@ -1,5 +1,5 @@
 // @ts-check
-import { test } from './helpers.js';
+import { test, paintedColor } from './helpers.js';
 import { expect } from '@playwright/test';
 import { TEST_URLS, TIMEOUTS, THEME_STYLESHEET, SCHEMES, schemeCss } from './constants.js';
 
@@ -281,29 +281,6 @@ test.describe('コードブロックを暗い地にする配色(ink・zenn・qii
     }
   });
 });
-
-/**
- * 要素を撮った画像の1点の色。別ドメインの iframe の中は page.evaluate から読めないので、撮った画像から読む
- * @param {any} page
- * @param {import('@playwright/test').Locator} locator
- * @param {number} x
- * @param {number} y
- */
-const paintedColor = async (page, locator, x, y) => {
-  // 先に画面内へスクロールし、描画の後回し(content-visibility)が解けて位置が動き終わってから撮る。
-  // 撮るときのスクロールで位置が動くと、要素からずれた場所を撮ってしまう
-  await locator.scrollIntoViewIfNeeded();
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const png = await locator.screenshot();
-  return page.evaluate(async (/** @type {{ base64: string, x: number, y: number }} */ { base64, x, y }) => {
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
-    const context = /** @type {OffscreenCanvasRenderingContext2D} */ (new OffscreenCanvas(bitmap.width, bitmap.height).getContext('2d'));
-    context.drawImage(bitmap, 0, 0);
-    const [r, g, b] = context.getImageData(x, y, 1, 1).data;
-    return `rgb(${r}, ${g}, ${b})`;
-  }, { base64: png.toString('base64'), x, y });
-};
 
 /**
  * ダークテーマのテスト (theme-design-spec.md の「ダークテーマ」を参照)

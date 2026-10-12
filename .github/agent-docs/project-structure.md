@@ -11,7 +11,7 @@
 | articles/ | テーマの紹介記事(`introduce-entry.md`、`customize-entry.md`)と、開発用ブログに投稿して見た目を確かめるFixture記事(Markdown)。投稿のしかたと記事の一覧は `articles/README.md` |
 | assets/ | テーマのロゴ。`logo.svg` が元の画像で、`logo.png`(256px)、`logo_large.png`(1024px)、`logo_mark.png`(READMEの見出し用に余白を除いたもの)は `export-logo.js`(`npm run logo`)でそこから書き出す |
 | build/ | ビルド成果物となるテーマ、本番はてなブログにはこのファイルを配布する |
-| js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉)、`dark-mode.js`(ダークモードの切り替えボタン) |
+| js/ | はてなブログ向けのJavaScriptのソースコード(置くとビルド対象になる)。`alert.js`(アラート記法)、`codeblock.js`(コードブロックのボタン)、`toc-toggle.js`(目次の開閉)、`dark-mode.js`(ダークモードの切り替えボタン)、`bookmark-comment.js`(記事下のはてなブックマークコメントをテーマの形に揃える) |
 | lighthouse-report/ | Lighthouseの計測結果 |
 | node_modules/ | npmのモジュール |
 | screenshots/ | Playwrightで取得したスクリーンショット |
@@ -26,7 +26,7 @@
 | blog.config.js | 開発用ブログのドメインと開発サーバーのポート。開発サーバー、E2Eテスト、Lighthouseが共通で参照する |
 | check-customize.js | `customize-*.html` が `js/` の同じ名前のスクリプトと同じ処理であることを確かめるスクリプト(`npm run check:customize`) |
 | CLAUDE.md | Claude Code向けの指示(`.github/copilot-instructions.md` を読み込む) |
-| customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」(`customize-dark-mode.html` は「headに要素を追加」)に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン)、`customize-toc-toggle.html`(目次の開閉)、`customize-dark-mode.html`(ダークモードの切り替えボタン) |
+| customize-*.html | はてなブログのカスタマイズ用HTML。`js/` と同じ処理を「ブログタイトル下」(`customize-dark-mode.html` は「headに要素を追加」)に貼り付けて使う。`customize-alert.html`(アラート記法)、`customize-codeblock.html`(コードブロックのボタン)、`customize-toc-toggle.html`(目次の開閉)、`customize-dark-mode.html`(ダークモードの切り替えボタン)、`customize-bookmark-comment.html`(はてなブックマークコメント) |
 | export-logo.js | `assets/logo.svg` を `assets/` のPNGに書き出すスクリプト(`npm run logo`) |
 | LICENSE.md | ライセンスファイル |
 | lighthouse.js | 開発用ブログに対してLighthouseを実行するスクリプト |
@@ -57,6 +57,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `lib/_table_of_contents.scss` | 目次を定義します。広い画面では本文の横に常に表示し、開閉(`js/toc-toggle.js`)の見出しの行と閉じたときの帯も定義します。本文のリストの指定を上書きするため `_entry.scss` の後に読み込みます。 |
 | `lib/_archive.scss` | 記事の一覧(トップページの一覧表示、アーカイブ、カテゴリー)を定義します。 |
 | `lib/_modules.scss` | ブログパーツ(サイドバーと記事下)を定義します。 |
+| `lib/_bookmark_comment.scss` | 記事下のはてなブックマークコメント(はてなの iframe)を定義します。iframe を記事下の段の1つとして置く指定と、`js/bookmark-comment.js` がページのCSSを iframe にも読み込ませたときの中の形です。 |
 | `lib/_print.scss` | 印刷用のスタイルを定義します。各コンポーネントを上書きするため最後に読み込みます。 |
 
 機能を足すときは `lib/_<機能名>.scss` を作り、`style.scss` で `_print.scss` より前に `@use` します。
@@ -75,6 +76,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`。変換の規則はローカルのページで確かめる)と見た目 |
 | `tests/heading.spec.js` | 本文の見出し(書き方に合わせた帯・破線・縦棒の割り当て、字間と間隔) |
 | `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ |
+| `tests/bookmark-comment.spec.js` | 記事下のはてなブックマークコメント。テーマのCSSだけのとき(段の線、端を揃える、ダークで白く塗らない、印刷で出さない)と、`js/bookmark-comment.js` を入れたとき(中の形、配色とモードをページに合わせる、テーマの形になる前の中身を描かない) |
 | `tests/dark-mode.spec.js` | ダークモードの切り替えボタン(`js/dark-mode.js`)の置き場所、モードの適用と記憶、読み込み時に別のモードで描かないこと、キーボード操作 |
 | `tests/scheme.spec.js` | 配色の切り替え(`--swifty-scheme`)、知らない名前では既定のまま、`body` に書いた色とはてなの背景設定が優先されること。ライトでもコードブロックを暗い地にする配色(`ink`、`zenn`、`qiita`)が、コードブロックだけを暗くし、印刷では置き換えないこと(ダークでは `ink` は置き換えず、`zenn` と `qiita` は置き換える)。ダークテーマ(OSに合わせる、`--swifty-color-mode`、ダークの背景がはてなの背景設定より優先、印刷はライト) |
 | `tests/toc-follow.spec.js` | 本文の横の長い目次で、いま読んでいる見出しのリンクが見える位置まで目次の中をスクロールすること(`js/toc-toggle.js`) |

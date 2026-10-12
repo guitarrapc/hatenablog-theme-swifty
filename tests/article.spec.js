@@ -312,7 +312,7 @@ test.describe('この記事を共有', () => {
     await expect(page.locator(SELECTORS.SUBSCRIBE_BUTTON)).toBeVisible();
   });
 
-  test('記事下の段(共有・関連記事・コメント欄)は上にだけ線を引き、段が抜けても線を2本並べない', async ({ page }) => {
+  test('記事下の段(共有・はてなブックマークコメント・関連記事・コメント欄)は上にだけ線を引き、段が抜けても線を2本並べない', async ({ page }) => {
     // 記事下の段の上の線と、線から見出しの行までの間隔
     const measureSections = () => page.evaluate(() => {
       const sections = [
@@ -320,15 +320,29 @@ test.describe('この記事を共有', () => {
         ['関連記事', document.querySelector('.entry-footer .customized-footer .hatena-module'), (/** @type {Element} */ el) => el.querySelector('.hatena-module-title')],
         ['コメント欄', document.querySelector('.entry-footer .comment-box'), (/** @type {Element} */ el) => el],
       ];
-      return sections.filter(([, el]) => el).map(([name, el, label]) => {
+      const measured = sections.filter(([, el]) => el).map(([name, el, label]) => {
         const element = /** @type {Element} */ (el);
         const s = getComputedStyle(element);
         const top = element.getBoundingClientRect().top;
         const labelEl = /** @type {(el: Element) => Element} */ (label)(element);
         // 共有とコメント欄の見出しは ::before なので、要素の内側の上端(線と余白の下)で測る
         const labelTop = labelEl === element ? top + element.clientTop + parseFloat(s.paddingTop) : labelEl.getBoundingClientRect().top;
-        return { name, top, bottom: element.getBoundingClientRect().bottom, lines: [s.borderTopWidth, s.borderBottomWidth], labelOffset: Math.round(labelTop - top) };
+        return { name, top, bottom: element.getBoundingClientRect().bottom, lines: [s.borderTopWidth, s.borderBottomWidth], labelOffset: /** @type {number | null} */ (Math.round(labelTop - top)) };
       });
+      // はてなブックマークコメントは、はてなの設定で表示しているときだけある。線は iframe の入れ物の先頭に引く。
+      // 見出しは iframe の中にあるので、ここでは測らない(tests/bookmark-comment.spec.js)
+      const footer = document.querySelector('.entry-footer .customized-footer');
+      const bookmark = footer?.querySelector(':scope > .hatena-bookmark-comment-iframe');
+      if (footer && bookmark) {
+        measured.push({
+          name: 'はてなブックマークコメント',
+          top: footer.getBoundingClientRect().top,
+          bottom: bookmark.getBoundingClientRect().bottom + parseFloat(getComputedStyle(bookmark).marginBottom),
+          lines: [getComputedStyle(footer, '::before').borderTopWidth, '0px'],
+          labelOffset: null,
+        });
+      }
+      return measured.sort((a, b) => a.top - b.top);
     });
 
     for (const [path, expected] of /** @type {const} */ ([
@@ -338,11 +352,11 @@ test.describe('この記事を共有', () => {
       await page.navigateTo(path, { waitFor: 'networkidle' });
       await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
       const sections = await measureSections();
-      expect(sections.map((s) => s.name), `前提: ${path} の記事下の段`).toEqual(expected);
+      expect(sections.map((s) => s.name).filter((name) => name !== 'はてなブックマークコメント'), `前提: ${path} の記事下の段`).toEqual(expected);
       for (const [i, section] of sections.entries()) {
         // 上にだけ線を引き、線から同じ間隔で見出しを置く
         expect(section.lines, `${path} ${section.name}`).toEqual(['1px', '0px']);
-        expect(section.labelOffset, `${path} ${section.name}の見出し`).toBe(17);
+        if (section.labelOffset !== null) expect(section.labelOffset, `${path} ${section.name}の見出し`).toBe(17);
         // 次の段の線は、この段のすぐ下に続く(間に線や余白を挟まない)
         if (i > 0) expect(section.top, `${path} ${section.name}`).toBeCloseTo(sections[i - 1].bottom, 0);
       }
