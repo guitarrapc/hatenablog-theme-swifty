@@ -45,7 +45,7 @@ Fixture記事は、開発用ブログ([blog.config.js](../blog.config.js) の `B
 
 ## はてなの出力を確かめた結果
 
-投稿した記事の実際のHTMLで、はてなの出力を確かめました。結果は仕様書(`.github/agent-docs/theme-design-spec.md`)に反映しています。原稿を足したり書き換えたりしたときも、投稿して実際のHTMLを確かめてください。
+投稿した記事の実際のHTMLで、はてなの出力を確かめました。結果は仕様書(`docs/theme-design-spec.md`)に反映しています。原稿を足したり書き換えたりしたときも、投稿して実際のHTMLを確かめてください。
 
 * `diff` のコードブロックは `pre.code.lang-diff` になり、追加行に `synIdentifier`、削除行に `synSpecial` が付きます(ファイル名の行は `synType`、`@@` は `synStatement`)。テーマはこの行を塗り分けます。
 * ```` ```aa ```` は `pre.lang-aa` にならず、`pre.code.aa`(`data-lang="aa"`)になります。はてなもアスキーアート用のフォントを当てません。

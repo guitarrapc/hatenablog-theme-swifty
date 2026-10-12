@@ -980,6 +980,6 @@ OSのダークモード(`prefers-color-scheme: dark`)のとき、どの配色も
 ## 未対応の項目
 
 * 複数人で書くブログの書いた人: 記事下の「書いた人・投稿してからの時間・読者になる」の行を出さないため(「記事」を参照)、書いた人の名前が記事のどこにも出ない。出したい場合はデザインCSSで `.entry-footer-section { display: block; }` と書けば戻せる
-* タップ領域(WCAG 2.5.8): ブログパーツのはてなブックマーク数(`a.bookmark-widget-counter`)ははてなの画像で、24×24pxに届かない(Lighthouseの `target-size`)。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/.github/agent-docs/theme-design-spec.md) の「タップ領域」に要素ごとの対処がある
-* 固定表示のUIを足す場合: ページ最上部のはてなのヘッダーメニューと「読者になる」ボタンはテーマ側のz-indexでは上に出せないため、縦に避ける必要がある。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/.github/agent-docs/theme-design-spec.md) の「固定表示UI」に、スクロールに応じて押し下げを戻す実装がある
+* タップ領域(WCAG 2.5.8): ブログパーツのはてなブックマーク数(`a.bookmark-widget-counter`)ははてなの画像で、24×24pxに届かない(Lighthouseの `target-size`)。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/docs/theme-design-spec.md) の「タップ領域」に要素ごとの対処がある
+* 固定表示のUIを足す場合: ページ最上部のはてなのヘッダーメニューと「読者になる」ボタンはテーマ側のz-indexでは上に出せないため、縦に避ける必要がある。[CodeFocusの `theme-design-spec.md`](https://github.com/guitarrapc/hatenablog-theme-codefocus/blob/main/docs/theme-design-spec.md) の「固定表示UI」に、スクロールに応じて押し下げを戻す実装がある
 * アニメーションを足す場合: 視差効果を減らす設定(`prefers-reduced-motion: reduce`)では止める

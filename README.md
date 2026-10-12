@@ -295,7 +295,7 @@ hatenablog-theme-swifty/
   ┗ js/
 ```
 
-詳しくは[.github/agent-docs/project-structure.md](.github/agent-docs/project-structure.md)を参照してください。
+詳しくは[docs/project-structure.md](docs/project-structure.md)を参照してください。
 
 ## ライセンス
 
