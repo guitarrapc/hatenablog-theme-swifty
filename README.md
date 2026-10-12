@@ -19,6 +19,7 @@ JavaScriptのカスタマイズを追加すると、次の機能も使えます(
 - 目次の開け閉め(本文の横の目次を閉じると、本文が広がります)と、長い目次でいま読んでいる見出しまでのスクロール
 - 読者によるライト・ダーク・自動の切り替え
 - GitHubと同じアラート記法(`> [!NOTE]` など)
+- 記事下のはてなブックマークコメントを、テーマの配色と形に揃える
 
 ## カスタマイズ
 
@@ -116,6 +117,16 @@ GitHubと同じく、空行で区切ってアラートを続けて書けます�
 > [!TIP]
 > zipの中の[customize-alert.html](customize-alert.html)を、「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けます。
 
+### はてなブックマークコメント
+
+記事の下にはてなブックマークのコメントを表示しているブログ(「デザイン」→「カスタマイズ」→「記事」の「ソーシャルパーツ」で「はてなブックマークコメント」にチェック)向けの機能です。はてなブックマークコメントは別のページ(iframe)として描かれ、テーマのCSSが届かないので、そのままでは、はてなの形(青い帯の付いた灰色の箱)で表示されます。このカスタマイズを追加すると、テーマの配色・書体と、記事下のほかの段(この記事を共有、コメント欄)と同じ形で表示します。
+
+- 配色の切り替えとダークモードにも合わせます。
+- 追加しなくても、記事下の段の1つとして線で区切り、ダークモードでまわりが白く塗られないようにします(箱の中は、はてなの形のままです)。
+
+> [!TIP]
+> zipの中の[customize-bookmark-comment.html](customize-bookmark-comment.html)を、「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けます。
+
 ## 開発環境を構築する
 
 [Node.js](https://nodejs.org/) 22.12以上が必要です。
@@ -146,6 +157,7 @@ npx playwright install chromium
     <script type="text/javascript" src="http://localhost:5173/js/toc-toggle.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/alert.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="http://localhost:5173/js/dark-mode.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://localhost:5173/js/bookmark-comment.js" crossorigin="anonymous"></script>
     ```
 4. [blog.config.js](blog.config.js)の`BLOG_HOST`を、1.のブログのドメイン(例: `example.hatenablog.com`)にします。開発サーバー、E2Eテスト、Lighthouseはこの設定を使います。
 
@@ -255,16 +267,19 @@ hatenablog-theme-swifty/
 ┃   ┣ _table_of_contents.scss   ... 目次(本文の横に常に表示)
 ┃   ┣ _archive.scss             ... 記事の一覧
 ┃   ┣ _modules.scss             ... ブログパーツ
+┃   ┣ _bookmark_comment.scss    ... 記事下のはてなブックマークコメント
 ┃   ┗ _print.scss               ... 印刷用のスタイル
 ┣ js/
 ┃ ┣ codeblock.js        ... コードブロックのボタン
 ┃ ┣ toc-toggle.js       ... 目次の開閉
 ┃ ┣ alert.js            ... アラート記法の変換
-┃ ┗ dark-mode.js        ... ダークモードの切り替えボタン
+┃ ┣ dark-mode.js        ... ダークモードの切り替えボタン
+┃ ┗ bookmark-comment.js ... はてなブックマークコメントをテーマの形に揃える
 ┣ customize-codeblock.html ... コードブロックのボタンの配布用(js/codeblock.jsと同じ処理)
 ┣ customize-toc-toggle.html ... 目次の開閉の配布用(js/toc-toggle.jsと同じ処理)
 ┣ customize-alert.html  ... アラート記法の配布用(js/alert.jsと同じ処理)
 ┣ customize-dark-mode.html ... ダークモードの切り替えボタンの配布用(js/dark-mode.jsと同じ処理)
+┣ customize-bookmark-comment.html ... はてなブックマークコメントの配布用(js/bookmark-comment.jsと同じ処理)
 ┣ tests/                ... PlaywrightのE2Eテスト
 ┣ articles/             ... テーマの紹介記事と、開発用ブログに投稿して見た目を確かめるFixture記事
 ┃ ┗ screenshots/        ... 紹介記事のスクリーンショット

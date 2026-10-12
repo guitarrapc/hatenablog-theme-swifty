@@ -564,6 +564,28 @@ html, body {
 
 ヘッダーメニューを表示しているブログでは、はてなの「読者になる」がヘッダーにあるので、貼ったボタンは表示しません。設定を切り替えても貼り直す必要はありません。
 
+## はてなブックマークコメントをテーマの見た目に揃える
+
+「デザイン」→「カスタマイズ」→「記事」の「ソーシャルパーツ」で「はてなブックマークコメント」にチェックを入れると、記事の下にはてなブックマークのコメントが表示されます。このコメントは、はてなブックマークが別のページとして埋め込むもので、テーマのCSSもデザインCSSも届きません。そのままでは、はてなブックマークの見た目(青い帯の付いた灰色の箱)で表示されます。
+
+テーマの見た目に揃えるには、JavaScriptを追加します。[customize-bookmark-comment.html](https://github.com/guitarrapc/hatenablog-theme-swifty/blob/main/customize-bookmark-comment.html)の内容をコピーし、「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付けて保存します。
+
+| 追加する前 | 追加した後 |
+| ---- | ---- |
+| <figure class="figure-image figure-image-fotolife" title="追加前">[f:id:guitarrapc_tech:20261012130507p:plain]<figcaption>追加前</figcaption></figure> | <figure class="figure-image figure-image-fotolife" title="追加後">[f:id:guitarrapc_tech:20261012130439p:plain]<figcaption>追加後</figcaption></figure> |
+
+<!-- screenshots/tablet-bookmark-comment-default.png | screenshots/tablet-bookmark-comment.png -->
+
+追加すると、次のように表示します。
+
+- 記事の下のほかの段(この記事を共有、コメント欄)と同じ形にします。見出しを左、「はてなブックマークでコメントする」を右に置き、その下にコメントを並べます。
+- 配色(`--swifty-scheme`)とダークモードに合わせます。読者が切り替えボタンで選んだモードにも従います。
+- デザインCSSで変えた色やフォントも、そのまま反映されます。
+
+見出しなどの文言は、はてなブックマークが出しているもので、変えられません。
+
+追加しない場合も、記事の下の段の1つとして線で区切り、ダークモードで箱のまわりが白くならないようにしています。箱の中だけが、はてなブックマークの見た目のままです。
+
 ## うまく反映されないとき
 
 - **色が変わらない**: 配色を切り替えているときは、色を `:root` ではなく `body` に書いてください。

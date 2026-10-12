@@ -1,6 +1,6 @@
 # 個別コンポーネント仕様
 
-JavaScriptを使う機能(アラート記法、コードブロック、目次の開閉、ダークモードの切り替え)の仕様です。見た目は theme-design-spec.md を参照してください。
+JavaScriptを使う機能(アラート記法、コードブロック、目次の開閉、ダークモードの切り替え、はてなブックマークコメント)の仕様です。見た目は theme-design-spec.md を参照してください。
 
 ## アラート記法
 
@@ -228,4 +228,56 @@ theme-design-spec.md の「アラート記法」を参照。
 * SCSS: `scss/lib/_color_mode.scss` - ボタン、選択肢、ヘッダーの場所。ダークテーマの配色は `_variable.scss`(`$dark-theme` など)と `_core.scss`
 * ユーザー設定用: `customize-dark-mode.html`
 * テスト: `tests/dark-mode.spec.js`(ボタン)、`tests/scheme.spec.js`(ダークテーマの切り替え)、`tests/contrast.spec.js`(ダークの配色のコントラスト)
+
+## はてなブックマークコメント
+
+記事下のはてなブックマークコメント(はてなの設定で表示したとき)を、テーマの配色・書体・記事下の段の形に揃える機能です。この機能がなくても、はてなの形のまま、記事下の段の1つとして表示されます。見た目と、JavaScriptなしでは実現できない理由は theme-design-spec.md の「記事」の「はてなブックマークコメント」を参照してください。
+
+### 1. 設計方針
+
+* はてなブックマークコメントは、ブログと同じドメインの iframe(`iframe.hatena-bookmark-comment-iframe`。中は `/iframe/hatena_bookmark_comment`)に、はてなブックマークのスクリプト(`HBBlogParts`)がはてなのCSS(`https://b.st-hatena.com/css/blogparts/basic.css`)で描く。別の文書なので、ページのCSSは届かない
+* 同じドメインなので、ページのスクリプトから iframe の中の文書に触れる。スクリプトは「ページと同じCSSを iframe にも読み込ませる」「はてなのCSSを外す」「ページの配色とモードを伝える」だけを行い、見た目はすべてSCSS(`_bookmark_comment.scss`)で定義する
+  * 中のHTMLは書き換えない。はてなブックマークのスクリプトが描いた要素と操作(「すべてのコメントを表示する」など)をそのまま使う
+  * 色や書体の値をスクリプトに持たせない。ページのCSSをそのまま読み込ませるので、配色の切り替え、デザインCSSでの色の上書き、テーマの更新が、スクリプトを変えずに iframe にも効く
+* iframe が別のドメインになるなど、中に触れないときは、はてなの形のまま表示する
+* テーマのCSSが中の形を持っていること(`:root` の `--swifty-bookmark-comment: themed`)を、最初に確かめる。なければ何もしない。古い版のテーマのCSSのまま、はてなのCSSだけを外して素の形にしないため
+
+### 2. iframe の読み込みと処理のタイミング
+
+* はてなは iframe を `src` なしで出力し、ページの準備ができたら、スクリプトで中を `data-src` のURLへ移す。中のページは、はてなブックマークのAPI(JSONP)を呼び、応答が届いたらコメントを描いて、はてなのCSSを足す
+* スクリプトは、iframe の `load` で中の文書を処理する。`load` はバブリングしないので、`document` でキャプチャして受ける。空の文書(`about:blank`)と読み込み中の文書は処理しない
+* スクリプトが iframe の読み込みより後に実行されたときのために、DOMContentLoaded(それより後に実行されたらすぐ)にも、読み込みが終わっている iframe を処理する
+* 処理した文書には印(`<html data-swifty-embed="bookmark-comment">`)を付け、同じ文書を2回処理しない。テーマのCSSは、この印の下で中の形を決める
+
+### 3. 中の文書への処理
+
+* はてなのCSSを外す
+  * はてなのCSSは箱の中のすべての要素の色・書体・表示をリセットしていて、残すとテーマのCSSが詳細度で負ける
+  * すでに足されていれば `link` を取り除く。まだなら、はてなブックマークのスクリプトの設定(`HBBlogParts.useUserCSS = true`。自分のCSSを使うための設定)で、後から足されないようにする
+* ページの `head` のスタイルシート(`link[rel~="stylesheet"]` と `style`)を、同じ順で中の `head` に複製する。はてなの基本のCSS、テーマ、デザインCSSが入る。`link` のURLは絶対URLにする(相対URLは iframe のURLを基準に解決されるため)
+* ページの配色とモードを、中の `<html>` のインラインスタイルに入れる(テーマのCSSは `<html>` の値をスタイルクエリで判定して配色を切り替える)
+  * `--swifty-scheme`: ページの `<html>` の値をそのまま入れる
+  * `--swifty-color-mode`: ページが描いているモードを、`light` か `dark` で明示して入れる。読者の選択(表示モードのボタンがページの `<html>` に書く)は iframe に届かず、OSの設定も iframe の中のメディアクエリに頼らないため。ページが描いているモードは、テーマが `body` に付ける `color-scheme` で分かる
+  * 読者がモードを切り替えたとき(ページの `<html>` の `style` の変化を `MutationObserver` で見る)と、OSの設定が変わったとき(`matchMedia` の `change`)に入れ直す
+
+### 4. 表示のちらつきを防ぐ
+
+* スクリプトは実行された時点で、ページの `<html>` に `data-swifty-bookmark-comment` を付ける。テーマのCSSは、この属性があるあいだ、処理の終わっていない iframe を見せない(`visibility: hidden`。場所は取ったままにする)
+* 複製した `link` がすべて読み込まれたら(失敗も含む)、iframe に `data-swifty-bookmark-comment="themed"` を付けて見せる。CSSが届く前にはてなブックマークのスクリプトがコメントを描いても、テーマの形になる前の中身は描かれない
+* 中に触れない iframe と、処理の途中で例外が起きた iframe には `data-swifty-bookmark-comment="default"` を付けて、そのまま見せる(見せないままにしない)
+* iframe の高さは、はてなのスクリプトが1秒ごとに中の高さを測って合わせる(theme-design-spec.md の「はてなブックマークコメント」の「iframe の高さ」)。テーマの形にして高さが変わっても、スクリプトは何もしない
+* テストでは、iframe に読み込ませるスタイルシートが届くのを遅らせ、描くフレームごとに iframe の状態を記録して、テーマの形になる前の中身が一度も描かれないことを確かめる
+
+### 5. ユーザー設定方法
+
+* `customize-bookmark-comment.html` の内容を、はてなブログの「デザイン」→「カスタマイズ」→「ヘッダ」→「ブログタイトル下」に貼り付ける。`js/bookmark-comment.js` と同じ処理であることを `npm run check:customize` で確認する
+* はてなブックマークコメントを表示していないブログやページでは、何もしない
+
+### 6. ファイル構成
+
+* JavaScript: `js/bookmark-comment.js`
+* SCSS: `scss/lib/_bookmark_comment.scss` - ページ側(iframe を記事下の段の1つとして置く)と、iframe の中の形。ダークで iframe を白く塗らない指定は `_core.scss`
+* 変数定義: `scss/lib/_variable.scss` - 操作のロゴ(`$svg-share-hatenabookmark`)
+* ユーザー設定用: `customize-bookmark-comment.html`
+* テスト: `tests/bookmark-comment.spec.js`
 

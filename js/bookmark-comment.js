@@ -1,0 +1,133 @@
+/**
+ * Script to make the Hatena Bookmark comments under an article match the theme.
+ * Hatena renders the comments in an iframe on the blog's own domain with a stylesheet of its own, which the theme CSS cannot reach.
+ * This script loads the page's stylesheets into the iframe as well, so the theme styles the comments there
+ * (scss/lib/_bookmark_comment.scss), following the blog's color scheme and dark mode.
+ */
+(function () {
+  'use strict';
+
+  const root = document.documentElement;
+
+  // Run once even if the snippet is pasted twice
+  if (root.hasAttribute('data-swifty-bookmark-comment')) {
+    return;
+  }
+  // The theme CSS styles the comments inside the iframe and says so with this custom property. Without that part
+  // (an older version of the theme), keep Hatena's look rather than removing its stylesheet
+  if (getComputedStyle(root).getPropertyValue('--swifty-bookmark-comment').trim() !== 'themed') {
+    return;
+  }
+  // Tells the theme CSS to keep the iframes out of sight until they are themed, so the comments are never painted in another look first
+  root.setAttribute('data-swifty-bookmark-comment', '');
+
+  const IFRAME = 'iframe.hatena-bookmark-comment-iframe';
+  // Set on the iframe once it can be shown: "themed", or "default" when it is left as Hatena renders it
+  const STATE = 'data-swifty-bookmark-comment';
+  // Set on the iframe's <html>; the theme CSS styles the comments under it
+  const EMBED = 'data-swifty-embed';
+
+  // The theme switches colors with style queries on custom properties of <html>. The iframe's <html> gets the values
+  // the page is using: the color scheme, and the resolved mode (the reader's choice on the page's <html> and the OS
+  // setting do not reach the iframe, so the page's result is passed as an explicit light or dark)
+  function sync(doc) {
+    const style = doc.documentElement.style;
+    const scheme = getComputedStyle(root).getPropertyValue('--swifty-scheme').trim();
+    if (scheme) {
+      style.setProperty('--swifty-scheme', scheme);
+    } else {
+      style.removeProperty('--swifty-scheme');
+    }
+    // The theme sets color-scheme on <body> to the mode it is drawing
+    const dark = getComputedStyle(document.body).colorScheme === 'dark';
+    style.setProperty('--swifty-color-mode', dark ? 'dark' : 'light');
+  }
+
+  function theme(iframe) {
+    const doc = iframe.contentDocument;
+    if (!doc) {
+      // Another origin: the document cannot be reached, so show Hatena's default look
+      iframe.setAttribute(STATE, 'default');
+      return;
+    }
+    // Hatena starts the iframe blank and navigates it once the page is ready; wait for the comments' document to load
+    if (doc.URL === 'about:blank' || doc.readyState !== 'complete' || doc.documentElement.hasAttribute(EMBED)) {
+      return;
+    }
+    doc.documentElement.setAttribute(EMBED, 'bookmark-comment');
+
+    // Hatena's stylesheet for the comments resets every element and would override the theme. Remove it if it is
+    // already there, and tell Hatena's script not to add it when the comments arrive later
+    doc.querySelectorAll('link[href*="/css/blogparts/"]').forEach(function (link) {
+      link.remove();
+    });
+    const parts = iframe.contentWindow.HBBlogParts;
+    if (parts) {
+      parts.useUserCSS = true;
+    }
+
+    sync(doc);
+
+    // Load the same stylesheets as the page (the theme and the blog's design CSS), and show the iframe when they are ready
+    let pending = 0;
+    function loaded() {
+      pending -= 1;
+      if (pending <= 0) {
+        iframe.setAttribute(STATE, 'themed');
+      }
+    }
+    document.head.querySelectorAll('link[rel~="stylesheet"], style').forEach(function (sheet) {
+      const copy = doc.importNode(sheet, true);
+      if (copy.tagName === 'LINK') {
+        // A relative URL would resolve against the iframe's URL
+        copy.href = sheet.href;
+        pending += 1;
+        copy.addEventListener('load', loaded);
+        copy.addEventListener('error', loaded);
+      }
+      doc.head.appendChild(copy);
+    });
+    if (pending === 0) {
+      iframe.setAttribute(STATE, 'themed');
+    }
+  }
+
+  // If anything fails, show the iframe as it is rather than leaving it out of sight
+  function tryTheme(iframe) {
+    try {
+      theme(iframe);
+    } catch (e) {
+      iframe.setAttribute(STATE, 'default');
+    }
+  }
+
+  function themeAll() {
+    document.querySelectorAll(IFRAME).forEach(tryTheme);
+  }
+
+  // Follow the reader's choice (the color mode button writes it to the style of <html>) and the OS setting
+  function syncAll() {
+    document.querySelectorAll(IFRAME + '[' + STATE + '="themed"]').forEach(function (iframe) {
+      if (iframe.contentDocument) {
+        sync(iframe.contentDocument);
+      }
+    });
+  }
+
+  // An iframe's load event does not bubble, so listen in the capture phase
+  document.addEventListener('load', function (e) {
+    if (e.target instanceof Element && e.target.matches(IFRAME)) {
+      tryTheme(e.target);
+    }
+  }, true);
+
+  // Iframes that finished loading before this script ran
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', themeAll);
+  } else {
+    themeAll();
+  }
+
+  new MutationObserver(syncAll).observe(root, { attributes: true, attributeFilter: ['style'] });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncAll);
+})();

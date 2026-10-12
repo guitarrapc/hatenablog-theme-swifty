@@ -1,0 +1,257 @@
+@use "./_variable" as var;
+@use "./_functions" as fn;
+
+/*
+ * はてなブックマークコメント (theme-design-spec.md の「記事」の「はてなブックマークコメント」を参照)
+ * はてなの設定で記事にはてなブックマークのコメントを表示すると、記事下のブログパーツの入れ物(.customized-footer)の先頭に
+ * iframe(.hatena-bookmark-comment-iframe)が出力される。中ははてなブックマークのスクリプトがはてなのCSSで描く別のページで、
+ * ページのCSSは届かない。このファイルは次の2つを決める。
+ *   1. ページ側: iframe を記事下の段の1つとして置く。JavaScriptなしで効く
+ *   2. iframe の中: js/bookmark-comment.js がページのCSSを iframe にも読み込ませたとき、中をコメント欄と同じ形にする
+ */
+
+// はてなが iframe の中の body に付けている余白。はてなの箱の左右の端を記事下の段に揃えるため、そのぶん iframe を外へ広げる
+$default-body-margin: 8px;
+// テーマの形にしたときの、中の左右の余白。フォーカスの枠(外側に2px離して2px)が iframe の端で切れないようにし、そのぶん iframe を外へ広げる
+$themed-inline-padding: 4px;
+
+/* 1. ページ側 */
+.hatena-bookmark-comment-iframe {
+    // 行の中に置くと、iframe の下に文字の下がるぶんの空きができる
+    display: block;
+    // 幅ははてなが style 属性で100%にしているので、最小の幅で広げる
+    min-width: calc(100% + #{$default-body-margin * 2});
+    margin-inline: -$default-body-margin;
+
+    // テーマの形にしたあと。はてなのスクリプトは iframe の高さを「中身 + 30px」にするので、中の上の余白(16px)を引いた14pxが下に空く。
+    // ほかの段の下の余白(16px)に揃える
+    &[data-swifty-bookmark-comment="themed"] {
+        min-width: calc(100% + #{$themed-inline-padding * 2});
+        margin: 0 (-$themed-inline-padding) 2px;
+    }
+}
+
+// スクリプト(js/bookmark-comment.js)を入れたブログでは、テーマの形になるまで見せない。
+// はてなの形(ダークでは明るい箱)が一度描かれてから切り替わると、ちらつくため。場所は取ったままにする
+html[data-swifty-bookmark-comment] .hatena-bookmark-comment-iframe:not([data-swifty-bookmark-comment]) {
+    visibility: hidden;
+}
+
+// 段の上の線(記事下の段と同じ)。iframe には疑似要素を付けられないので、入れ物の先頭に引く。
+// 印刷では iframe を出さないので(_print.scss)、線も画面だけにする
+@media screen {
+    .customized-footer:has(> .hatena-bookmark-comment-iframe:first-child)::before {
+        content: "";
+        display: block;
+        border-top: 1px solid var(--border);
+    }
+}
+
+/*
+ * 2. iframe の中 (component-specs.md の「はてなブックマークコメント」を参照)
+ * スクリプトは iframe の <html> に data-swifty-embed を付け、はてなのCSS(青い帯の付いた灰色の箱)を外す。
+ * 配色の変数・書体・リンクの色などは、ページと同じCSSがそのまま効く。ここでは中の並びと形だけを決める
+ */
+$avatar-size: 16px;
+$avatar-gap: 8px;
+
+// スクリプトは、テーマのCSSが iframe の中の形を持っていることをこの値で確かめてから動く。
+// 持っていないCSS(古い版のテーマ)のまま、はてなのCSSを外して素の形にしないため
+:root {
+    --swifty-bookmark-comment: themed;
+}
+
+html[data-swifty-embed="bookmark-comment"] {
+    // iframe の入れ物(_core.scss)と同じライトにして、ブラウザが iframe を不透明に塗らないようにする。色は配色の変数で決まるので、ダークでもこのままでよい
+    color-scheme: light;
+
+    // はてなのスクリプトは body の高さを測って iframe の高さにする。デザインCSSがページの body に高さを指定していても(height: 100% など)、
+    // ここでは中身の高さにする(iframe の高さに合わせると、測るたびに伸び続ける)
+    &,
+    body {
+        height: auto;
+        min-height: 0;
+    }
+
+    body {
+        margin: 0;
+        // 上は、段の上の線から見出しまでの間隔(記事下の段と同じ16px)
+        padding: 16px $themed-inline-padding 0;
+        // ページの背景(テーマの既定、はてなの背景設定、ダークの背景)は塗らず、記事のカードを透かす
+        background: none;
+        // 記事下(.entry-footer)と同じ大きさ
+        font-size: .875rem;
+    }
+
+    // コメント欄(.comment-box)と同じく、見出しを左、操作(はてなブックマークでコメントする)を右に置き、その下にコメントを並べる。
+    // 収まらない幅では、操作は見出しの下の行に左から並ぶ
+    #hatena-bookmark-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 20px;
+    }
+
+    // はてなは操作をリストの最初の項目として出力するので、リストの箱をなくして、項目を見出しと同じ並びに入れる
+    #hatena-bookmark-list-container {
+        display: contents;
+        list-style: none;
+    }
+
+    // 見出し(はてなブックマークでのコメント)。はてなブックマークのこの記事のページへのリンクで、ブックマークの数が続く
+    .hatena-bookmark-title {
+        @include var.footer-section-label;
+        margin-right: auto;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--link);
+                text-decoration: underline;
+            }
+        }
+    }
+
+    // 操作(はてなブックマークでコメントする)。共有するリンクと同じ形(ロゴと名前、下線)にする
+    .hatena-bookmark-addcomment a {
+        @include var.footer-action;
+
+        &::before {
+            mask-image: fn.url-svg(var.$svg-share-hatenabookmark, #000);
+        }
+    }
+
+    // 操作のほかの項目(コメント、ブックマークがないときの文言)は1行を占める。項目の間は線ではなく余白で区切る(コメント欄と同じ)
+    .hatena-bookmark-item:not(.hatena-bookmark-addcomment-container) {
+        flex-basis: 100%;
+        padding-block: 4px;
+        color: var(--text-light);
+        overflow-wrap: anywhere;
+    }
+
+    // コメント1件。アイコンを左の列に置き、名前とタグ・本文・日付をその右の同じ位置から並べる。
+    // はてなのスクリプトが表示する項目に style 属性で display: block を書くので、中は行の並びで組む
+    .hatena-bookmark-item:has(> .hatena-bookmark-user-info) {
+        padding-left: $avatar-size + $avatar-gap;
+        color: var(--text-body);
+    }
+
+    // 名前の行。アイコンは左の列へ出す
+    .hatena-bookmark-user-info {
+        display: inline-flex;
+        align-items: center;
+        gap: $avatar-gap;
+        min-height: 24px;
+        margin: 0 10px 0 (-($avatar-size + $avatar-gap));
+        font-weight: 700;
+        line-height: 1.4;
+        vertical-align: middle;
+    }
+
+    .hatena-bookmark-profile-image {
+        flex: none;
+        width: $avatar-size;
+        height: $avatar-size;
+        border-radius: 50%;
+    }
+
+    .hatena-bookmark-username {
+        color: var(--text-header);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+
+    // タグ。名前の横に小さな文字で並べる。小さい文字のリンクなので、タップ領域の高さを24px確保する(WCAG 2.5.8)
+    .hatena-bookmark-user-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        margin-right: 8px;
+        color: var(--text-light);
+        font-size: .75rem;
+        line-height: 1.4;
+        text-decoration: none;
+        vertical-align: middle;
+
+        &:hover {
+            color: var(--link);
+            text-decoration: underline;
+        }
+    }
+
+    // 本文。コメントのないブックマークでは出さず、名前の行に日付を続ける
+    .hatena-bookmark-comment {
+        display: block;
+        margin: 2px 0;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    // 日付は記事の日付と同じ書体にする(_variable.scss の meta-text)。スターはその右に並べる
+    .hatena-bookmark-timestamp {
+        @include var.meta-text;
+        color: var(--text-light);
+        // 名前の行に続くとき(コメントのないブックマーク)は、名前やタグと上下中央で揃える
+        vertical-align: middle;
+    }
+
+    .hatena-bookmark-star {
+        margin-left: 8px;
+
+        img {
+            vertical-align: middle;
+        }
+    }
+
+    // コメントの下の行。左に「すべてのコメントを表示する」、右に「はてなブックマークで確認」を置く
+    .hatena-bookmark-footer {
+        flex-basis: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 20px;
+
+        // ブックマークがないときは空なので、行を取らない
+        &:empty {
+            display: none;
+        }
+    }
+
+    // 「すべてのコメントを表示する」(コメントが多いとき、はてなが出す)。コメント欄の「もっと読む」と同じ形にする
+    .hatena-bookmark-span-button {
+        @include var.footer-action;
+
+        &::before {
+            mask-image: fn.url-svg(var.$svg-toc-chevron, #000);
+        }
+
+        // 開いたあと(元に戻す)は、山形を上向きにする
+        &.hatena-bookmark-hide-overlimit::before {
+            transform: rotate(180deg);
+        }
+    }
+
+    // 「はてなブックマークで確認」。ブログパーツの「もっと見る」と同じ形(下線、アイコンなし)にする
+    .hatena-bookmark-entrypage-link {
+        margin-left: auto;
+
+        a {
+            @include var.footer-action;
+            // はてなのスクリプトが style 属性に display: inline を書くので、!important でなければ上書きできない。
+            // 行の中の箱のままだと、操作の高さ(32px)と下線の位置がほかの操作と揃わない
+            display: inline-flex !important;
+
+            &::before {
+                display: none;
+            }
+        }
+    }
+}

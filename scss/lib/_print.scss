@@ -29,6 +29,11 @@
         display: none;
     }
 
+    // はてなブックマークコメントは、はてなブックマークのスクリプトが後から描く埋め込みで、記事の内容ではない
+    .hatena-bookmark-comment-iframe {
+        display: none;
+    }
+
     /* ナビゲーション */
     #box2,
     #entry-footer-secondary-modules,
