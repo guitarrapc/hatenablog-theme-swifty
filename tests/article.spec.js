@@ -345,20 +345,26 @@ test.describe('この記事を共有', () => {
       return measured.sort((a, b) => a.top - b.top);
     });
 
-    for (const [path, expected] of /** @type {const} */ ([
-      [TEST_URLS.SAMPLE_ARTICLE, ['共有', '関連記事', 'コメント欄']],
-      [FIXTURE_URLS.HEADINGS_H2, ['共有', 'コメント欄']],
+    await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
+    await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
+    const related = page.locator('.entry-footer .customized-footer .hatena-module');
+    await expect(related, '前提: 関連記事の段が1つあること').toHaveCount(1);
+
+    // 関連記事の選定は変わるため、特定の記事に関連記事がないことを前提にしない。
+    // 実際の段を検証してから取り除き、記事下の設定で段を省略した状態も同じページで確かめる。
+    for (const [name, expected] of /** @type {const} */ ([
+      ['関連記事あり', ['共有', '関連記事', 'コメント欄']],
+      ['関連記事なし', ['共有', 'コメント欄']],
     ])) {
-      await page.navigateTo(path, { waitFor: 'networkidle' });
-      await expect(page.locator('.entry-footer .comment-box'), '前提: コメント欄があること').toBeAttached();
+      if (name === '関連記事なし') await related.evaluate((el) => el.remove());
       const sections = await measureSections();
-      expect(sections.map((s) => s.name).filter((name) => name !== 'はてなブックマークコメント'), `前提: ${path} の記事下の段`).toEqual(expected);
+      expect(sections.map((s) => s.name).filter((name) => name !== 'はてなブックマークコメント'), `前提: ${name}の段構成`).toEqual(expected);
       for (const [i, section] of sections.entries()) {
         // 上にだけ線を引き、線から同じ間隔で見出しを置く
-        expect(section.lines, `${path} ${section.name}`).toEqual(['1px', '0px']);
-        if (section.labelOffset !== null) expect(section.labelOffset, `${path} ${section.name}の見出し`).toBe(17);
+        expect(section.lines, `${name} ${section.name}`).toEqual(['1px', '0px']);
+        if (section.labelOffset !== null) expect(section.labelOffset, `${name} ${section.name}の見出し`).toBe(17);
         // 次の段の線は、この段のすぐ下に続く(間に線や余白を挟まない)
-        if (i > 0) expect(section.top, `${path} ${section.name}`).toBeCloseTo(sections[i - 1].bottom, 0);
+        if (i > 0) expect(section.top, `${name} ${section.name}`).toBeCloseTo(sections[i - 1].bottom, 0);
       }
     }
   });
