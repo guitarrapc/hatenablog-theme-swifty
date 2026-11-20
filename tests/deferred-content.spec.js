@@ -23,8 +23,9 @@ const renderAll = (/** @type {any} */ page) => page.evaluate(async () => {
   scrollTo(0, 0);
 });
 
+// MarkdownのGistの中(article.markdown-body.entry-content)は本文の直下ではないので除く
 const measure = (/** @type {any} */ page) => page.evaluate(() =>
-  [...document.querySelectorAll('.entry-content > *, #box2')].map((el) => {
+  [...document.querySelectorAll('.entry-content:not(.markdown-body) > *, #box2')].map((el) => {
     const rect = el.getBoundingClientRect();
     return {
       element: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.className ? `.${String(el.className).trim().split(/\s+/).join('.')}` : ''}`,
@@ -44,7 +45,7 @@ test.describe('描画の後回し', () => {
 
       // 前提: 本文で後回しが効いていること(ここが崩れると比較が意味を失う)
       const deferredCount = await page.evaluate(() =>
-        [...document.querySelectorAll('.entry-content > *')].filter((el) => getComputedStyle(el).contentVisibility === 'auto').length);
+        [...document.querySelectorAll('.entry-content:not(.markdown-body) > *')].filter((el) => getComputedStyle(el).contentVisibility === 'auto').length);
       expect(deferredCount).toBeGreaterThan(0);
 
       await renderAll(page);
@@ -68,7 +69,7 @@ test.describe('描画の後回し', () => {
 
     // 仮の高さ(100px)で置かれてから実際の高さに変わると、下の要素(本文中の目次など)がずれてCLSになる
     const values = await page.evaluate(() =>
-      [...document.querySelectorAll('.entry-content > *')].slice(0, 5).map((el) => getComputedStyle(el).contentVisibility));
+      [...document.querySelectorAll('.entry-content:not(.markdown-body) > *')].slice(0, 5).map((el) => getComputedStyle(el).contentVisibility));
     expect(values.every((value) => value !== 'auto'), `先頭の5要素: ${values.join(', ')}`).toBe(true);
   });
 });

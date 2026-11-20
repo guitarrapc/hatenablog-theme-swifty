@@ -53,8 +53,9 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `lib/_color_mode.scss` | ダークモードの切り替えボタン(`js/dark-mode.js`)と、ヘッダーのボタンの場所を定義します。ヘッダーの場所を上書きするため `_header.scss` の後に読み込みます。 |
 | `lib/_entry.scss` | 記事(ヘッダー、本文、コード、脚注、記事下、コメント、ページャー)を定義します。 |
 | `lib/_codeblock.scss` | コードブロック、インラインコード、ハイライトの色、コードブロックのボタン(`js/codeblock.js`)を定義します。 |
-| `lib/_alert.scss` | アラート記法(`js/alert.js` で変換した引用)を定義します。本文の引用の指定を上書きするため `_entry.scss` の後に読み込みます。 |
+| `lib/_alert.scss` | アラート記法(`js/alert.js` で変換した引用)を定義します。Gistの埋め込みのMarkdownのアラート(GitHubが描く)も同じ形にします。本文の引用の指定を上書きするため `_entry.scss` の後に読み込みます。 |
 | `lib/_table_of_contents.scss` | 目次を定義します。広い画面では本文の横に常に表示し、開閉(`js/toc-toggle.js`)の見出しの行と閉じたときの帯も定義します。本文のリストの指定を上書きするため `_entry.scss` の後に読み込みます。 |
+| `lib/_gist.scss` | GitHub Gistの埋め込みを、本文のコードブロックと本文の書体・配色に揃えます。 |
 | `lib/_archive.scss` | 記事の一覧(トップページの一覧表示、アーカイブ、カテゴリー)を定義します。 |
 | `lib/_modules.scss` | ブログパーツ(サイドバーと記事下)を定義します。 |
 | `lib/_bookmark_comment.scss` | 記事下のはてなブックマークコメント(はてなの iframe)を定義します。iframe を記事下の段の1つとして置く指定と、`js/bookmark-comment.js` がページのCSSを iframe にも読み込ませたときの中の形です。 |
@@ -74,6 +75,7 @@ scssは以下のように分割して実装します。モジュールは `@use`
 | `tests/article.spec.js` | 記事・アバウト・アーカイブページの表示 |
 | `tests/codeblock.spec.js` | コードブロックの言語名の帯、ハイライトの色分け、アスキーアートの除外、ボタン(`js/codeblock.js`) |
 | `tests/alert.spec.js` | アラート記法の変換(`js/alert.js`。変換の規則はローカルのページで確かめる)と見た目 |
+| `tests/gist.spec.js` | GitHub Gistの埋め込み(サンプル記事のGist)。コードのファイル(帯を含む)とMarkdownのコードブロックが本文のコードブロックと同じ色・枠・余白になること(すべての配色とモード)、ハイライトの種類ごとの色、行番号、ファイル名の帯の位置と折り返し、中身の領域のフォーカスの枠、Markdownのファイルが本文と同じ書体・色・枠・引用・表・リスト・コード・アラートになること、前後の間隔、スマホと印刷。サンプルのGistにないCSVのファイル・アラート・脚注・画像・ハイライトの種類は、GitHubと同じ形のHTMLを足して確かめる |
 | `tests/heading.spec.js` | 本文の見出し(書き方に合わせた帯・破線・縦棒の割り当て、字間と間隔) |
 | `tests/toc-toggle.spec.js` | 目次の開閉(`js/toc-toggle.js`)、閉じた状態の記憶と表示のずれ |
 | `tests/bookmark-comment.spec.js` | 記事下のはてなブックマークコメント。テーマのCSSだけのとき(段の線、端を揃える、ダークで白く塗らない、印刷で出さない)と、`js/bookmark-comment.js` を入れたとき(中の形、配色とモードをページに合わせる、テーマの形になる前の中身を描かない) |

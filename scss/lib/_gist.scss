@@ -1,0 +1,682 @@
+@use "./_variable" as var;
+
+/*
+ * GitHub Gistの埋め込み (theme-design-spec.md の「Gist埋め込み」を参照)
+ *
+ * Gistのスクリプト(<script src="https://gist.github.com/….js">)は、本文の中に .gist を書き出し、
+ * GitHubのCSS(gist-embed-*.css)を <body> の中に読み込む。GitHubのCSSはテーマより後に読み込まれるので、
+ * 詳細度が同じならGitHubの指定が勝つ。Gistの中の指定は .entry-content .gist から始め、GitHubの指定(.gist …)より
+ * クラスを1つ多くして上書きする。GitHubとはてなのCSSに !important があるところだけ、テーマも !important にする。
+ *
+ * - 色はすべてテーマの変数にする。GitHubのCSSはライトの色しか持たないが、テーマの変数は配色とダークに従う
+ * - コードのファイルは、はてなのコードブロック(_codeblock.scss)と同じ地・枠・角丸・ハイライトにする
+ * - MarkdownとCSVのファイルは、本文と同じ書体・色の枠付きの文書にする
+ * - ファイル名の帯(GitHubではファイルの下)は、コードブロックの帯と同じ形にしてファイルの上に置く
+ */
+
+// コードブロック(_codeblock.scss)と同じ文字の大きさ・行の高さ・余白
+$code-font-size: .875rem;
+// 行番号はコードより小さい文字なので、倍率ではなく行の高さそのものをコードと揃えて、行ごとの位置を合わせる
+$code-line-height: $code-font-size * 1.7;
+// コードブロックの帯の下の余白(帯の文字 .75rem の1em)と、コードブロックの下の余白(コードの文字の1em)
+$code-padding-top: .75rem;
+$code-padding-bottom: $code-font-size;
+$code-padding-inline: 1.125rem;
+$band-height: 2.25rem; // コードブロックの帯の高さ(帯の下の線は含まない)
+
+// Gistのスクリプトがある段落。はてなはスクリプトを <p> で囲み、Gistの .gist はその段落の後ろに書き出される。
+// 段落は中身が見えないのに本文の余白(下の余白と描画の後回しの仮の高さ)を持つので、箱を作らない。
+// CSSでは段落の中の文字の有無を見分けられないので、同じ段落のスクリプトより前に書いた文字は、Gistのすぐ上に付く。
+// Gistを読み込めない(消されたGistなど)と、出典が段落の中に残るので、Gistが続くときに限る
+.entry-content > p:has(> script[src^="https://gist.github.com/"]):has(+ .gist) {
+    display: contents;
+}
+
+// 「:embed:cite」の出典(はてなの cite)は、ブログカードと同じくすぐ下に置く(はてなのブログカードの下の余白と同じ10px)
+.entry-content > .gist:has(+ .hatena-citation) {
+    margin-bottom: 10px;
+}
+
+.entry-content .gist {
+    // GitHubのCSSが定義せずに参照している変数。未定義のままだと、それを使う余白や枠線が0になる
+    // (テーマが上書きしない指定も、GitHubの意図した値で効くようにする)
+    --base-size-4: 4px;
+    --base-size-8: 8px;
+    --base-size-16: 16px;
+    --base-size-20: 20px;
+    --base-size-24: 24px;
+    --base-size-32: 32px;
+    --base-size-80: 80px;
+    --borderWidth-thin: 1px;
+    --borderWidth-default: 1px;
+    --borderRadius-medium: 6px;
+    --focus-outline-width: 2px;
+
+    // 本文の字間はコードや行番号の桁を崩すので、Gistの中では使わない(Markdownは下で本文と同じに戻す)
+    letter-spacing: normal;
+
+    // 1つのファイルが1つの .gist-file。ファイル名の帯(.gist-meta)を上に出すため、縦に並べ替える
+    .gist-file {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        overflow: hidden; // 帯の背景とコードのスクロールバーを角丸で切る
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background-color: var(--surface);
+        // GitHubのCSSは .gist に固定の濃い文字色を持つ。テーマが形を決めていない文字(大きいファイルの省略の注意書きなど)も読めるよう、地に合う色にする
+        color: var(--text-body);
+        font-family: var.$font-family-base;
+
+        + .gist-file {
+            margin-top: 1rem;
+        }
+
+        // コードのファイルは、コードブロックと同じ地と文字色にする。
+        // CSVのファイルも .blob-wrapper を持つので、行番号とコードの表のセル(.blob-code)で見分ける
+        &:has(.blob-code) {
+            background-color: var(--surface-muted);
+            color: var(--code-text);
+        }
+    }
+
+    // GitHubは中身の下に固定の明るい色の線を引く(テーマが定義する線の太さの変数で出る)。区切りは帯の下の線だけにする
+    .gist-data {
+        border: 0;
+        border-radius: 0;
+        background-color: transparent;
+    }
+
+    .file {
+        margin: 0;
+    }
+
+    // ファイルの中身の領域(GitHubがキーボードでフォーカスできるようにしている)は、ファイルの枠の内側いっぱいにある。
+    // ファイルは overflow: hidden なので、外側に描いた枠は切れる。内側に描く
+    .Box-body:focus-visible {
+        outline-offset: -2px;
+    }
+
+    // ファイル名の帯(ファイル名 / hosted with ❤ by GitHub / view raw)。コードブロックの帯と同じ形にして上に置く。
+    // GitHubの表記(hosted with ❤ by GitHub)はそのまま出す
+    .gist-meta {
+        order: -1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: .35em;
+        // コードブロックの帯と同じく、帯の高さに下の線(1px)を足した高さにする
+        min-height: calc(#{$band-height} + 1px);
+        // 上下の余白は、帯が折り返してもリンクのフォーカスの枠(外側に4px)が帯の中に収まる幅にする。
+        // 帯とファイルは overflow: hidden なので、帯の外に出た枠は切れる
+        padding: 6px $code-padding-inline;
+        box-sizing: border-box;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+        background-color: var(--surface);
+        color: var(--text-light);
+        font-family: var.$font-family-base;
+        font-size: .75rem;
+        line-height: 1.5;
+        letter-spacing: .04em;
+
+        a {
+            // 小さい文字のリンクなので、タップ領域の高さを24px確保する(WCAG 2.5.8)
+            display: flex;
+            align-items: center;
+            min-height: 24px;
+            // 区切りのない長いファイル名(「_」や「.」でつないだ名前)も、帯の中で折り返す
+            min-width: 0;
+            overflow-wrap: anywhere;
+            color: var(--text-light);
+            font-weight: 700;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--link);
+                text-decoration: underline;
+            }
+        }
+
+        // 「view raw」は右端に置く(GitHubは右に浮かせているが、帯はフレックスなので浮かない。残りの幅で右へ押す)
+        a[href*="/raw/"] {
+            order: 1;
+            margin-left: auto;
+        }
+    }
+
+    // 画像のファイルとMarkdownの中の画像。本文のはてなフォトライフの画像と同じ小さい角丸
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-small);
+    }
+
+    /* コードのファイル */
+
+    // 長い行は、ファイルの中身の領域(GitHubが style 属性で overflow: auto にしている)の中で横にスクロールする
+    .blob-wrapper {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+    }
+
+    // 行番号とコードの表。本文の表の指定(_entry.scss の .entry-content table)を外す。
+    // CSVのファイルの表(.csv-data)も .blob-wrapper の中にあるので、コードの表(.highlight)に限る
+    table.highlight {
+        display: table;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        overflow: visible;
+        border-collapse: collapse;
+        background-color: transparent;
+        color: var(--code-text);
+        font-size: inherit;
+        line-height: inherit;
+
+        tr {
+            background-color: transparent;
+        }
+
+        td {
+            min-width: 0;
+            border: 0;
+        }
+
+        // 先頭の行の上と末尾の行の下に、コードブロックと同じ余白を取る。
+        // GitHubのCSSが行番号とコードのセルの余白を四辺とも !important で指定しているので、こちらも !important にする
+        tr:first-child td {
+            padding-top: $code-padding-top !important;
+        }
+
+        tr:last-child td {
+            padding-bottom: $code-padding-bottom !important;
+        }
+
+        .blob-num {
+            width: 1%;
+            padding: 0 .875rem 0 $code-padding-inline !important; // GitHubのCSSの !important を上書きする
+            line-height: $code-line-height;
+            vertical-align: top;
+        }
+
+        .blob-code {
+            padding: 0 $code-padding-inline 0 0 !important; // GitHubのCSSの !important を上書きする
+            line-height: $code-line-height;
+            vertical-align: top;
+        }
+    }
+
+    // 行番号(コードとCSVのファイル)は、小さめの文字と補助テキストの色で控えめに出し、罫線は引かない。
+    // コピー時に選ばれないのはGitHubのCSSのまま(user-select: none)。押しても何も起きないので、指のカーソルにしない
+    .blob-num {
+        font-family: var.$font-family-monospace;
+        font-size: .75rem;
+        cursor: default;
+
+        &,
+        &:hover {
+            color: var(--text-light);
+        }
+    }
+
+    .blob-code-inner {
+        color: var(--code-text);
+        font-family: var.$font-family-monospace;
+        font-size: $code-font-size;
+        letter-spacing: 0;
+        tab-size: 4;
+    }
+
+    // シンタックスハイライト。GitHubのCSSは固定の色(ライトだけ)を持つので、テーマのコードの色(_codeblock.scss と同じ変数)に付け直す。
+    // はてなのハイライト(synXxx)と同じ種類に同じ色を当てる
+    .pl-k {
+        color: var(--code-keyword); // キーワード
+    }
+
+    .pl-ent {
+        color: var(--code-keyword); // HTMLなどのタグ名
+    }
+
+    .pl-e,
+    .pl-en {
+        color: var(--code-function); // 関数名
+    }
+
+    .pl-smi,
+    .pl-v,
+    .pl-smw {
+        color: var(--code-type); // 型・変数として色分けされる名前
+    }
+
+    .pl-c1,
+    .pl-s .pl-v {
+        color: var(--code-constant); // 定数・数値
+    }
+
+    .pl-s,
+    .pl-pds,
+    .pl-sr,
+    .pl-sr .pl-sre,
+    .pl-sr .pl-sra {
+        color: var(--code-constant); // 文字列・正規表現
+    }
+
+    // 文字列の中の埋め込みは、はてなのハイライトと同じく記号の色にし、中の式はコードの文字の色に戻す
+    .pl-pse,
+    .pl-s .pl-pse .pl-s1 {
+        color: var(--code-special);
+    }
+
+    .pl-s .pl-s1 {
+        color: var(--code-text);
+    }
+
+    // エスケープ
+    .pl-cce,
+    .pl-sr .pl-cce {
+        color: var(--code-special);
+        font-weight: inherit;
+    }
+
+    .pl-c,
+    .pl-ba,
+    .pl-sg,
+    .pl-mi2 {
+        color: var(--code-comment); // コメント
+        background-color: transparent;
+    }
+
+    // 対応しない括弧(.pl-bu)と改行文字(.pl-c2。GitHubが ^M と出す)は、記号の色にする
+    .pl-bu,
+    .pl-c2 {
+        color: var(--code-special);
+        background-color: transparent;
+    }
+
+    // 構文の誤り(.pl-ii)は、はてなのハイライトと同じく、色だけに頼らず波線でも示す
+    .pl-ii {
+        color: var(--code-special);
+        background-color: transparent;
+        text-decoration: underline wavy;
+        text-decoration-thickness: 1px;
+    }
+
+    // マークアップ(見出し・リスト・強調)と差分
+    .pl-mh,
+    .pl-mh .pl-en,
+    .pl-ms {
+        color: var(--code-function);
+        font-weight: 700;
+    }
+
+    .pl-ml,
+    .pl-mc {
+        color: var(--code-constant);
+        background-color: transparent;
+    }
+
+    .pl-mi,
+    .pl-mb {
+        color: inherit;
+    }
+
+    .pl-mdr {
+        color: var(--code-preproc);
+        font-weight: 700;
+    }
+
+    .pl-mi1 {
+        color: var(--code-diff-added);
+        background-color: var(--code-diff-added-bg);
+    }
+
+    .pl-md {
+        color: var(--code-diff-removed);
+        background-color: var(--code-diff-removed-bg);
+    }
+
+    .pl-corl {
+        color: var(--code-constant);
+    }
+
+    // GitHub上の「定義へ移動」の印。埋め込みでは押せないので出さない
+    .pl-token:hover,
+    .pl-token.active {
+        background: none;
+        cursor: auto;
+    }
+
+    /* Markdownのファイル: 本文と同じ書体・色の文書にする */
+
+    .Box-body.readme {
+        padding: 1.25rem $code-padding-inline;
+    }
+
+    // GitHubの <article class="markdown-body entry-content"> は本文と同じ .entry-content を持つので、
+    // 本文の直下の要素に当てる指定(余白、描画の後回し)がGistの中にも当たる。Gistの中では、ここで決め直す。
+    // GitHubのCSSは .gist .markdown-body .highlight のようにクラスを3つ重ねるので、.gist-file を足してそれより詳細度を上げる
+    .gist-file .markdown-body {
+        padding: 0;
+        background-color: transparent;
+        color: var(--text-body);
+        font-family: var.$font-family-base;
+        font-size: 1rem;
+        line-height: 1.9;
+        letter-spacing: .02em;
+        overflow-wrap: anywhere;
+
+        > * {
+            margin: 0 0 1.25rem;
+            // Gistは本文の要素として後回しにするので、中ではすべて描く(仮の高さで中身がずれないようにする)
+            content-visibility: visible;
+        }
+
+        // 文書の最初の要素の上と最後の要素の下の余白は、枠の内側の余白に足されるので消す。AsciiDoc は節・段落・リストを
+        // div で包むので、文書の直下の要素だけでなく、包みの中で最初・最後にある要素も消す(定義リストの最初の項目も)
+        :first-child:not(.markdown-body :not(:first-child) *) {
+            margin-top: 0;
+        }
+
+        :last-child:not(.markdown-body :not(:last-child) *) {
+            margin-bottom: 0;
+        }
+
+        a {
+            color: var(--link);
+
+            &:hover {
+                color: var(--link-hover);
+            }
+        }
+
+        // 見出しは記事の見出しの印(帯・破線・縦棒)を使わず、太さと大きさだけにする。
+        // どの段も記事の2番目の段の見出しより小さくして、記事の中に入れた文書だとわかるようにする。目次には載らない。
+        // AsciiDoc は節を div で包み、引用の中にも見出しを置けるので、入れ子の見出しにも同じ余白を付ける
+        :is(.markdown-heading, h1, h2, h3, h4, h5, h6) {
+            margin: 2rem 0 .75rem;
+        }
+
+        .markdown-heading > :is(h1, h2, h3, h4, h5, h6) {
+            margin: 0;
+        }
+
+        // 文書と引用の先頭の見出しは上を空けない。見出しの余白は囲みの div を抜けるので、先頭にある要素
+        // (AsciiDoc の最初の節など)の先頭の見出しも空けない。
+        // reStructuredText の文書は、GitHubが先頭に空のリンク先(<a name>)を置くので、その次の見出しも先頭として扱う
+        > :is(.markdown-heading, h1, h2, h3, h4, h5, h6):first-child,
+        :is(:first-child, blockquote) > :is(.markdown-heading, h1, h2, h3, h4, h5, h6):first-child,
+        > a:empty:first-child + :is(.markdown-heading, h1, h2, h3, h4, h5, h6) {
+            margin-top: 0;
+        }
+
+        :is(.markdown-heading, h1, h2, h3, h4, h5, h6):last-child {
+            margin-bottom: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            padding: 0;
+            border: 0;
+            color: var(--text-header);
+            font-weight: 700;
+            line-height: 1.4;
+            letter-spacing: 0;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+        }
+
+        h2 {
+            font-size: 1.125rem;
+        }
+
+        h3 {
+            font-size: 1.0625rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+        }
+
+        h5 {
+            font-size: .9375rem;
+        }
+
+        h6 {
+            font-size: .875rem;
+            color: var(--text-light);
+        }
+
+        // リスト。本文のリスト(_entry.scss)と同じ字下げと項目の間隔
+        ul,
+        ol {
+            padding-left: 1.6em;
+        }
+
+        li + li,
+        li > ul,
+        li > ol {
+            margin-top: .35em;
+        }
+
+        li > ul,
+        li > ol {
+            margin-bottom: 0;
+        }
+
+        // ゆるいリスト(項目の中が段落)は、GitHubのCSSが段落の上下に余白を付ける。最初と最後の項目の外側の余白は、
+        // リストを抜けて引用やアラートの端に残るので消す。上は段落に限る(項目の文字の後ろの入れ子のリストは、
+        // 要素としては最初になるが、ほかの項目と同じく上を空ける)
+        li:first-child > p:first-child {
+            margin-top: 0;
+        }
+
+        li:last-child > :last-child {
+            margin-bottom: 0;
+        }
+
+        // 引用。本文の引用(_entry.scss)と同じ形
+        blockquote {
+            padding: 1em 1.25em;
+            border-left: 3px solid var(--border-quote);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            background-color: var(--surface-muted);
+            color: inherit;
+        }
+
+        // アラート(> [!NOTE] など)は、GitHubが div で描く。形はテーマのアラート(_alert.scss)にする。
+        // アイコンはテーマのアラートと同じくタイトルの前に描くので、GitHubのアイコン(塗りの色がなく、ダークで見えない)は出さない
+        .markdown-alert {
+            > .markdown-alert-title > svg {
+                display: none;
+            }
+
+            > :last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        // 表。本文の表(_entry.scss)と同じ配色と余白。列揃え(:--- / :---: / ---:)はMarkdownの align 属性のまま。
+        // GitHubは表を独自の要素で囲む(行の中の要素)。ブロックにして、文書の段落の間の余白は囲みに持たせる。
+        // 最後の表の下の余白は、囲みを抜けて引用やアラートの端に残るので消す
+        markdown-accessiblity-table {
+            display: block;
+
+            &:last-child > table {
+                margin-bottom: 0;
+            }
+        }
+
+        // GitHubは偶数の行を塗るので、本文の表と同じく塗らない
+        tr {
+            border-top: 0;
+            background-color: transparent;
+        }
+
+        th,
+        td {
+            padding: .5em .9em;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--surface-muted);
+            color: var(--text-header);
+            font-weight: 700;
+        }
+
+        hr {
+            height: 1px;
+            margin-block: 1.5rem;
+            border: 0;
+            background-color: var(--border);
+        }
+
+        img {
+            box-sizing: border-box;
+            background-color: transparent;
+        }
+
+        // インラインコード。本文のインラインコード(_codeblock.scss)と同じ形
+        code {
+            margin: 0;
+            padding: .15em .4em;
+            border-radius: 4px;
+            background-color: var(--accent-soft);
+            color: var(--code-text);
+            font-size: .875em;
+            letter-spacing: 0;
+            white-space: normal;
+        }
+
+        // GitHubのCSSが pre と code の書体を !important で指定しているので、本文のコードと同じ書体に !important で戻す
+        // (日本語のコメントが、コードブロックと同じ BIZ UDGothic で表示されるようにする)
+        pre,
+        code {
+            font-family: var.$font-family-monospace !important;
+        }
+
+        // コードブロック。本文のコードブロック(_codeblock.scss の pre)と同じ形。言語名の帯は、はてなのリストの中のコードブロックと同じく付けない。
+        // GitHubは言語名のあるコードブロックの pre を .highlight で囲み、白で塗る。pre の角丸の外に白が出るので塗らない
+        .highlight {
+            background-color: transparent;
+        }
+
+        :is(pre, .highlight pre) {
+            padding: 1em $code-padding-inline;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background-color: var(--surface-muted);
+            color: var(--code-text);
+            // はてなのCSS(blog.css)が .gist pre の文字の大きさを !important で親から継承させているので、!important で決める
+            font-size: $code-font-size !important;
+            line-height: 1.7;
+            letter-spacing: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-strong) transparent;
+        }
+
+        pre code {
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            font-size: inherit;
+            white-space: inherit;
+        }
+
+        // 脚注。本文の脚注(_entry.scss)と同じ文字の大きさと色
+        .footnotes {
+            padding-top: 1em;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: .8125rem;
+            line-height: 1.7;
+
+            > ol {
+                margin: 0;
+            }
+
+            // 脚注の参照から移ってきた脚注。GitHubのCSSはライトの濃い文字色と青い囲みにするので、本文の文字色とリンク色にする
+            li:target {
+                color: var(--text-body);
+
+                &::before {
+                    border-color: var(--link);
+                }
+            }
+        }
+    }
+
+    // 読み上げ用の文字(脚注の「Footnotes」、地図などの表示の「Loading」)。GitHubの埋め込み用のCSSは .sr-only を持たないので、ここで画面から隠す
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    // 中身を出さないファイル(大きすぎるファイルなど)の注意書き。GitHubの埋め込み用のCSSは text-center などの指定を持たないので、
+    // GitHub上と同じく中央に置き、Markdownの文書と同じ余白を取る
+    .blob-wrapper > .text-center {
+        padding: 1.25rem $code-padding-inline;
+        text-align: center;
+    }
+
+    /* CSVのファイル: GitHubが表(.csv-data)にして描く。カードの地に、Markdownの表と同じ形で置く */
+
+    // 検索欄はGitHubのスクリプトで動くもので、埋め込み先では動かないので出さない
+    .blob-interaction-bar {
+        display: none;
+    }
+
+    .gist-file .blob-wrapper > .markdown-body {
+        padding: 1.25rem $code-padding-inline;
+    }
+
+    // セルの文字の大きさと行の高さは、Markdownの表(本文の表と同じ)に戻す。GitHubは小さい文字で詰めている。
+    // 折り返さないのはGitHubのまま(列の多いデータは表の中で横にスクロールする)
+    .gist-file .markdown-body .csv-data :is(td:not(.blob-num), th) {
+        font-size: inherit;
+        line-height: inherit;
+    }
+
+    // 行番号はGitHubが白で塗るので塗らない。罫線を引かない。
+    // 行番号はセルより小さい文字なので、セル(既定の上下中央)と同じく上下中央に置いて各行の文字に揃える。
+    // GitHubのCSSが行番号の余白を !important で指定しているので、こちらも !important にする
+    .gist-file .markdown-body .csv-data .blob-num {
+        padding: .5em .9em !important;
+        border: 0;
+        background: none;
+        vertical-align: middle;
+    }
+}
+
+// 印刷: 紙は横スクロールできないので、コードとCSVのセルを折り返してすべて刷る (theme-design-spec.md の「印刷」を参照)。
+// ファイルの中身の領域はGitHubが style 属性で overflow: auto にしているが、折り返せば横にはみ出さない。
+// GitHubのCSSは、Markdownのコードブロックの pre と code に長い語を折り返さない指定(word-break: normal)を持ち、
+// 本文の印刷の指定に勝つ。ここで pre と code の両方に折り返しを指定する
+@media print {
+    .entry-content .gist {
+        .blob-code-inner,
+        .gist-file .markdown-body :is(pre, .highlight pre),
+        .gist-file .markdown-body pre > code {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        // 列の多いCSVも紙の幅に収める。本文の表の最小の幅(5em)を外し、区切りのない語(メールアドレスなど)も折り返す
+        .gist-file .markdown-body .csv-data :is(td, th) {
+            min-width: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    }
+}

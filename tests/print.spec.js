@@ -74,7 +74,8 @@ test.describe('印刷スタイルのテスト', () => {
     await page.navigateTo(TEST_URLS.SAMPLE_ARTICLE, { waitFor: 'networkidle' });
     // 画面外にある最後の段落を測る。描画を後回しにしている間は仮の高さ(contain-intrinsic-size)になる
     const measureLast = () => page.evaluate(() => {
-      const paragraphs = [...document.querySelectorAll('.entry-content > p')].filter((el) => el.textContent?.trim());
+      // MarkdownのGistの中(article.markdown-body.entry-content)の段落は本文の直下ではないので除く
+      const paragraphs = [...document.querySelectorAll('.entry-content:not(.markdown-body) > p')].filter((el) => el.textContent?.trim());
       const el = paragraphs[paragraphs.length - 1];
       return {
         offscreen: el.getBoundingClientRect().top > innerHeight,

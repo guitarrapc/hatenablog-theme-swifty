@@ -286,7 +286,10 @@ test.describe('目次の開閉(js/toc-toggle.js)', () => {
       await page.addStyleTag({ content: '.entry-content > * { content-visibility: visible !important; }' });
 
       const gaps = () => page.evaluate(() => {
-        const children = [...document.querySelectorAll('.entry-content > :not(.toc-panel)')];
+        // MarkdownのGistの中(article.markdown-body.entry-content)は本文の直下ではないので除く。
+        // 箱を作らない要素(Gistのスクリプトの段落の display: contents など)は位置を持たないので除く
+        const children = [...document.querySelectorAll('.entry-content:not(.markdown-body) > :not(.toc-panel)')]
+          .filter((el) => !['contents', 'none'].includes(getComputedStyle(el).display));
         return children.slice(1).map((el, i) => Math.round(el.getBoundingClientRect().top - children[i].getBoundingClientRect().bottom));
       });
       const side = await gaps();

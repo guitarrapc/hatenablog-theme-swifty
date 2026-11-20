@@ -105,6 +105,7 @@ $dark-condition: "(style(--swifty-color-mode: dark) or (style(--swifty-os-color-
      * ライトでもコードブロックを暗い地にする配色(ink・zenn・qiita。theme-design-spec.md の「配色の切り替え」を参照)。
      * コードブロックの中だけ、配色の変数を暗い地の色に置き換える。帯・ボタン・ハイライトはどれも配色の変数で色を決めているので、
      * コードブロックのスタイル(_codeblock.scss)は変えずに、そろって暗い地の色になる。
+     * Gistのコードのファイル(_gist.scss)も、ファイル名の帯ごと同じ色にする。
      * ダークでも同じ色にする配色(zenn・qiita)のほかは、ダークのときは置き換えず、body に置いたダークの配色をそのまま使う。
      * 印刷では置き換えない(@media screen)。紙は白地で、明るい文字が読めなくなるため
      */
@@ -116,7 +117,8 @@ $dark-condition: "(style(--swifty-color-mode: dark) or (style(--swifty-os-color-
 
         @container #{$condition} {
             .entry-content pre:not(.lang-aa),
-            .code-block {
+            .code-block,
+            .entry-content .gist-file:has(.blob-code) {
                 @include var.css-variables(map.get($block, "colors"));
                 // スクロールバーなど、ブラウザが描く部品も暗い地に合わせる
                 color-scheme: dark;
