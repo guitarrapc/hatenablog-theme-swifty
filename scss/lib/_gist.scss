@@ -590,6 +590,57 @@ $band-height: 2.25rem; // コードブロックの帯の高さ(帯の下の線�
             white-space: inherit;
         }
 
+        // タスクリストのチェックボックス。GitHubは押せないチェックボックス(disabled)にし、ブラウザの押せない見た目は
+        // 薄い灰色でチェックの有無が見分けにくい(accent-color は押せないチェックボックスには効かない)。
+        // 本文の箇条書きの記号と同じ色で描き直し、記号と同じく字下げの中に置く
+        .task-list-item-checkbox {
+            appearance: none;
+            display: inline-grid;
+            place-content: center;
+            box-sizing: border-box;
+            width: 1em;
+            height: 1em;
+            margin-block: 0;
+            margin-inline: -1.5em .5em;
+            border: 2px solid var(--accent-strong);
+            border-radius: 4px;
+            background-color: transparent;
+            // 上下の中央に揃えると和文の文字の中心より下がるので持ち上げる。項目の最後の要素の下の余白は消す指定があるので、
+            // 余白ではなく位置をずらす
+            position: relative;
+            top: -.15em;
+            vertical-align: middle;
+            // 背景色で描く塗りと印が、印刷の「背景のグラフィック」オフで省略されないようにする
+            print-color-adjust: exact;
+
+            &:checked {
+                background-color: var(--accent-strong);
+
+                // チェックの印。塗りの上に、ファイルの地の色で描く
+                &::before {
+                    content: "";
+                    width: .6em;
+                    height: .6em;
+                    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+                    background-color: var(--surface);
+                }
+            }
+
+            // ハイコントラストモードでは背景色が強制されて塗りと印が消えるため、システムの色で描く
+            @media (forced-colors: active) {
+                forced-color-adjust: none;
+                border-color: CanvasText;
+
+                &:checked {
+                    background-color: CanvasText;
+
+                    &::before {
+                        background-color: Canvas;
+                    }
+                }
+            }
+        }
+
         // 脚注。本文の脚注(_entry.scss)と同じ文字の大きさと色
         .footnotes {
             padding-top: 1em;

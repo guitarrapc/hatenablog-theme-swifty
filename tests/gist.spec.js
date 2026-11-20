@@ -978,6 +978,84 @@ test.describe('Gist埋め込み', () => {
     expect(footnote.labelHeight, '読み上げ用の見出しは画面に出さない').toBeLessThanOrEqual(1);
   });
 
+  test('タスクリストのチェックボックスは、どの配色とモードでもリストの記号と同じ色で描き、チェックの有無を見分けられる', async ({ page }) => {
+    await openGist(page);
+    // GitHubは押せないチェックボックス(disabled)にする。ブラウザの押せない見た目は薄い灰色で、チェックの有無が見分けにくい
+    for (const mode of MODES) {
+      await page.emulateMedia({ colorScheme: mode });
+      await expectMode(page, mode);
+      for (const scheme of SCHEMES) {
+        await page.addStyleTag({ content: schemeCss(scheme) });
+        const label = `${mode} / ${scheme}`;
+        const state = await page.evaluate((markdown) => ({
+          marker: (() => {
+            const item = document.querySelector('.entry-content:not(.markdown-body) > ul > li');
+            return item ? getComputedStyle(item, '::marker').color : null;
+          })(),
+          boxes: [...document.querySelectorAll(`${markdown} .task-list-item-checkbox`)].map((el) => {
+            const box = /** @type {HTMLInputElement} */ (el);
+            const s = getComputedStyle(box);
+            const mark = getComputedStyle(box, '::before');
+            return {
+              checked: box.checked,
+              disabled: box.disabled,
+              border: s.borderTopColor,
+              fill: s.backgroundColor,
+              mark: mark.content === 'none' ? null : mark.backgroundColor,
+              file: getComputedStyle(/** @type {Element} */ (box.closest('.gist-file'))).backgroundColor,
+            };
+          }),
+        }), MARKDOWN_FILE);
+
+        expect(state.marker, '前提: 記事に箇条書きがあること').not.toBeNull();
+        expect(state.boxes.some((box) => box.checked) && state.boxes.some((box) => !box.checked), '前提: Gistにチェックありとなしの項目があること').toBe(true);
+        expect(state.boxes.every((box) => box.disabled), '前提: GitHubがチェックボックスを押せない状態で書き出していること').toBe(true);
+        for (const box of state.boxes) {
+          const name = `${label}: チェック${box.checked ? 'あり' : 'なし'}`;
+          // 枠は本文の箇条書きの記号と同じ色。ファイルの地に対して非テキストの3:1を満たす
+          expect.soft(box.border, `${name}の枠`).toBe(state.marker);
+          expect.soft(contrast(box.border, box.file), `${name}の枠 ${box.border} on ${box.file}`).toBeGreaterThanOrEqual(3);
+          if (box.checked) {
+            // チェックありは塗りつぶしと印。印は塗りの上で3:1を満たす
+            expect.soft(box.fill, `${name}の塗り`).toBe(state.marker);
+            expect.soft(box.mark, `${name}の印`).not.toBeNull();
+            expect.soft(contrast(box.mark ?? box.fill, box.fill), `${name}の印 ${box.mark} on ${box.fill}`).toBeGreaterThanOrEqual(3);
+          } else {
+            expect.soft(box.fill, `${name}の塗り`).toBe('rgba(0, 0, 0, 0)');
+            expect.soft(box.mark, `${name}の印`).toBeNull();
+          }
+        }
+      }
+    }
+
+    // チェックボックスは箇条書きの記号の位置(リストの字下げの中)に置き、項目の文字の1行目と上下の中心を揃える
+    const layout = await page.evaluate((markdown) => [...document.querySelectorAll(`${markdown} .task-list-item`)].map((item) => {
+      const box = /** @type {Element} */ (item.querySelector('.task-list-item-checkbox')).getBoundingClientRect();
+      const list = /** @type {Element} */ (item.parentElement).getBoundingClientRect();
+      const s = getComputedStyle(item);
+      const contentLeft = item.getBoundingClientRect().left + parseFloat(s.paddingLeft);
+      // 中身の始まりは、チェックボックスの後ろの中身(文字やインラインコード)の1行目の左端
+      const range = document.createRange();
+      range.setStartAfter(/** @type {Element} */ (item.querySelector('.task-list-item-checkbox')));
+      range.setEnd(item, item.childNodes.length);
+      const start = /** @type {DOMRect} */ ([...range.getClientRects()].find((r) => r.height > 0));
+      // 上下の中心は、本文の大きさの文字で測る(インラインコードは文字が小さい)
+      const text = /** @type {Node} */ ([...item.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim()));
+      range.selectNodeContents(text);
+      const line = range.getClientRects()[0];
+      return {
+        inIndent: box.left >= list.left && box.right <= contentLeft,
+        textStart: Math.round((start.left - contentLeft) * 10) / 10,
+        offset: Math.round(((box.top + box.height / 2) - (line.top + line.height / 2)) * 10) / 10,
+      };
+    }), MARKDOWN_FILE);
+    for (const item of layout) {
+      expect(item.inIndent, 'チェックボックスがリストの字下げの中にある').toBe(true);
+      expect(Math.abs(item.textStart), '項目の文字は字下げの位置から始まる').toBeLessThanOrEqual(1);
+      expect(Math.abs(item.offset), 'チェックボックスと文字の1行目の上下の中心の差').toBeLessThanOrEqual(1.5);
+    }
+  });
+
   test('CSVのファイルは、どの配色とモードでもカードの地の表にし、行番号を控えめにして行と揃える', async ({ page }) => {
     await openGist(page, { csv: true });
 
