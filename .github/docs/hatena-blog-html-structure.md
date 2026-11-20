@@ -109,6 +109,62 @@
      * はてなブックマークコメント: `<iframe class="hatena-bookmark-comment-iframe">` (はてなの設定で表示するときだけ。カスタマイズフッターの先頭に入る)
    * コメント: `<div class="comment-box js-comment-box">`
 
+### 記事本文のGistの埋め込み
+
+記事にGistのスクリプト(`<script src="https://gist.github.com/….js">`)を書くと、はてなはスクリプトを段落で囲みます。スクリプトが書き出す `div.gist` は段落の中に入れられないので、ブラウザが段落を閉じ、本文の直下に次の順で並びます(2026年11月に確認。見た目は theme-design-spec.md の「Gist埋め込み」):
+
+```html
+<p><script src="https://gist.github.com/….js"></script><link rel="stylesheet" href="https://github.githubassets.com/assets/gist-embed-….css"></p>
+<div id="gist…" class="gist">
+  <!-- 1つのファイルが1つの .gist-file。ファイルの数だけ続く -->
+  <div class="gist-file" data-color-mode="light" data-light-theme="light">
+    <div class="gist-data">
+      <div class="js-gist-file-update-container js-task-list-container">
+        <div id="file-…" class="file my-2">
+          <!-- ファイルの中身。ファイルの種類で変わる(下の一覧) -->
+        </div>
+      </div>
+    </div>
+    <div class="gist-meta"><a href="…/raw/…" style="float:right">view raw</a><a href="…">ファイル名</a> hosted with ❤ by <a href="https://github.com">GitHub</a></div>
+  </div>
+</div>
+<cite class="hatena-citation"><a href="https://gist.github.com/…">gist.github.com</a></cite> <!-- :embed:cite のとき -->
+<p></p> <!-- 閉じられた段落の閉じタグ(</p>)が残って作る空の段落 -->
+```
+
+ファイルの中身(`.file` の中)は、ファイルの種類で次のようになります。
+
+```html
+<!-- コードのファイル: 行番号とコードの表 -->
+<div class="Box-body p-0 blob-wrapper data type-rust" style="overflow: auto" tabindex="0" role="region">
+  <div class="js-check-hidden-unicode js-blob-code-container blob-code-content">
+    <table class="highlight tab-size js-file-line-container">
+      <tr><td class="blob-num js-line-number" data-line-number="1"></td><td class="blob-code blob-code-inner js-file-line">…</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Markdownのファイル: GitHubが描いたHTML。本文と同じ .entry-content を持つ -->
+<div class="Box-body readme blob" style="overflow: auto" tabindex="0" role="region">
+  <article class="markdown-body entry-content container-lg">…</article>
+</div>
+
+<!-- CSVのファイル: 検索欄と表。表の先頭の列が行番号 -->
+<div class="Box-body p-0 blob-wrapper data type-csv" style="overflow: auto" tabindex="0" role="region">
+  <div class="blob-interaction-bar"><svg class="octicon octicon-search">…</svg><input type="text" class="form-control js-csv-filter-field blob-filter"></div>
+  <div class="markdown-body js-check-hidden-unicode">
+    <table class="js-csv-data csv-data js-file-line-container">
+      <thead><tr><td class="blob-num js-line-number" data-line-number="1"></td><th>…</th></tr></thead>
+      <tbody><tr><td class="blob-num js-line-number" data-line-number="2"></td><td>…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+```
+
+* GitHubのCSS(`gist-embed-*.css`)は `<body>` の中、テーマより後に読み込まれます。はてなの `blog.css` にも `.gist` の指定があります(`.gist pre { font-size: inherit !important }` など)。
+* コードのファイルとCSVのファイルは、どちらも `.blob-wrapper` を持ちます。行番号とコードのセル(`.blob-code`)があるのはコードのファイルだけです。
+* MarkdownのGistの中の要素は、本文の `.entry-content` の直下の要素への指定やスクリプト(`.entry-content > blockquote` など)にも当たります。本文だけを選ぶときは `.entry-content:not(.markdown-body)` にします。
+
 ### カスタマイズフッターのはてなブックマークコメント
 
 はてなの設定で記事にはてなブックマークのコメントを表示すると(「デザイン」→「カスタマイズ」→「記事」の「ソーシャルパーツ」の「はてなブックマークコメント」)、カスタマイズフッターの先頭に iframe が出力されます(記事ページだけ。2026年10月に確認):

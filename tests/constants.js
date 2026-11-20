@@ -91,7 +91,9 @@ export const SELECTORS = {
   // 記事関連
   ENTRY: '.entry',
   ENTRY_TITLE: '.entry-title',
-  ENTRY_CONTENT: '.entry-content',
+  // MarkdownのGistの埋め込みも article.markdown-body.entry-content を持つので、記事の本文に絞る
+  // (アバウトページの本文は .hatenablog-entry を持たないので、Gistのほうを除く)
+  ENTRY_CONTENT: '.entry-content:not(.markdown-body)',
   TABLE_OF_CONTENTS: '.entry-content > .table-of-contents',
   ENTRY_DATE: '.entry-date',
   ENTRY_CATEGORIES: '.entry-categories',

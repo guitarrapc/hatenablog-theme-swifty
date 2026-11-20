@@ -44,6 +44,32 @@ const TARGETS = {
   はてなブログをはじめるボタン: '#footer .guest-footer .btn-register',
 };
 
+/**
+ * サンプル記事に埋め込んだGitHub Gist(theme-design-spec.md の「Gist埋め込み」)。
+ * GitHubのCSSはライトの固定の色を持つので、テーマの変数に付け直した色が、どの配色とモードでもファイルの地の上で読めることを測る
+ */
+const GIST_TARGETS = {
+  Gistの行番号: '.entry-content .gist .blob-num',
+  // ファイル名の帯は、コードのファイル(ink・zenn・qiitaでは暗い地)とMarkdownのファイルで地が違うので、両方を測る
+  Gistのコードのファイル名の帯: '.entry-content .gist .gist-file:has(.blob-code) .gist-meta',
+  Gistのコードのファイル名の帯のリンク: '.entry-content .gist .gist-file:has(.blob-code) .gist-meta a',
+  Gistの文書のファイル名の帯: '.entry-content .gist .gist-file:has(.readme) .gist-meta',
+  Gistの文書のファイル名の帯のリンク: '.entry-content .gist .gist-file:has(.readme) .gist-meta a',
+  Gistのコード: '.entry-content .gist .blob-code-inner',
+  Gistのキーワード: '.entry-content .gist .blob-code-inner .pl-k',
+  Gistの関数名: '.entry-content .gist .blob-code-inner .pl-en',
+  Gistの型: '.entry-content .gist .blob-code-inner .pl-smi',
+  Gistの文字列: '.entry-content .gist .blob-code-inner .pl-s',
+  Gistのコメント: '.entry-content .gist .blob-code-inner .pl-c',
+  Gistの文書: '.entry-content .gist .markdown-body p',
+  Gistの文書の見出し: '.entry-content .gist .markdown-body h2',
+  Gistの文書のリンク: '.entry-content .gist .markdown-body p a',
+  Gistの文書の引用: '.entry-content .gist .markdown-body blockquote',
+  Gistの文書の表の見出し: '.entry-content .gist .markdown-body th',
+  Gistの文書のインラインコード: '.entry-content .gist .markdown-body p code',
+  Gistの文書のコードブロック: '.entry-content .gist .markdown-body pre',
+};
+
 /** カテゴリのページ。パンくずはカードの外(ページの背景の上)にある */
 const CATEGORY_PAGE_TARGETS = {
   パンくずのリンク: '.breadcrumb a',
@@ -206,6 +232,7 @@ for (const mode of /** @type {const} */ (['light', 'dark'])) {
     for (const [name, { path, targets }] of Object.entries({
       本文と補助テキスト: { path: TEST_URLS.SAMPLE_ARTICLE, targets: TARGETS },
       コードハイライト: { path: TEST_URLS.CODE_HIGHLIGHT, targets: CODE_TARGETS },
+      Gist埋め込み: { path: TEST_URLS.SAMPLE_ARTICLE, targets: GIST_TARGETS },
       // 記事ページではパンくずを表示しないので、パンくずはカテゴリのページ(ページの背景の上)で測る
       カテゴリのページ: { path: '/archive/category/test', targets: CATEGORY_PAGE_TARGETS },
     })) {

@@ -8,6 +8,7 @@
 @use "./lib/_alert";
 // 目次は本文のリストの指定を上書きするため、記事の後に読み込む
 @use "./lib/_table_of_contents";
+@use "./lib/_gist";
 @use "./lib/_archive";
 @use "./lib/_modules";
 @use "./lib/_bookmark_comment";

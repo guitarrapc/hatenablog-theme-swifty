@@ -25,9 +25,13 @@ const renderAll = (/** @type {any} */ page) => page.evaluate(async () => {
   scrollTo(0, 0);
 });
 
-/** 本文の直下の要素(目次を除く)どうしの間隔 */
+/**
+ * 本文の直下の要素(目次を除く)どうしの間隔。MarkdownのGistの中(article.markdown-body.entry-content)は本文の直下ではないので除く。
+ * 箱を作らない要素(Gistのスクリプトの段落の display: contents など)は位置を持たないので除く
+ */
 const measureGaps = (/** @type {any} */ page) => page.evaluate(() => {
-  const children = [...document.querySelectorAll('.entry-content > :not(.table-of-contents)')];
+  const children = [...document.querySelectorAll('.entry-content:not(.markdown-body) > :not(.table-of-contents)')]
+    .filter((el) => !['contents', 'none'].includes(getComputedStyle(el).display));
   return children.slice(1).map((el, i) => ({
     element: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}`,
     gap: Math.round(el.getBoundingClientRect().top - children[i].getBoundingClientRect().bottom),
